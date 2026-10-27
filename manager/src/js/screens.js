@@ -188,6 +188,99 @@ function setCardType(ty) {
     }
   );
 }
+/* Android box: apps that open on an Android box (NVIDIA Shield, ...) over ADB instead of on the TV (helper/androidbox.js) */
+function openAndroidBox() {
+  api('/api/androidbox').then(
+    function (r) {
+      ab = r;
+      if (view !== 'androidbox') push('androidbox');
+      else {
+        build();
+        draw();
+      }
+    },
+    function () {
+      banner('The service did not answer', 'err');
+    }
+  );
+}
+function abRefresh() {
+  if (view === 'androidbox') openAndroidBox();
+}
+function abTest() {
+  banner('Connecting\u2026 accept the question on the box if it asks', 'work');
+  api('/api/androidbox/test', {}, 50000).then(
+    function (r) {
+      if (r.ok) banner('Connected: ' + (r.model || 'Android box'), 'ok');
+      else banner(r.error || 'The box did not answer', 'err');
+      abRefresh();
+    },
+    function () {
+      banner('The service did not answer', 'err');
+    }
+  );
+}
+function abOff() {
+  api('/api/androidbox', { host: '' }).then(
+    function (r) {
+      ab = r;
+      banner('Apps open on the TV again', 'ok');
+      build();
+      draw();
+    },
+    function () {
+      banner('The service did not answer', 'err');
+    }
+  );
+}
+function abWatch(base, n) {
+  if (view !== 'share' || shareMode !== 'abox') return;
+  setTimeout(function () {
+    if (view !== 'share' || shareMode !== 'abox') return;
+    api('/api/androidbox').then(
+      function (r) {
+        ab = r;
+        if (r.savedAt > base) {
+          $('sharemsg').textContent = tr('Saved. Press Back, then choose Test the connection.');
+          base = r.savedAt;
+        }
+        abWatch(base, n + 1);
+      },
+      function () {
+        abWatch(base, n + 1);
+      }
+    );
+  }, 2000);
+}
+function openAbPair() {
+  shareMode = 'abox';
+  push('share');
+  $('share').style.display = 'block';
+  $('shareurl').textContent = '';
+  $('qrbox').style.visibility = 'hidden';
+  $('share').querySelector('h2').textContent = tr('Android box');
+  $('share').querySelector('ol').innerHTML = tr(
+    '<li>Phone on the <b>same Wi-Fi</b> as the TV.</li><li>Scan the code with the camera.</li><li>Fill in the address of the box and its HDMI input, then tap <b>Save</b>.</li>'
+  );
+  $('sharemsg').textContent = tr('Preparing\u2026');
+  api('/api/androidbox/pair', {}).then(
+    function (r) {
+      if (view !== 'share' || shareMode !== 'abox') return;
+      if (r.error) {
+        $('sharemsg').textContent = tr(r.error);
+        return;
+      }
+      drawQr(r.qr);
+      $('qrbox').style.visibility = 'visible';
+      $('shareurl').textContent = tr(r.url + '   code ' + r.code);
+      $('sharemsg').textContent = tr('The page stays open for ten minutes. It is not encrypted: what you type travels over your Wi-Fi.');
+      abWatch((ab && ab.savedAt) || 0, 0);
+    },
+    function () {
+      $('sharemsg').textContent = tr('The service did not answer.');
+    }
+  );
+}
 /* Cards: the options of the cards in the theme's slots, typed on a phone page (helper/cards.js) */
 function openCardsPair() {
   shareMode = 'cards';

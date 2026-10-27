@@ -24,7 +24,7 @@ disk, and a reboot without the boot scripts brings LG's Home back.
 | The Input key, the Inputs list over the running app | `helper/inputkey.js`, `helper/inputhook.js`, `helper/picker.js`, `picker/app/`, `scripts/inputkey.sh` |
 | Home takeover at boot, rollback, undo | `scripts/10-cleanyourtv-home`, `scripts/stage-home.sh`, `scripts/undo-home.sh`, `scripts/bootstrap.sh` |
 | Live TV: playlist, guide, favourites | `helper/live.js` and `app/src/js/live.js` |
-| An app that opens on an Android box over ADB (input switch, `adb` start) | `helper/androidbox.js`, the hook in `/api/launch` in `helper/apps.js`, `docs/android-box.md` |
+| An app that opens on an Android box over ADB (input switch, ADB start) | `helper/androidbox.js`, `helper/adbclient.js` (the ADB protocol), `helper/androidboxpage.js` (phone page), the hook in `/api/launch` in `helper/apps.js`, `docs/android-box.md` |
 | Picture notifications | `notify/app/`, `helper/notify.js`, `helper/notifyapi.js` |
 | Voice (Moonshine, OpenRouter, Home Assistant) | `helper/voice.js` (microphone, recogniser), `helper/answers.js` (Assist, OpenRouter, your server), `voice/` |
 | Themes | `helper/themeschema.js` (the schema), `helper/theme.js` (downloads), `themes/` (read from GitHub), `docs/themes.md` |

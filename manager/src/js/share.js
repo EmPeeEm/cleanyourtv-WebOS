@@ -77,6 +77,12 @@ function closeShare() {
     wallRefresh();
     return;
   }
+  if (shareMode === 'abox') {
+    api('/api/androidbox/pair', { stop: true }).catch(function () {});
+    pop();
+    abRefresh();
+    return;
+  }
   if (shareMode === 'pair') {
     api('/api/voice/pair-stop', {}).catch(function () {});
     pop();

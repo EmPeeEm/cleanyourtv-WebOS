@@ -62,6 +62,17 @@ function load(keep) {
       build();
       if (idx >= rows.length) idx = 0;
       draw();
+      /* the Android box settings are read apart from the status, which stays as it is */
+      api('/api/androidbox').then(
+        function (r) {
+          ab = r;
+          if (view === 'main') {
+            build();
+            draw();
+          }
+        },
+        function () {}
+      );
       if (s.checking)
         setTimeout(function () {
           load(true);

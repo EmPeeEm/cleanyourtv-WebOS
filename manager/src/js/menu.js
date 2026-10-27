@@ -874,6 +874,47 @@ function build() {
     rows.push({ label: 'Back', fn: pop });
     return;
   }
+  if (view === 'androidbox') {
+    var a = ab || { configured: false, settings: null, key: {}, last: null },
+      cfg = a.settings || {},
+      lastRun = a.last;
+    rows.push({
+      label: 'Set up from your phone',
+      sub: a.configured ? cfg.host + ' \u00B7 ' + cfg.input.replace('com.webos.app.hdmi', 'HDMI ') : 'address, HDMI input and apps',
+      fn: openAbPair,
+    });
+    rows.push({
+      label: 'Apps on the box',
+      sub: a.configured ? Object.keys(cfg.apps).join(', ') : 'none yet',
+      fn: null,
+    });
+    rows.push({ sep: true });
+    rows.push({
+      label: 'Test the connection',
+      sub: a.configured ? 'the first time, accept the question on the box' : 'set it up first',
+      dim: !a.configured,
+      fn: function () {
+        if (a.configured) abTest();
+      },
+    });
+    rows.push({
+      label: 'Last start',
+      sub: !lastRun ? 'none yet' : lastRun.ok ? lastRun.app + ' started' : lastRun.error,
+      fn: null,
+    });
+    rows.push({
+      label: 'Key of this TV',
+      sub: a.key && a.key.ready ? 'ready' : 'made at the first test',
+      fn: null,
+    });
+    if (a.configured) {
+      rows.push({ sep: true });
+      rows.push({ label: 'Switch off', sub: 'apps open on the TV again', fn: abOff });
+    }
+    rows.push({ sep: true });
+    rows.push({ label: 'Back', fn: pop });
+    return;
+  }
   if (view === 'wallpapers') {
     var w = wp || { uploads: 0, immich: {}, total: 0, limits: { uploads: 100 }, bytes: 0 },
       im = w.immich || {},
@@ -1043,6 +1084,11 @@ function build() {
     fn: openWallpapers,
   });
   rows.push({ label: 'Cards', sub: 'small widgets on Home', fn: openCards });
+  rows.push({
+    label: 'Android box',
+    sub: ab && ab.configured ? ab.settings.host : ab ? 'off' : '',
+    fn: openAndroidBox,
+  });
   rows.push({
     label: 'Input key',
     sub: st.inputhook && st.inputhook.hook && !st.inputhook.hook.attached ? 'not available' : onoff(st.options.inputKey),

@@ -19,7 +19,7 @@ you can call it from a shell on the TV (for example over SSH).
 | `GET /api/theme/list`, `POST /api/theme/set`, `/revert` | Themes for the home screen; see [Themes](themes.md) |
 | `POST /api/cards/status`, `/set` `{slot, type}`, `/pair` `{stop?}`, `/weather` `{lat, lon, unit}`, `/ha` `{ids}`, `/ha/toggle` `{id}`; `GET /api/cards/ha/camera/<camera.id>` | Cards: the phone page for their options, the weather card's weather (Open-Meteo, kept 30 minutes), Home Assistant states (kept 20 seconds), switching an entity, a camera's picture; see [Cards](launcher.md#cards) |
 | `GET /api/wallpapers/status`, `/list`, `/photo/<u\|i>/<id>`; `POST /api/wallpapers/set` `{size}`, `/pair`, `/sync`, `/remove-uploads`, `/disconnect` | Wallpapers: the photo library, the phone page and the Immich sync; see [Wallpapers](wallpapers.md) |
-| `GET /api/androidbox`; `POST /api/androidbox` `{host, port, input, apps}`, `/api/androidbox/test` | Apps that open on an Android box over ADB instead of on the TV; see [Android box](android-box.md) |
+| `GET /api/androidbox`; `POST /api/androidbox` `{host, port, input, apps}`, `/api/androidbox/test`, `/api/androidbox/pair` (the phone page) | Apps that open on an Android box over ADB instead of on the TV; see [Android box](android-box.md) |
 | `GET /api/live/status`, `/api/live/channels`, `/api/live/epg` | Live TV data |
 | `POST /api/live/settings`, `/api/live/refresh`, `/api/live/reset` | Live TV setup |
 | `GET /api/manager/status` | Versions, updates, options, hook state |

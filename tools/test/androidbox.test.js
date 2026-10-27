@@ -1,37 +1,20 @@
-// Opening an app on an Android box (androidbox.js): the settings are checked, launching switches the input and starts the app over adb,
-// and every way it can fail is reported. adb is a stand-in script that records its arguments and answers from files.
+// Opening an app on an Android box (androidbox.js): the settings are checked, launching switches the input and starts the app on the box,
+// and every way it can fail is reported. The box is a stand-in device on a local port (adbdevice.js); the client is the real one.
 const fs = require('fs'),
+  http = require('http'),
   path = require('path');
-const { ok, call, sleep, req, memoryConfig, tmp, run } = require('./lib');
+const { ok, call, sleep, req, memoryConfig, run } = require('./lib');
+const { device, KEY } = require('./adbdevice');
+
+process.env.CYTV_ADB_AUTH_MS = '300'; // the time to answer the box's question, short for the test
 
 run(async () => {
   const D = process.env.CYTV_DIR;
-  const adbDir = path.join(D, 'adb');
-  const calls = path.join(tmp, 'adb-calls.txt');
-  const reply = path.join(tmp, 'adb-reply'); // a file per kind of call: connect, shell
-  fs.mkdirSync(adbDir);
-  fs.mkdirSync(reply);
-  const say = (kind, text) => fs.writeFileSync(path.join(reply, kind), text);
-  const seen = () => (fs.existsSync(calls) ? fs.readFileSync(calls, 'utf8').trim().split('\n') : []);
-  const forget = () => fs.existsSync(calls) && fs.unlinkSync(calls);
-  // the stand-in: logs "HOME=<home> <args>", then prints what the test left for the call
-  fs.writeFileSync(
-    path.join(adbDir, 'adb'),
-    [
-      '#!/bin/sh',
-      'echo "HOME=$HOME $*" >> ' + calls,
-      'case "$1" in',
-      '  connect) cat ' + reply + '/connect ;;',
-      '  -s) cat ' + reply + '/shell ;;',
-      'esac',
-      '',
-    ].join('\n'),
-    { mode: 0o755 }
-  );
-  say('connect', 'connected to 192.168.1.50:5555\n');
-  say('shell', 'Events injected: 1\n## Network stats: elapsed time=5ms\n');
+  const keyFile = path.join(D, 'adb', 'adbkey');
+  fs.mkdirSync(path.join(D, 'adb'));
+  fs.writeFileSync(keyFile, KEY, { mode: 0o600 });
 
-  const good = { host: '192.168.1.50', port: 5555, input: 'com.webos.app.hdmi2', apps: { plex: 'com.plexapp.android' } };
+  const good = { host: '127.0.0.1', port: 5555, input: 'com.webos.app.hdmi2', apps: { plex: 'com.plexapp.android' } };
   const mod = req('androidbox');
 
   // ---- the settings ----
@@ -54,19 +37,27 @@ run(async () => {
   // ---- the feature ----
   const conf = memoryConfig({});
   const launched = [];
-  let lunaOk = true;
   const luna = async (uri, payload) => {
     launched.push(uri.split('/').pop() + ' ' + JSON.stringify(payload));
-    return { returnValue: lunaOk };
+    return { returnValue: true };
   };
-  const f = mod.create({ config: conf, luna });
+  const appsStub = {
+    apps: async () => [
+      { id: 'plex', title: 'Plex' },
+      { id: 'com.webos.app.hdmi2', title: 'PlayStation', input: 2 },
+      { id: 'netflix', title: 'Netflix' },
+    ],
+  };
+  const f = mod.create({ config: conf, luna, feature: n => (n === 'apps' ? appsStub : null) });
+  let box = await device({ trusted: KEY, reply: () => 'Events injected: 1\n' });
+  const at = port => Object.assign({}, good, { port });
 
   ok(f.handles('plex') === false && (await f.open('plex')) === null, 'nothing is set up: the app opens on the TV as before');
   let r = await call(f, '/api/androidbox');
-  ok(r.j.configured === false && r.j.adb.found === true, 'status: not set up, adb found in the service folder');
+  ok(r.j.configured === false && r.j.key.ready === true, 'status: not set up, the key is there');
 
-  r = await call(f, '/api/androidbox', 'POST', good);
-  ok(r.j.configured === true && conf.get().androidBox.host === '192.168.1.50', 'saving keeps the settings in config.json');
+  r = await call(f, '/api/androidbox', 'POST', at(box.port));
+  ok(r.j.configured === true && conf.get().androidBox.host === '127.0.0.1', 'saving keeps the settings in config.json');
   ok(f.handles('plex') && !f.handles('netflix'), 'only the listed apps move to the box');
 
   // ---- a start that works ----
@@ -76,67 +67,134 @@ run(async () => {
     launched.length === 1 && launched[0] === 'launch {"id":"com.webos.app.hdmi2","params":{}}',
     'the TV switches to the HDMI input first: ' + launched[0]
   );
-  await sleep(800);
-  let c = seen();
-  ok(c.length === 2 && /^HOME=\S+\/adb connect 192\.168\.1\.50:5555$/.test(c[0]), 'adb connects to the box: ' + c[0]);
+  await sleep(600);
   ok(
-    /-s 192\.168\.1\.50:5555 shell input keyevent KEYCODE_WAKEUP; monkey -p com\.plexapp\.android -c android\.intent\.category\.LAUNCHER 1$/.test(
-      c[1]
-    ),
-    'the box wakes and the app starts by its launcher entry: ' + c[1]
+    box.seen.commands.length === 1 &&
+      box.seen.commands[0] === 'input keyevent KEYCODE_WAKEUP; monkey -p com.plexapp.android -c android.intent.category.LAUNCHER 1',
+    'the box wakes and the app starts by its launcher entry: ' + box.seen.commands[0]
   );
-  ok(c[0].indexOf('HOME=' + adbDir) === 0, 'adb keeps its key in the service folder');
+  ok(box.seen.good === 1, "the box accepted the TV's key");
   r = await call(f, '/api/androidbox');
   ok(r.j.last && r.j.last.ok === true && r.j.last.app === 'plex', 'the result of the start is in the status');
 
   // ---- a second tap while one is running ----
-  forget();
   const a = await f.open('plex');
   ok(a.androidBox === 'busy' || a.androidBox === 'starting', 'a quick second tap does not start a second one at the same time');
-  await sleep(800);
+  await sleep(600);
 
   // ---- ways it fails ----
-  async function fails(name, setup, step, text) {
-    forget();
-    setup();
-    await sleep(0);
+  async function fails(name, port, step, text) {
+    await call(f, '/api/androidbox', 'POST', at(port));
     launched.length = 0;
     await f.open('plex');
-    await sleep(800);
+    await sleep(900);
     const st = (await call(f, '/api/androidbox')).j.last;
     ok(st && st.ok === false && st.step === step && st.error.indexOf(text) >= 0, name + ' -> ' + step + ': ' + (st && st.error));
     ok(launched.length === 1, name + ': the input was switched anyway');
   }
-  await fails('the box does not answer', () => say('connect', 'failed to connect to 192.168.1.50:5555\n'), 'connect', 'failed to connect');
-  say('connect', 'connected to 192.168.1.50:5555\n');
-  await fails('the box has not allowed the TV', () => say('shell', 'error: device unauthorized.\n'), 'authorize', 'accept the prompt');
-  await fails('Plex is not installed', () => say('shell', '** No activities found to run, monkey aborted.\n'), 'launch', 'not installed');
-  say('shell', 'Events injected: 1\n');
-
-  // ---- no adb at all ----
-  fs.renameSync(path.join(adbDir, 'adb'), path.join(adbDir, 'adb.off'));
-  const noPath = path.join(tmp, 'empty');
-  fs.mkdirSync(noPath);
-  const P = req('paths');
-  const oldPath = P.ENV.PATH;
-  P.ENV.PATH = noPath;
-  await sleep(0);
-  forget();
-  await f.open('plex');
-  await sleep(500);
-  const miss = (await call(f, '/api/androidbox')).j;
-  ok(
-    miss.adb.found === false && miss.last.step === 'adb' && /put it at/.test(miss.last.error),
-    'without adb the status says where to put it'
-  );
-  P.ENV.PATH = oldPath;
-  fs.renameSync(path.join(adbDir, 'adb.off'), path.join(adbDir, 'adb'));
+  box.close();
+  box = await device({ trusted: KEY, reply: () => '** No activities found to run, monkey aborted.\n' });
+  await fails('Plex is not installed', box.port, 'launch', 'not installed');
+  box.close();
+  box = await device({ trusted: '', prompt: 'deny' });
+  await fails('the box has not allowed the TV', box.port, 'authorize', 'accept the question');
+  ok(box.seen.keys.length === 1, 'the TV offered its key to the box');
+  box.close();
+  box = await device({ auth: false, refuse: true });
+  await fails('the box refuses the command', box.port, 'shell', 'refused');
+  box.close();
+  await fails('nothing listens on the box', box.port, 'connect', 'refused');
+  fs.writeFileSync(keyFile, 'rubbish');
+  box = await device({ trusted: KEY });
+  await fails('the key file is damaged', box.port, 'key', 'cannot be used');
+  ok((await call(f, '/api/androidbox')).j.key.ready === false, 'and the status says the key is not usable');
+  fs.writeFileSync(keyFile, KEY);
 
   // ---- the test button ----
-  say('shell', 'Shield TV\n');
+  box.close();
+  box = await device({ trusted: KEY, reply: () => 'SHIELD Android TV\n' });
+  await call(f, '/api/androidbox', 'POST', at(box.port));
   const t = await call(f, '/api/androidbox/test', 'POST', {});
-  ok(t.j.ok === true && t.j.model === 'Shield TV', 'the test asks the box for its model');
-  ok((await call(f, '/api/androidbox/test', 'POST', {})).code !== 404, 'the test route exists');
+  ok(
+    t.j.ok === true && t.j.model === 'SHIELD Android TV' && box.seen.commands.pop() === 'getprop ro.product.model',
+    'the test asks the box for its model'
+  );
+  box.close();
+
+  // ---- a request that is not valid is refused and changes nothing ----
+  const before = JSON.stringify(conf.get().androidBox);
+  r = await call(f, '/api/androidbox', 'POST', { host: 'not a host!', input: 'com.webos.app.hdmi2', apps: good.apps });
+  ok(
+    r.code === 400 && /address/.test(r.j.error) && JSON.stringify(conf.get().androidBox) === before,
+    'a bad address is refused: ' + r.j.error
+  );
+  r = await call(f, '/api/androidbox', 'POST', { host: '1.2.3.4', input: 'netflix', apps: good.apps });
+  ok(r.code === 400 && /HDMI input/.test(r.j.error), 'a bad input is refused: ' + r.j.error);
+  r = await call(f, '/api/androidbox', 'POST', { host: '1.2.3.4', input: 'com.webos.app.hdmi1', apps: { plex: 'nodots' } });
+  ok(
+    r.code === 400 && /Android package/.test(r.j.error) && JSON.stringify(conf.get().androidBox) === before,
+    'no valid app is refused: ' + r.j.error
+  );
+
+  // ---- the phone page ----
+  const phone = (method, p, code, body) =>
+    new Promise(res => {
+      const h = { 'accept-language': 'en' };
+      if (code) h['x-code'] = code;
+      const q = http.request({ host: '127.0.0.1', port: 8793, path: p, method, headers: h, agent: false }, rs => {
+        let b = '';
+        rs.on('data', c => (b += c));
+        rs.on('end', () => res({ code: rs.statusCode, body: b }));
+      });
+      q.on('error', e => res({ code: 0, body: String(e) }));
+      q.end(body ? JSON.stringify(body) : undefined);
+    });
+  const pr = await call(f, '/api/androidbox/pair', 'POST', {});
+  ok(
+    /^http:\/\/.+:8793$/.test(pr.j.url) && /^\d{6}$/.test(pr.j.code) && pr.j.qr === pr.j.url + '/#' + pr.j.code,
+    'the phone page opens with a six-digit code: ' + pr.j.url
+  );
+  ok((await call(f, '/api/androidbox')).j.pairing === true, 'the status says the page is open');
+  let pg = await phone('GET', '/');
+  ok(
+    pg.code === 200 && /<title>Android box<\/title>/.test(pg.body) && /id=host/.test(pg.body) && /var I18N/.test(pg.body),
+    'the page is served without the code'
+  );
+  ok((await phone('GET', '/api/state', 'wrong')).code === 403, 'the data needs the code');
+  const st = JSON.parse((await phone('GET', '/api/state', pr.j.code)).body);
+  ok(
+    st.settings.host === '127.0.0.1' && st.apps.length === 2 && st.apps[0].id === 'plex',
+    'the page gets the settings and the TV apps, without inputs'
+  );
+  pg = await phone('POST', '/api/save', pr.j.code, {
+    host: '192.168.1.60',
+    port: 5555,
+    input: 'com.webos.app.hdmi3',
+    apps: { plex: 'com.plexapp.android' },
+  });
+  ok(
+    pg.code === 200 &&
+      JSON.parse(pg.body).ok &&
+      conf.get().androidBox.host === '192.168.1.60' &&
+      conf.get().androidBox.input === 'com.webos.app.hdmi3',
+    'saving from the phone changes the settings'
+  );
+  const sv = (await call(f, '/api/androidbox')).j.savedAt;
+  ok(sv > 0, 'and the status shows when, for the manager');
+  pg = await phone('POST', '/api/save', pr.j.code, { host: '192.168.1.60', input: 'com.webos.app.hdmi3', apps: {} });
+  ok(
+    JSON.parse(pg.body).error && conf.get().androidBox.host === '192.168.1.60',
+    'a save that is not valid is explained and changes nothing: ' + JSON.parse(pg.body).error
+  );
+  for (let i = 0; i < 9; i++) await phone('GET', '/api/state', '000000');
+  await sleep(100);
+  ok(
+    (await phone('GET', '/')).code === 0 && (await call(f, '/api/androidbox')).j.pairing === false,
+    'after eight wrong codes the page closes'
+  );
+  await call(f, '/api/androidbox/pair', 'POST', {});
+  await call(f, '/api/androidbox/pair', 'POST', { stop: true });
+  ok((await phone('GET', '/')).code === 0, 'closing the page from the TV stops it');
 
   // ---- switching it off ----
   r = await call(f, '/api/androidbox', 'POST', { host: '' });
