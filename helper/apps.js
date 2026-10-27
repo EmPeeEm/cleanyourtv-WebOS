@@ -337,6 +337,7 @@ function create(ctx) {
     delete c.notifyApi;
     delete c.theme;
     delete c.wallpapers; // holds the Immich key; the launcher gets only a stamp that changes with the set of photos
+    delete c.androidBox; // the box's address stays with the service
     const theme = ctx.feature('theme'),
       wp = ctx.feature('wallpapers');
     if (wp) c.wallpapers = { stamp: wp.stamp() };
@@ -356,6 +357,10 @@ function create(ctx) {
     if (u === '/api/launch' && req.method === 'POST') {
       const b = await body(req);
       if (!/^[\w.\-]+$/.test(b.id || '')) return web.json(res, { error: 'bad id' }, 400);
+      // an app set up to open on an Android box (androidbox.js) switches the input instead of opening on the TV
+      const box = ctx.feature && ctx.feature('androidbox');
+      const moved = box && box.handles(b.id) ? await box.open(b.id) : null;
+      if (moved) return web.json(res, moved);
       return web.json(res, await luna('luna://com.webos.applicationManager/launch', { id: b.id, params: b.params || {} }));
     }
     // a full power-off (tvpower/power/shutDown, issue 50): not the standby of the remote's power key, which keeps Quick Start+ and draws power.

@@ -22,6 +22,7 @@ nav = [
     { "Themes" = "themes.md" },
     { "Wallpapers" = "wallpapers.md" },
     { "Live TV" = "live-tv.md" },
+    { "Android box" = "android-box.md" },
     { "The Input key" = "input-key.md" },
     { "Picture notifications" = "notifications.md" },
     { "Voice (optional)" = "voice.md" },

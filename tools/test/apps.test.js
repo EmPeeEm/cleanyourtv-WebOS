@@ -322,4 +322,25 @@ run(async () => {
     r.j && typeof r.j.volume === 'number' && typeof r.j.seq === 'number' && typeof r.j.theme === 'string',
     'the launcher can query audio volume and theme'
   );
+
+  // an app set up to open on an Android box (androidbox.js) goes there instead of opening on the TV
+  const sent = [],
+    opened = [];
+  const spy = async (uri, payload) => {
+    sent.push(uri.split('/').pop() + ' ' + payload.id);
+    return { returnValue: true };
+  };
+  const box = { handles: id => id === 'plex', open: async id => (opened.push(id), { returnValue: true, androidBox: 'starting' }) };
+  const withBox = req('apps').create({
+    config: memoryConfig({ androidBox: { host: '192.168.1.50', port: 5555 }, dock: [] }),
+    luna: spy,
+    version: '1.6.0',
+    feature: n => (n === 'androidbox' ? box : null),
+  });
+  r = await call(withBox, '/api/launch', 'POST', { id: 'plex' });
+  ok(r.j.androidBox === 'starting' && opened[0] === 'plex' && sent.length === 0, 'an app set up for the box is not launched on the TV');
+  r = await call(withBox, '/api/launch', 'POST', { id: 'netflix' });
+  ok(r.j.returnValue === true && sent[0] === 'launch netflix' && opened.length === 1, 'any other app still opens on the TV');
+  r = await call(withBox, '/api/apps');
+  ok(r.j.config.androidBox === undefined, "the launcher is not given the box's address");
 });
