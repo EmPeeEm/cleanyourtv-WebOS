@@ -75,12 +75,15 @@ function create(ctx) {
 
   async function setOptions(o) {
     const cur = config.options();
+    const curLang = config.get().lang || '';
     const next = Object.assign({}, cur);
     for (const k of ['debloat', 'inputKey', 'liveTv']) if (typeof o[k] === 'boolean') next[k] = o[k];
     if (Array.isArray(o.debloatOff)) next.debloatOff = debloat.cleanOff(o.debloatOff);
+    let langChanged = false;
     config.update('manager', c => {
       // the language of every screen: a two-letter code, or '' to follow the TV
       if (typeof o.lang === 'string' && /^([a-z]{2})?$/.test(o.lang)) {
+        if (o.lang !== curLang) langChanged = true;
         if (o.lang) c.lang = o.lang;
         else delete c.lang;
       }
@@ -103,6 +106,9 @@ function create(ctx) {
     if (next.debloat !== cur.debloat) await debloat.apply(next.debloat);
     else if (next.debloat) await debloat.change(debloat.cleanOff(cur.debloatOff), debloat.cleanOff(next.debloatOff));
     ensureHook();
+    if (langChanged) {
+      await exec.sh('sh ' + P.D + '/stage-home.sh && sh ' + P.D + '/reload-home.sh', 30000);
+    }
     return next;
   }
 

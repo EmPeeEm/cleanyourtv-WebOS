@@ -608,6 +608,11 @@ function build() {
       label: 'Automatic',
       sub: (curL ? '' : 'selected \u00B7 ') + 'TV language: ' + tvName,
       fn: function () {
+        setLang('');
+        curLang = '';
+        if (st) st.lang = '';
+        build();
+        draw();
         opt({ lang: '' });
       },
     });
@@ -617,6 +622,11 @@ function build() {
         info: { t: x.name, d: x.pct + '%' },
         sub: (curL === x.code ? 'selected \u00B7 ' : '') + x.pct + '%',
         fn: function () {
+          setLang(x.code);
+          curLang = x.code;
+          if (st) st.lang = x.code;
+          build();
+          draw();
           opt({ lang: x.code });
         },
       });

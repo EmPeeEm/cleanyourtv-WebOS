@@ -1,6 +1,6 @@
 # Languages
 
-CleanYourTV's screens are in English, Dutch, German, French, Spanish, Russian, Turkish and Arabic: the launcher, its menus and Live TV, the manager app, the
+CleanYourTV's screens are in English, Dutch, German, French, Spanish, Portuguese, Russian, Turkish and Arabic: the launcher, its menus and Live TV, the manager app, the
 Inputs list, and the pages a phone opens from a QR code (Wallpapers, Live TV setup, voice setup, Share log).
 
 ## Choosing the language
