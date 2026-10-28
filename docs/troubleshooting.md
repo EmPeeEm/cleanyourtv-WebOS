@@ -29,6 +29,13 @@
   `POST /api/live/settings` ([Live TV](live-tv.md#setting-it-up)).
 - **Something is broken after an update.** A launcher or service that does not start is replaced by the previous version
   automatically. **Go back to launcher** in the manager returns to the previous launcher by hand.
+- **The TV does not wake from the network (Wake-on-LAN) after it was switched off.** LG has two ways to switch off. With
+  the TV's **Quick Start+** setting on, the remote and
+  `luna://com.webos.service.tvpower/power/powerOff` only suspend the TV: Wake-on-LAN wakes it in a few seconds and CleanYourTV is
+  already Home, since the boot scripts do not run again. `luna://com.webos.service.tvpower/power/shutDown` switches it off
+  completely: it uses less power, but Wake-on-LAN no longer wakes it (the remote and HDMI-CEC from a device on an input still do), and
+  the next start is a cold boot, with LG's Home until the boot scripts have run. Checked on webOS 22 (65QNED866QA). Use `powerOff`
+  in scripts that must wake the TV again.
 - **Back to LG's Home right now.** In the manager, **CleanYourTV as Home** off, or `sh /media/developer/cleanyourtv/undo-home.sh`
   over SSH.
 

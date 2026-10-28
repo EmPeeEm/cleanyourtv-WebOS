@@ -31,3 +31,10 @@ and, for **Ads**, removes the marked hosts lines. Switching the last group off s
 
 It does not block updates: firmware update blocking (for example with the Homebrew Channel's tools) is separate and is not touched.
 It does not claim to remove all tracking. It stops the services listed above and nothing else.
+
+**Blocking more on the network.** The **Ads** group blocks three ad servers on the TV itself. A DNS blocker on your network
+(Pi-hole, AdGuard Home) can block many more with a community list such as
+[hugobatista/lg-tv-ad-block](https://github.com/hugobatista/lg-tv-ad-block). Apply it to the TV only (in Pi-hole, a group with
+the TV as its only client): on one network it also blocked Philips Hue, `developers.google.com`, Apple services and parts of
+Prime Video for every other device. Its `list-store` variant also blocks the LG Content Store, so apps can no longer be installed or
+updated.
