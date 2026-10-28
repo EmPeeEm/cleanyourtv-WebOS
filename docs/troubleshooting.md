@@ -32,6 +32,17 @@
 - **Back to LG's Home right now.** In the manager, **CleanYourTV as Home** off, or `sh /media/developer/cleanyourtv/undo-home.sh`
   over SSH.
 
+## App icons remain text labels after boot
+
+Home can show its cached layout before the local helper is ready. Previously,
+an icon request that failed at that point stayed as a cached text fallback even
+after the helper recovered; an unchanged app list did not rebuild the tile.
+After a successful app-list request, failed helper icons now retry, including
+when the layout is unchanged. Text stays visible until an image loads. Each
+cached tile gets at most two retries, so genuinely missing icons do not create
+an endless request loop. The embedded Live TV icon is not requested from the
+helper.
+
 ## Reporting a problem
 
 An AI assistant can help you read the report and find the cause: see [Working on problems with an AI assistant](ai.md).
