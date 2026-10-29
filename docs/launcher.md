@@ -55,7 +55,7 @@ system apps are never in it. The list is read when it opens and closes when you 
 - the **dock**: each app in it can be replaced (an app already in the dock swaps places), moved or removed, and **Add an app...**
   fills a free place. Holding OK on an app gives **Add to dock**, **Move left**, **Move right**, **Remove from dock**, **Hide app** and **Uninstall** (with a confirmation prompt, for user-installed LG Store and Homebrew apps);
 - the **top buttons**: move one left or right, remove it, or add Inputs, Settings, Live TV, TV or any app. **TV** opens LG's own Live TV (the
-tuner) and is offered only when the TV has that app;
+tuner) and is offered only when the TV has that app and **Show LG's own Live TV** is on in the manager;
 - **hidden apps** (show them again);
 - the **app order** (most used first, or A to Z);
 - **mark running apps** (a green dot on their tiles, or none);

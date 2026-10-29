@@ -9,9 +9,9 @@ you can call it from a shell on the TV (for example over SSH).
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /api/apps` | Installed apps, config, usage, version, and `tuner: true` when LG's own Live TV is installed |
+| `GET /api/apps` | Installed apps, config, usage, version, and `tuner: true` when LG's own Live TV is installed and shown |
 | `POST /api/launch` `{id, params}` | Launch an app |
-| `GET /api/inputs` | The inputs: the HDMI ports and their state, and LG's own Live TV (the tuner, `{appId, tuner: true}`) while its app is installed |
+| `GET /api/inputs` | The inputs: the HDMI ports and their state, and LG's own Live TV (the tuner, `{appId, tuner: true}`) while its app is installed and the manager's **Show LG's own Live TV** is on |
 | `GET /api/running`, `POST /api/running/close` `{id}` or `{all: true}` | The running apps the launcher can close, and closing them (only listed apps; never Home or CleanYourTV's own apps) |
 | `POST /api/notify` | Picture notification (on the network: `POST :8767/notify` with the token) |
 | `GET /api/voice/status`, `POST /api/voice/install`, `/uninstall`, `/set`, `/listen`, `/ask`, `/forget`, `/ha-test`, `/ha-agents`; `/pair` `{only?: "ha"}` | Optional voice function and AI chat |

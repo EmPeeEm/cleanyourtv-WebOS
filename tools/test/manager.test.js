@@ -50,6 +50,15 @@ run(async () => {
     lines.some(l => /options\.liveTv true -> false \(manager\)/.test(l)),
     'the change is logged with its source: ' + lines.join(' | ')
   );
+  r = await ask('options', 'POST', { tuner: false });
+  ok(
+    r.j.options.tuner === false && conf.get().options.tuner === false && r.j.options.liveTv === false,
+    "Show LG's own Live TV is its own option: it changes alone"
+  );
+  r = await ask('options', 'POST', { tuner: 'no' });
+  ok(r.j.options.tuner === false, 'only a boolean changes the tuner option');
+  r = await ask('options', 'POST', { tuner: true });
+  ok(r.j.options.tuner === true, "Show LG's own Live TV can be switched on again");
   r = await ask('options', 'POST', { liveTv: 'no' });
   ok(r.j.options.liveTv === false, 'only a boolean changes an option');
   r = await ask('options', 'POST', { inputKey: false });

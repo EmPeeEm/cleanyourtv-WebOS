@@ -30,6 +30,10 @@ Live TV is optional. In the manager app, **Live TV** > **Show Live TV** switches
 the launcher, **Live TV** in the Inputs list, and the Guide key takeover (below). LG's own player and guide are used as before.
 The playlist and your favourites are kept, so switching it on again brings them back.
 
+LG's own Live TV (the antenna or cable tuner) has its own switch next to it: **Live TV** > **Show LG's own Live TV**. It is on by default. Off
+removes the **TV · Tuner** entry from the Inputs list and the Input key list and the **TV** button from the buttons Customise offers, which suits a TV
+that only plays a playlist or external boxes. The two switches are independent, so you can show both, one of them, or neither.
+
 ## Keys
 
 | Key | Watching | In the guide (OK) |

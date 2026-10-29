@@ -145,6 +145,38 @@ run(async () => {
   const ownApps = req('apps').create({ config: memoryConfig({}), luna: ownLuna, version: '1.6.0', feature: () => null });
   r = await call(ownApps, '/api/inputs');
   ok(r.j.devices.length === 1, 'a TV that reports the tuner itself gets no second one');
+  // the manager's "Show LG's own Live TV" off: no tuner in the list (also where the firmware reports it), no TV button, the HDMI ports stay
+  const offApps = req('apps').create({
+    config: memoryConfig({ options: { tuner: false } }),
+    luna: tunerLuna,
+    version: '1.6.0',
+    feature: () => null,
+  });
+  r = await call(offApps, '/api/inputs');
+  const offApps2 = req('apps').create({
+    config: memoryConfig({ options: { tuner: false } }),
+    luna: ownLuna,
+    version: '1.6.0',
+    feature: () => null,
+  });
+  const r2 = await call(offApps2, '/api/inputs');
+  ok(
+    r.j.devices.length === 1 && r.j.devices[0].appId === 'com.webos.app.hdmi1' && r2.j.devices.length === 0,
+    "with Show LG's own Live TV off the tuner is left out of the inputs, also where the TV reports it itself"
+  );
+  r = await call(offApps, '/api/apps');
+  ok(r.j.tuner === undefined, "with Show LG's own Live TV off the launcher gets no TV button");
+  const onApps = req('apps').create({
+    config: memoryConfig({ options: { tuner: true, liveTv: false } }),
+    luna: tunerLuna,
+    version: '1.6.0',
+    feature: () => null,
+  });
+  r = await call(onApps, '/api/inputs');
+  ok(
+    r.j.devices.length === 2 && r.j.devices[1].tuner === true,
+    'the tuner does not depend on Show Live TV (the playlist): each is its own switch'
+  );
 
   // uninstalling apps
   r = await call(apps, '/api/apps/uninstall', 'POST', { id: 'bad id!' });

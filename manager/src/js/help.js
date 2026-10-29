@@ -89,6 +89,8 @@ var INFO = {
   'Live TV': 'Settings for Live TV: switch it on or off, set up or remove your playlist, refresh the guide and learn the Guide key.',
   'Show Live TV':
     'On: the launcher has a Live TV button and tile, the Inputs list has Live TV, and the Guide key can open the channel guide. Off: all of that is hidden and LG\u2019s own player and guide are used. Your playlist is kept.',
+  'Show LG\u2019s own Live TV':
+    'On: LG\u2019s own Live TV (the antenna or cable tuner) is in the Inputs list and the Input key list, and the launcher offers a TV button. Off: none of that, for a TV that only plays a playlist or external boxes. Independent of Show Live TV, so you can have both, one of them, or neither.',
   'Playlist':
     'Your M3U playlist and its XMLTV guide. Choose it to set up: a QR code opens a page on your phone where you enter the playlist address and the 6-digit code shown here.',
   'Refresh playlist and guide': 'Downloads the playlist and the programme guide again now. It also happens twice a day.',

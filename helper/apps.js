@@ -175,9 +175,14 @@ function create(ctx) {
     return askingTuner;
   }
   // the inputs the pages get: the HDMI ports, and LG's Live TV while its app is there (some firmware lists it itself: not twice)
+  // The manager's "Show LG's own Live TV" (options.tuner, on by default) switches the tuner off everywhere: the list leaves it out, also
+  // where the firmware reports it itself, and the launcher gets no TV button.
+  const tunerShown = () => config.options().tuner !== false;
   async function inputsWithTuner() {
     const r = await askInputs(),
       list = (r && r.devices) || [];
+    if (!tunerShown())
+      return r && Array.isArray(r.devices) ? Object.assign({}, r, { devices: list.filter(d => !d || d.appId !== TUNER) }) : r;
     if (!(await askTuner()) || list.some(d => d && d.appId === TUNER)) return r;
     const tuner = { id: 'TV', appId: TUNER, tuner: true };
     if (foreground === TUNER) tuner.activate = true;
@@ -328,7 +333,7 @@ function create(ctx) {
     if (u === '/api/apps') {
       const reply = { apps: await apps(), config: launcherConfig(), usage: usageScores(), version: ctx.version };
       // the launcher offers its TV button only where LG's Live TV is installed (a TV without a tuner has no such app)
-      if (await askTuner()) reply.tuner = true;
+      if (tunerShown() && (await askTuner())) reply.tuner = true;
       return web.json(res, reply);
     }
     if (u === '/api/inputs') return web.json(res, await inputsWithTuner());

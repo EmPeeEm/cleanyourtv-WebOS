@@ -436,7 +436,8 @@
    "options": {
     "debloat": false,
     "inputKey": false,
-    "liveTv": true
+    "liveTv": true,
+    "tuner": true
    },
    "picker": {
     "mode": "overlay",
@@ -518,7 +519,8 @@
    "options": {
     "debloat": false,
     "inputKey": false,
-    "liveTv": true
+    "liveTv": true,
+    "tuner": true
    },
    "picker": {
     "mode": "overlay",
@@ -618,7 +620,8 @@
    "options": {
     "debloat": false,
     "inputKey": false,
-    "liveTv": false
+    "liveTv": false,
+    "tuner": true
    },
    "picker": {
     "mode": "overlay",
@@ -857,7 +860,8 @@
   "options": {
    "debloat": false,
    "inputKey": false,
-   "liveTv": false
+   "liveTv": false,
+   "tuner": true
   },
   "sort": "alpha",
   "theme": {
