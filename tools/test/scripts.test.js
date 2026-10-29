@@ -164,6 +164,21 @@ run(async () => {
       !/TESTED_SDK/.test(bootText),
     'the setup takes the window type and the compatibility list from tvprofile.js'
   );
+  // the stand-in way that does not bring the launcher up (CRIU, issues 72 and 84): the setup tries the mount way once, and remembers it
+  const vstart = bootText.indexOf('verify() {'),
+    verifyText = bootText.slice(vstart, bootText.indexOf('finish() {'));
+  ok(
+    /wait_home && return 0/.test(verifyText) &&
+      /\$TV get homeTakeover --home "\$HOMEKIND"\)" = standin/.test(verifyText) &&
+      /"\$\(cat \$D\/home-method[^)]*\)" != mount/.test(verifyText) &&
+      /echo mount > \$D\/home-method; RETRIED=1/.test(verifyText) &&
+      /sh \$D\/10-cleanyourtv-home <\/dev\/null/.test(verifyText) &&
+      /debloat-stop\.sh/.test(verifyText) &&
+      /\[ -n "\$RETRIED" \] && rm -f \$D\/home-method/.test(verifyText) &&
+      verifyText.indexOf('wait_home && return 0') < verifyText.indexOf('rolling back'),
+    'when the stand-in does not bring the launcher up the setup tries the mount way once, keeps it in home-method, and only then rolls back'
+  );
+  ok(cp.spawnSync('sh', ['-n', path.join(root, 'scripts', 'bootstrap.sh')]).status === 0, 'bootstrap.sh is valid shell');
 
   // the watchdog (watchdog.sh): starts a service that has stopped again, keeps the logs of the runs that ended, starts less often a
   // service that stops at once, survives its own file being replaced by an update, and ends when CleanYourTV is gone.
