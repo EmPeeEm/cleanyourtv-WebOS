@@ -704,5 +704,15 @@
  "Uninstall %s?": "هل تريد إلغاء تثبيت %s؟",
  "Uninstalling %s...": "جارٍ إلغاء تثبيت %s...",
  "%s uninstalled.": "تم إلغاء تثبيت %s.",
- "Could not uninstall %s.": "تعذر إلغاء تثبيت %s."
+ "Could not uninstall %s.": "تعذر إلغاء تثبيت %s.",
+ "Mute": "كتم الصوت",
+ "Volume bar": "شريط الصوت",
+ "Apple TV Pro": "Apple TV Pro",
+ "Vertical pill on the right": "كبسولة عمودية على اليمين",
+ "Dynamic Island": "Dynamic Island",
+ "Horizontal bar at the top": "شريط أفقي في الأعلى",
+ "Bang & Olufsen Dial": "قرص Bang & Olufsen",
+ "Circular dial on the right": "قرص دائري على اليمين",
+ "System default (LG webOS)": "افتراضي النظام (LG webOS)",
+ "Stock TV volume bar": "شريط صوت التلفزيون الأصلي"
 }

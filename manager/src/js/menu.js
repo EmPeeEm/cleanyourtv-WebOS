@@ -517,6 +517,27 @@ function build() {
     rows.push({ label: 'No, keep it', fn: pop });
     return;
   }
+  if (view === 'volumebar') {
+    var curV = (st.options && st.options.volumeTheme) || 'apple-pro';
+    var themes = [
+      { id: 'apple-pro', label: tr('Apple TV Pro'), sub: tr('Vertical pill on the right') },
+      { id: 'dynamic-island', label: tr('Dynamic Island'), sub: tr('Horizontal bar at the top') },
+      { id: 'bo-dial', label: tr('Bang & Olufsen Dial'), sub: tr('Circular dial on the right') },
+      { id: 'system', label: tr('System default (LG webOS)'), sub: tr('Stock TV volume bar') },
+    ];
+    themes.forEach(function (t) {
+      rows.push({
+        label: t.label,
+        sub: (t.id === curV ? 'selected \u00B7 ' : '') + t.sub,
+        fn: function () {
+          opt({ volumeTheme: t.id });
+        },
+      });
+    });
+    rows.push({ sep: true });
+    rows.push({ label: 'Back', fn: pop });
+    return;
+  }
   if (view === 'inputkey') {
     var hk = st.inputhook || {},
       na = hk.hook && !hk.hook.attached;
@@ -970,6 +991,13 @@ function build() {
     },
   });
   rows.push({
+    label: 'Volume bar',
+    sub: volumeSub((st.options || {}).volumeTheme),
+    fn: function () {
+      push('volumebar');
+    },
+  });
+  rows.push({
     label: 'Debloat',
     sub: (function () {
       var n = DEBLOAT.filter(function (g) {
@@ -1037,4 +1065,11 @@ function debloatToggle(id) {
       return g !== id;
     }),
   });
+}
+
+function volumeSub(theme) {
+  if (theme === 'system') return tr('System default (LG webOS)');
+  if (theme === 'dynamic-island') return tr('Dynamic Island');
+  if (theme === 'bo-dial') return tr('Bang & Olufsen Dial');
+  return tr('Apple TV Pro');
 }

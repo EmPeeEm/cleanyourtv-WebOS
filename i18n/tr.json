@@ -669,5 +669,15 @@
  "Uninstall %s?": "%s kaldırılsın mı?",
  "Uninstalling %s...": "%s kaldırılıyor...",
  "%s uninstalled.": "%s kaldırıldı.",
- "Could not uninstall %s.": "%s kaldırılamadı."
+ "Could not uninstall %s.": "%s kaldırılamadı.",
+ "Mute": "Sessiz",
+ "Volume bar": "Ses çubuğu",
+ "Apple TV Pro": "Apple TV Pro",
+ "Vertical pill on the right": "Sağda dikey hap tasarımı",
+ "Dynamic Island": "Dynamic Island",
+ "Horizontal bar at the top": "Üstte yatay çubuk",
+ "Bang & Olufsen Dial": "Bang & Olufsen Kadranı",
+ "Circular dial on the right": "Sağda dairesel kadran",
+ "System default (LG webOS)": "Sistem varsayılanı (LG webOS)",
+ "Stock TV volume bar": "Orijinal TV ses çubuğu"
 }

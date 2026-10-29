@@ -690,5 +690,15 @@
  "Uninstall %s?": "Désinstaller %s ?",
  "Uninstalling %s...": "Désinstallation de %s...",
  "%s uninstalled.": "%s désinstallé.",
- "Could not uninstall %s.": "Impossible de désinstaller %s."
+ "Could not uninstall %s.": "Impossible de désinstaller %s.",
+ "Mute": "Muet",
+ "Volume bar": "Barre de volume",
+ "Apple TV Pro": "Apple TV Pro",
+ "Vertical pill on the right": "Pilule verticale sur la droite",
+ "Dynamic Island": "Dynamic Island",
+ "Horizontal bar at the top": "Barre horizontale en haut",
+ "Bang & Olufsen Dial": "Cadran Bang & Olufsen",
+ "Circular dial on the right": "Cadran circulaire à droite",
+ "System default (LG webOS)": "Par défaut du système (LG webOS)",
+ "Stock TV volume bar": "Barre de volume d'origine du téléviseur"
 }

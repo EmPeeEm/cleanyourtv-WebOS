@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>CleanYourTV - Studio Projektowe Paska Głośności (12 Archetypów)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, sans-serif;
+      background: #090a0f;
+      color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      background: #11141d;
+      border-bottom: 1px solid #1e2433;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: -0.2px;
+    }
+    header h1 span {
+      background: #2563eb;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .header-hint {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    .main-layout {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 57px);
+      overflow: hidden;
+    }
+    /* Sidebar */
+    .sidebar {
+      width: 480px;
+      background: #0d1017;
+      border-right: 1px solid #1e2433;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .category-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .cat-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 6px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .preset-card {
+      background: #141822;
+      border: 1px solid #1e2536;
+      border-radius: 10px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+      text-align: left;
+    }
+    .preset-card:hover {
+      background: #1c2230;
+      border-color: #3b82f6;
+    }
+    .preset-card.active {
+      background: #182338;
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 1px #60a5fa;
+    }
+    .preset-card .p-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .preset-card .p-name {
+      font-weight: 700;
+      font-size: 13px;
+      color: #fff;
+    }
+    .preset-card .p-tag {
+      font-size: 10px;
+      background: rgba(255,255,255,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #94a3b8;
+    }
+    .preset-card.active .p-tag {
+      background: #2563eb;
+      color: #fff;
+    }
+    .preset-card .p-desc {
+      font-size: 12px;
+      color: #8b9bb4;
+      margin-top: 4px;
+      line-height: 1.35;
+    }
+    /* Controls */
+    .control-box {
+      background: #141822;
+      border: 1px solid #1e2536;
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .ctrl-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .ctrl-row label {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+    input[type="range"] {
+      flex: 1;
+      accent-color: #ffffff;
+      cursor: pointer;
+    }
+    .num-val {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      min-width: 32px;
+      text-align: right;
+    }
+    .btn-group {
+      display: flex;
+      gap: 6px;
+    }
+    .btn-group button {
+      flex: 1;
+      background: #1e2536;
+      color: #fff;
+      border: 1px solid #2d374d;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .btn-group button:hover {
+      background: #283349;
+    }
+    .btn-primary {
+      background: #ffffff !important;
+      color: #000000 !important;
+      border: none !important;
+      padding: 12px !important;
+      font-size: 13px !important;
+      font-weight: 700 !important;
+      border-radius: 8px !important;
+    }
+    .btn-primary:hover {
+      background: #e2e8f0 !important;
+    }
+    select {
+      background: #1e2536;
+      color: #fff;
+      border: 1px solid #2d374d;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    /* Preview Screen */
+    .preview-container {
+      flex: 1;
+      background: #050608;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow: hidden;
+      position: relative;
+    }
+    .tv-mockup {
+      width: 100%;
+      max-width: 1140px;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border: 12px solid #161820;
+      border-radius: 16px;
+      box-shadow: 0 30px 100px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+      background-size: cover;
+      background-position: center;
+      transition: background-image 0.2s ease;
+    }
+    .tv-badge-scene {
+      position: absolute;
+      top: 14px;
+      left: 16px;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.75);
+      pointer-events: none;
+      border: 1px solid rgba(255,255,255,0.08);
+      z-index: 5;
+    }
+    .tv-stage {
+      position: absolute;
+      top: 0; left: 0;
+      width: 1920px; height: 1080px;
+      transform-origin: top left;
+      pointer-events: none;
+      --ui-scale: 1;
+    }
+
+    /* ============================================================= */
+    /* ARCHETYPE STYLES (1920x1080 Scaled Canvas)                    */
+    /* ============================================================= */
+
+    /* 1. APPLE TV NATIVE LIQUID PILL (tvOS 17/18) */
+    .arch-atv-pure {
+      position: absolute;
+      right: 56px;
+      top: 50%;
+      transform: translateY(-50%) scale(var(--ui-scale, 1));
+      transform-origin: right center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+    }
+    .arch-atv-pure .dev-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.85);
+      letter-spacing: 0.2px;
+      margin-bottom: 14px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+      white-space: nowrap;
+    }
+    .arch-atv-pure .pill {
+      position: relative;
+      width: 36px;
+      height: 230px;
+      border-radius: 18px;
+      background: rgba(45, 45, 52, 0.65);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .arch-atv-pure .pill .fill {
+      width: 100%;
+      background: #ffffff;
+      border-radius: 18px;
+      transition: height 0.08s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .arch-atv-pure .pill .speaker {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 18px;
+      height: 18px;
+      z-index: 10;
+      mix-blend-mode: difference;
+      color: #ffffff;
+    }
+    .arch-atv-pure.mute .pill .fill { background: #ef4444; }
+
+    /* 2. APPLE TV + FLOATING NUMERIC BADGE */
+    .arch-atv-badge {
+      position: absolute;
+      right: 56px;
+      top: 50%;
+      transform: translateY(-50%) scale(var(--ui-scale, 1));
+      transform-origin: right center;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      pointer-events: none;
+    }
+    .arch-atv-badge .floating-chip {
+      background: rgba(30, 32, 42, 0.75);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border: 1px solid rgba(255, 255, 255, 0.20);
+      border-radius: 12px;
+      padding: 7px 14px;
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      box-shadow: 0 14px 32px rgba(0,0,0,0.55);
+    }
+    .arch-atv-badge.mute .floating-chip {
+      color: #ef4444;
+      font-size: 13px;
+    }
+
+    /* 3. APPLE TV PRO EXPANDED (Powiększona pigułka) */
+    .arch-atv-expanded {
+      position: absolute;
+      right: 56px;
+      top: 50%;
+      transform: translateY(-50%) scale(var(--ui-scale, 1));
+      transform-origin: right center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .arch-atv-expanded .pill-wide {
+      position: relative;
+      width: 62px;
+      height: 280px;
+      border-radius: 31px;
+      background: rgba(35, 37, 46, 0.72);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .arch-atv-expanded .fill-wide {
+      width: 100%;
+      background: #ffffff;
+      border-radius: 31px;
+      transition: height 0.08s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .arch-atv-expanded .center-num {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+      font-weight: 700;
+      mix-blend-mode: difference;
+      color: #ffffff;
+      z-index: 10;
+      font-variant-numeric: tabular-nums;
+    }
+    .arch-atv-expanded .speaker-bottom {
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 26px;
+      height: 26px;
+      mix-blend-mode: difference;
+      color: #ffffff;
+      z-index: 10;
+    }
+
+    /* 4. APPLE DYNAMIC ISLAND (Powiększona pigułka górna) */
+    .arch-atv-island {
+      position: absolute;
+      top: 48px;
+      left: 50%;
+      transform: translateX(-50%) scale(var(--ui-scale, 1));
+      transform-origin: center top;
+      height: 66px;
+      padding: 0 28px;
+      border-radius: 33px;
+      background: rgba(24, 26, 33, 0.88);
+      backdrop-filter: blur(44px);
+      -webkit-backdrop-filter: blur(44px);
+      border: 1px solid rgba(255, 255, 255, 0.20);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      color: #fff;
+      min-width: 520px;
+    }
+    .arch-atv-island .isl-icon { width: 28px; height: 28px; color: #fff; }
+    .arch-atv-island .isl-dev {
+      font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.75);
+      text-transform: uppercase; letter-spacing: 0.6px;
+    }
+    .arch-atv-island .isl-track {
+      flex: 1; height: 14px; background: rgba(255, 255, 255, 0.22);
+      border-radius: 7px; overflow: hidden;
+    }
+    .arch-atv-island .isl-fill {
+      height: 100%; background: #ffffff; border-radius: 7px;
+      transition: width 0.08s ease;
+    }
+    .arch-atv-island .isl-num {
+      font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums;
+      min-width: 42px; text-align: right;
+    }
+    .arch-atv-island.mute .isl-icon, .arch-atv-island.mute .isl-num { color: #ef4444; }
+    .arch-atv-island.mute .isl-fill { background: #ef4444; }
+
+    /* 5. BRAUN / DIETER RAMS ATELIER */
+    .arch-braun {
+      position: absolute;
+      right: 52px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #1b1c20;
+      border: 1px solid #333642;
+      border-radius: 8px;
+      padding: 18px 14px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,255,255,0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 58px;
+    }
+    .arch-braun .b-header {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #9499a8;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      font-family: ui-monospace, monospace;
+    }
+    .arch-braun .b-meter {
+      position: relative;
+      width: 22px;
+      height: 180px;
+      background: #0f1013;
+      border-radius: 4px;
+      border: 1px solid #252833;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .arch-braun .b-fill {
+      width: 100%;
+      background: #f59e0b; /* Iconic Braun Amber */
+      transition: height 0.08s ease;
+    }
+    .arch-braun .b-ticks {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: linear-gradient(to bottom, rgba(255,255,255,0.15) 1px, transparent 1px);
+      background-size: 100% 12px;
+      pointer-events: none;
+    }
+    .arch-braun .b-num {
+      margin-top: 12px;
+      font-family: ui-monospace, monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: #f59e0b;
+    }
+    .arch-braun.mute .b-fill { background: #ef4444; }
+    .arch-braun.mute .b-num { color: #ef4444; }
+
+    /* 6. BANG & OLUFSEN BEOVISION HALO DIAL */
+    .arch-bo-dial {
+      position: absolute;
+      right: 64px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 150px;
+      height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 20px 50px rgba(0,0,0,0.85));
+    }
+    .arch-bo-dial svg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      transform: rotate(-90deg);
+    }
+    .arch-bo-dial .circle-bg {
+      fill: rgba(20, 22, 30, 0.75);
+      stroke: rgba(255, 255, 255, 0.15);
+      stroke-width: 6;
+      backdrop-filter: blur(30px);
+    }
+    .arch-bo-dial .circle-val {
+      fill: none;
+      stroke: #f1f5f9;
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-dasharray: 408; /* 2 * PI * 65 */
+      transition: stroke-dashoffset 0.08s ease;
+    }
+    .arch-bo-dial .center-info {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 5;
+    }
+    .arch-bo-dial .bo-val {
+      font-size: 32px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+    .arch-bo-dial .bo-dev {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.65);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 5px;
+    }
+    .arch-bo-dial.mute .circle-val { stroke: #ef4444; }
+    .arch-bo-dial.mute .bo-val { color: #ef4444; font-size: 18px; }
+
+    /* 7. DEVIALET PHANTOM (Minimalist Horizon) */
+    .arch-devialet {
+      position: absolute;
+      bottom: 54px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 17, 24, 0.85);
+      backdrop-filter: blur(36px);
+      -webkit-backdrop-filter: blur(36px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      min-width: 540px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.8);
+    }
+    .arch-devialet .dev-brand {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+    }
+    .arch-devialet .dev-track {
+      flex: 1;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 2px;
+      position: relative;
+    }
+    .arch-devialet .dev-fill {
+      height: 100%;
+      background: #ffffff;
+      border-radius: 2px;
+      transition: width 0.08s ease;
+    }
+    .arch-devialet .dev-val {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      font-variant-numeric: tabular-nums;
+      min-width: 44px;
+      text-align: right;
+    }
+    .arch-devialet.mute .dev-fill { background: #ef4444; }
+    .arch-devialet.mute .dev-val { color: #ef4444; }
+
+    /* 8. TEENAGE ENGINEERING OB-4 (Tactile LED Matrix) */
+    .arch-teenage {
+      position: absolute;
+      right: 56px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #0f1013;
+      border: 2px solid #282a33;
+      border-radius: 12px;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.9);
+      width: 60px;
+    }
+    .arch-teenage .te-label {
+      font-family: ui-monospace, monospace;
+      font-size: 10px;
+      font-weight: 800;
+      color: #ff5500;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+    .arch-teenage .led-stack {
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 4px;
+      width: 26px;
+    }
+    .arch-teenage .led-segment {
+      height: 8px;
+      border-radius: 2px;
+      background: #23252d;
+      transition: background 0.08s ease;
+    }
+    .arch-teenage .led-segment.on {
+      background: #ff5500; /* Teenage iconic orange */
+      box-shadow: 0 0 8px rgba(255, 85, 0, 0.6);
+    }
+    .arch-teenage.mute .led-segment.on {
+      background: #ef4444;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+    }
+    .arch-teenage .te-val {
+      margin-top: 14px;
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    /* 9. SONY BRAVIA / PLAYSTATION 5 HUD */
+    .arch-sony-ps5 {
+      position: absolute;
+      top: 48px;
+      right: 56px;
+      background: rgba(12, 16, 26, 0.88);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border-left: 4px solid #3b82f6;
+      border-top: 1px solid rgba(255,255,255,0.12);
+      border-right: 1px solid rgba(255,255,255,0.12);
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      border-radius: 0 10px 10px 0;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 320px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.7);
+    }
+    .arch-sony-ps5 .ps-ico { width: 22px; height: 22px; color: #fff; }
+    .arch-sony-ps5 .ps-mid { flex: 1; }
+    .arch-sony-ps5 .ps-dev {
+      font-size: 11px; font-weight: 600; color: #94a3b8;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;
+    }
+    .arch-sony-ps5 .ps-bar {
+      height: 6px; background: rgba(255,255,255,0.16);
+      border-radius: 3px; overflow: hidden;
+    }
+    .arch-sony-ps5 .ps-fill {
+      height: 100%; background: #ffffff; border-radius: 3px;
+      transition: width 0.08s ease;
+    }
+    .arch-sony-ps5 .ps-val {
+      font-size: 20px; font-weight: 700; color: #fff;
+      font-variant-numeric: tabular-nums;
+    }
+    .arch-sony-ps5.mute { border-left-color: #ef4444; }
+    .arch-sony-ps5.mute .ps-fill { background: #ef4444; }
+    .arch-sony-ps5.mute .ps-val { color: #ef4444; }
+
+    /* 10. GOOGLE TV MATERIAL YOU CAPSULE */
+    .arch-googletv {
+      position: absolute;
+      top: 48px;
+      right: 56px;
+      background: rgba(30, 31, 38, 0.90);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      border-radius: 28px;
+      padding: 10px 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 340px;
+      box-shadow: 0 16px 44px rgba(0,0,0,0.65);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .arch-googletv .gt-ico { width: 22px; height: 22px; color: #a8c7fa; }
+    .arch-googletv .gt-track {
+      flex: 1; height: 16px; background: rgba(255,255,255,0.12);
+      border-radius: 8px; overflow: hidden;
+    }
+    .arch-googletv .gt-fill {
+      height: 100%; background: #a8c7fa; border-radius: 8px;
+      transition: width 0.08s ease;
+    }
+    .arch-googletv .gt-num {
+      font-size: 17px; font-weight: 700; color: #e3e3e3; min-width: 30px; text-align: right;
+    }
+    .arch-googletv.mute .gt-ico, .arch-googletv.mute .gt-fill { background: #f2b8b5; color: #f2b8b5; }
+    .arch-googletv.mute .gt-num { color: #f2b8b5; }
+
+    /* 11. SONOS CINEMATIC SUB-BAR */
+    .arch-sonos {
+      position: absolute;
+      bottom: 50px;
+      right: 64px;
+      background: rgba(18, 20, 26, 0.85);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 300px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.75);
+    }
+    .arch-sonos .so-label {
+      font-size: 11px; font-weight: 700; color: #94a3b8;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .arch-sonos .so-track {
+      flex: 1; height: 6px; background: rgba(255,255,255,0.16);
+      border-radius: 3px; overflow: hidden;
+    }
+    .arch-sonos .so-fill {
+      height: 100%; background: #ffffff; border-radius: 3px;
+      transition: width 0.08s ease;
+    }
+    .arch-sonos .so-val {
+      font-size: 18px; font-weight: 700; color: #ffffff; min-width: 28px; text-align: right;
+    }
+    .arch-sonos.mute .so-fill { background: #ef4444; }
+    .arch-sonos.mute .so-val { color: #ef4444; }
+
+    /* 12. NEO-HUD CYBERPUNK OLED */
+    .arch-cyber {
+      position: absolute;
+      top: 50px;
+      right: 56px;
+      background: rgba(8, 12, 18, 0.92);
+      border: 1px solid #00f0ff;
+      border-radius: 4px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);
+      min-width: 330px;
+      font-family: ui-monospace, monospace;
+    }
+    .arch-cyber .cy-title {
+      font-size: 11px; font-weight: 700; color: #00f0ff; letter-spacing: 1.5px;
+    }
+    .arch-cyber .cy-track {
+      flex: 1; height: 8px; background: #0f1c29;
+      border: 1px solid rgba(0, 240, 255, 0.3); overflow: hidden;
+    }
+    .arch-cyber .cy-fill {
+      height: 100%; background: #00f0ff;
+      box-shadow: 0 0 10px #00f0ff;
+      transition: width 0.08s ease;
+    }
+    .arch-cyber .cy-val {
+      font-size: 18px; font-weight: 700; color: #00f0ff; min-width: 34px; text-align: right;
+    }
+    .arch-cyber.mute { border-color: #ff0055; box-shadow: 0 0 20px rgba(255, 0, 85, 0.3); }
+    .arch-cyber.mute .cy-title, .arch-cyber.mute .cy-val { color: #ff0055; }
+    .arch-cyber.mute .cy-fill { background: #ff0055; box-shadow: 0 0 10px #ff0055; }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>CleanYourTV <span>OSD Design Studio</span></h1>
+    <div class="header-hint">Wybierz styl lub testuj klawiszami [ ] / strzałkami / M</div>
+  </header>
+
+  <div class="main-layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+
+      <!-- Category 1: Apple TV -->
+      <div class="category-group">
+        <div class="cat-title"> Rodzina Apple TV & iOS</div>
+
+        <div class="preset-card active" onclick="setPreset('atv-pure')">
+          <div class="p-header">
+            <span class="p-name">1. Apple TV Native (tvOS 17/18)</span>
+            <span class="p-tag">Rekomendowany</span>
+          </div>
+          <div class="p-desc">Czysta, smukła pionowa pigułka (36px). Brak ramki wokół. Matowe szkło, białe wypełnienie z płynnym inwertowaniem ikony głośnika.</div>
+        </div>
+
+        <div class="preset-card" onclick="setPreset('atv-badge')">
+          <div class="p-header">
+            <span class="p-name">2. Apple TV + Pływająca Cyfra (Badge)</span>
+            <span class="p-tag">Precyzyjny</span>
+          </div>
+          <div class="p-desc">Pigułka Apple TV z dodatkową, lewitującą obok matową plakietką pokazującą dokładną cyfrę głośności.</div>
+        </div>
+
+        <div class="preset-card" onclick="setPreset('atv-expanded')">
+          <div class="p-header">
+            <span class="p-name">3. Apple TV Pro (Powiększona 62px)</span>
+            <span class="p-tag">Duży & Wyrazisty</span>
+          </div>
+          <div class="p-desc">Powiększona pigułka (62px szerokości, 280px wysokości) ze zintegrowaną dużą cyfrą 20px na górze i głośnikiem 26px na dole. Bardzo czytelna z 3-4 metrów.</div>
+        </div>
+
+        <div class="preset-card" onclick="setPreset('atv-island')">
+          <div class="p-header">
+            <span class="p-name">4. Apple Dynamic Island (Powiększona 66px)</span>
+            <span class="p-tag">Górny Horyzont</span>
+          </div>
+          <div class="p-desc">Powiększona horyzontalna pigułka (wysokość 66px, szerokość 520px) na środku u góry ekranu z grubym paskiem 14px i wielką cyfrą 24px.</div>
+        </div>
+      </div>
+
+      <!-- Category 2: Audiophile & Industrial -->
+      <div class="category-group">
+        <div class="cat-title">📻 Industrial & Audiophile Masters</div>
+
+        <div class="preset-card" onclick="setPreset('braun')">
+          <div class="p-header">
+            <span class="p-name">5. Dieter Rams / Braun Atelier</span>
+            <span class="p-tag">Industrial Classic</span>
+          </div>
+          <div class="p-desc">Funkcjonalny minimalizm Braun: grafitowa obudowa, ikoniczny bursztynowy wskaźnik LED, podziałki skali.</div>
+        </div>
+
+        <div class="preset-card" onclick="setPreset('bo-dial')">
+          <div class="p-header">
+            <span class="p-name">6. Bang & Olufsen BeoVision Dial</span>
+            <span class="p-tag">Luksusowy pierścień</span>
+          </div>
+          <div class="p-desc">Okrągły wskaźnik kątowy w stylu pokrętła B&O Halo. Aluminiowy pierścień z wielką czytelną cyfrą w środku.</div>
+        </div>
+
+        <div class="preset-card" onclick="setPreset('devialet')">
+          <div class="p-header">
+            <span class="p-name">7. Devialet Phantom (Dolna linia)</span>
+            <span class="p-tag">Ultra-Minimal</span>
+          </div>
+          <div class="p-desc">Dyskretna, cienka linia na dole ekranu. Luksusowa typografia i maksymalny spokój podczas oglądania.</div>
+        </div>
+
+        <div class="preset-card" onclick="setPreset('teenage')">
+          <div class="p-header">
+            <span class="p-name">8. Teenage Engineering OB-4</span>
+            <span class="p-tag">Retro-Futurism</span>
+          </div>
+          <div class="p-desc">Fizyczny segmentowy słupek LED w charakterystycznym pomarańczu Teenage Engineering.</div>
+        </div>
+      </div>
+
+      <!-- Category 3: Modern TV & Consoles -->
+      <div class="category-group">
+        <div class="cat-title">🎮 Nowoczesne Konsole & TV</div>
+
+        <div class="preset-card" onclick="setPreset('sony-ps5')">
+          <div class="p-header">
+            <span class="p-name">9. Sony Bravia / PlayStation 5</span>
+            <span class="p-tag">Gaming Clean</span>
+          </div>
+          <div class="p-desc">Geometryczny panel z kobaltowym akcentem w prawym górnym rogu. Znany z interfejsu PS5.</div>
+        </div>
+
+        <div class="preset-card" onclick="setPreset('googletv')">
+          <div class="p-header">
+            <span class="p-name">10. Google TV Material You</span>
+            <span class="p-tag">Material 3</span>
+          </div>
+          <div class="p-desc">Zaokrąglona kapsuła z pastelowym akcentem i grubym paskiem postępu w prawym górnym rogu.</div>
+        </div>
+
+        <div class="preset-card" onclick="setPreset('sonos')">
+          <div class="p-header">
+            <span class="p-name">11. Sonos Cinema Sub-Bar</span>
+            <span class="p-tag">Kino domowe</span>
+          </div>
+          <div class="p-desc">Dyskretny pasek w prawym dolnym rogu, nie zasłaniający napisów ani twarzy aktorów.</div>
+        </div>
+
+        <div class="preset-card" onclick="setPreset('cyber')">
+          <div class="p-header">
+            <span class="p-name">12. Neo-HUD Cyberpunk OLED</span>
+            <span class="p-tag">Futurystyczny</span>
+          </div>
+          <div class="p-desc">Technologiczny neonowy HUD z cyfrową telemetrią w kolorze cyjanu na głębokiej czerni OLED.</div>
+        </div>
+      </div>
+
+      <!-- Live Controls -->
+      <div class="category-group">
+        <div class="cat-title">🎛️ Parametry testowe</div>
+        <div class="control-box">
+          <div class="ctrl-row">
+            <label>Głośność:</label>
+            <input type="range" id="volRange" min="0" max="100" value="18" oninput="updateVol(this.value)">
+            <span class="num-val" id="volNum">18%</span>
+          </div>
+          <div class="btn-group">
+            <button onclick="stepVol(-1)">- Vol Down</button>
+            <button onclick="stepVol(1)">+ Vol Up</button>
+            <button id="muteBtn" onclick="toggleMute()">Mute</button>
+          </div>
+          <div class="ctrl-row" style="margin-top: 4px;">
+            <label>Wielkość (Skalowanie UI):</label>
+            <input type="range" id="scaleRange" min="80" max="160" value="100" oninput="updateScale(this.value)">
+            <span class="num-val" id="scaleNum">100%</span>
+          </div>
+          <div class="btn-group">
+            <button onclick="setScale(90)">90%</button>
+            <button onclick="setScale(100)">100%</button>
+            <button onclick="setScale(120)">120% (Duży)</button>
+            <button onclick="setScale(140)">140% (XL)</button>
+          </div>
+          <div class="ctrl-row" style="margin-top: 4px;">
+            <label>Wyjście audio:</label>
+            <select id="outputSel" onchange="updateOutput(this.value)">
+              <option value="tv_speaker">Głośnik TV</option>
+              <option value="bt_soundbar">Soundbar / BT</option>
+              <option value="external_arc">HDMI eARC</option>
+              <option value="optical">Optyczne</option>
+              <option value="headphone">AirPods</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Background Switcher -->
+      <div class="category-group">
+        <div class="cat-title">📺 Sceneria TV (Sprawdź kontrast)</div>
+        <div class="control-box">
+          <div class="btn-group">
+            <button onclick="setBg('movie')">🎬 Ciemny film</button>
+            <button onclick="setBg('bright')">☀️ Jasna scena</button>
+            <button onclick="setBg('launcher')">🏠 CleanYourTV</button>
+            <button onclick="setBg('oled')">⬛ Czerń OLED</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div>
+        <button class="btn-primary" style="width: 100%;" onclick="deployChosen()">Zastosuj wybrany styl na moim TV 🚀</button>
+        <div id="deployHint" style="font-size: 12px; color: #34d399; margin-top: 8px; text-align: center; display: none;"></div>
+      </div>
+
+    </div>
+
+    <!-- Live Preview -->
+    <div class="preview-container">
+      <div class="tv-mockup" id="tvMockup">
+        <div class="tv-badge-scene" id="bgLabel">Podgląd: Film (Life of Pi)</div>
+        <div class="tv-stage" id="tvStage">
+          <div id="renderTarget"></div>
+        </div>
+      </div>
+      <div style="font-size: 11px; letter-spacing: 2px; color: #475569; font-weight: 700; margin-top: 14px;">LG OLED TV (1920 × 1080)</div>
+    </div>
+  </div>
+
+  <script>
+    var currentPreset = 'atv-pure';
+    var currentVol = 18;
+    var currentScale = 100;
+    var isMute = false;
+    var currentOutput = 'tv_speaker';
+    var currentBg = 'movie';
+
+    function updateScale(val) {
+      currentScale = parseInt(val, 10);
+      document.getElementById('scaleNum').textContent = currentScale + '%';
+      document.getElementById('scaleRange').value = currentScale;
+      document.getElementById('tvStage').style.setProperty('--ui-scale', currentScale / 100);
+    }
+
+    function setScale(val) {
+      updateScale(val);
+    }
+
+    var bgs = {
+      movie: 'url("/Users/mateusz/.gemini/antigravity/brain/3808492b-fd8f-467b-8731-5a4b59dda5f4/volume_live_test.jpg")',
+      launcher: 'url("/Users/mateusz/.gemini/antigravity/brain/3808492b-fd8f-467b-8731-5a4b59dda5f4/home_shot.jpg")',
+      bright: 'linear-gradient(135deg, #e0e7ff 0%, #ffffff 50%, #f1f5f9 100%)',
+      oled: '#000000'
+    };
+
+    function resizeStage() {
+      var mockup = document.getElementById('tvMockup');
+      var stage = document.getElementById('tvStage');
+      var scale = mockup.clientWidth / 1920;
+      stage.style.transform = 'scale(' + scale + ')';
+    }
+    window.addEventListener('resize', resizeStage);
+
+    function setBg(type) {
+      currentBg = type;
+      var mockup = document.getElementById('tvMockup');
+      var label = document.getElementById('bgLabel');
+      if (type === 'bright') {
+        mockup.style.backgroundImage = bgs.bright;
+        label.textContent = 'Podgląd: Jasna scena (np. transmisja zimowa / śnieg)';
+      } else if (type === 'oled') {
+        mockup.style.backgroundImage = 'none';
+        mockup.style.backgroundColor = '#000000';
+        label.textContent = 'Podgląd: Prawdziwa czerń OLED';
+      } else {
+        mockup.style.backgroundColor = '#000';
+        mockup.style.backgroundImage = bgs[type];
+        label.textContent = type === 'movie' ? 'Podgląd: Ciemny film kinowy' : 'Podgląd: Launcher CleanYourTV';
+      }
+    }
+
+    function setPreset(name) {
+      currentPreset = name;
+      document.querySelectorAll('.preset-card').forEach(function(card) { card.classList.remove('active'); });
+      if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+      }
+      render();
+    }
+
+    function updateVol(val) {
+      currentVol = parseInt(val, 10);
+      document.getElementById('volNum').textContent = currentVol + '%';
+      document.getElementById('volRange').value = currentVol;
+      render();
+    }
+
+    function stepVol(delta) {
+      updateVol(Math.max(0, Math.min(100, currentVol + delta)));
+    }
+
+    function toggleMute() {
+      isMute = !isMute;
+      var btn = document.getElementById('muteBtn');
+      btn.style.background = isMute ? '#ef4444' : '#1e2536';
+      btn.textContent = isMute ? 'Muted' : 'Mute';
+      render();
+    }
+
+    function updateOutput(val) {
+      currentOutput = val;
+      render();
+    }
+
+    function getSpeakerSvg(mute) {
+      if (mute) {
+        return '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="currentColor"><path d="M3.63 3.63a1 1 0 0 0 0 1.41l3.58 3.58L7 9H4a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l4 3.33A1 1 0 0 0 12.67 17.5l2.45 2.45a1 1 0 0 0 1.41-1.41L5.05 3.63a1 1 0 0 0-1.42 0zM12 5.33l-2.4 2 5.07 5.07c.21-.77.33-1.58.33-2.4a6 6 0 0 0-3-5.2v.53zM18.8 8.4A9.95 9.95 0 0 1 20 12c0 1.7-.43 3.3-1.2 4.7l1.45 1.45A11.93 11.93 0 0 0 22 12c0-2.8-1-5.37-2.67-7.4l-1.43 1.43c.31.75.55 1.55.7 2.37h.2z"/></svg>';
+      }
+      return '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="currentColor"><path d="M4 9h3l4-3.33A1 1 0 0 1 12.67 6.5v11a1 1 0 0 1-1.67.83L7 15H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1zm11 3a4 4 0 0 0-2-3.46v6.92A4 4 0 0 0 15 12zm2.5 0c0 2.22-1.2 4.15-3 5.19v2.09c2.9-1.2 5-4.04 5-7.28s-2.1-6.08-5-7.28v2.09c1.8 1.04 3 2.97 3 5.19z"/></svg>';
+    }
+
+    function getDeviceLabel(output) {
+      if (output === 'tv_speaker') return 'Głośnik TV';
+      if (output === 'bt_soundbar') return 'Soundbar BT';
+      if (output === 'external_arc') return 'HDMI eARC';
+      if (output === 'optical') return 'Optyczne';
+      if (output === 'headphone') return 'AirPods';
+      return output;
+    }
+
+    function render() {
+      var target = document.getElementById('renderTarget');
+      var ico = getSpeakerSvg(isMute);
+      var dev = getDeviceLabel(currentOutput);
+      var muteCls = isMute ? ' mute' : '';
+      var val = isMute ? 0 : currentVol;
+
+      if (currentPreset === 'atv-pure') {
+        target.innerHTML = '<div class="arch-atv-pure' + muteCls + '">' +
+          '<div class="dev-label">' + dev + '</div>' +
+          '<div class="pill">' +
+            '<div class="fill" style="height:' + val + '%;"></div>' +
+            '<div class="speaker">' + ico + '</div>' +
+          '</div>' +
+          '</div>';
+      } else if (currentPreset === 'atv-badge') {
+        target.innerHTML = '<div class="arch-atv-badge' + muteCls + '">' +
+          '<div class="floating-chip">' + (isMute ? 'MUTE' : currentVol) + '</div>' +
+          '<div class="arch-atv-pure" style="position:static; transform:none;">' +
+            '<div class="dev-label">' + dev + '</div>' +
+            '<div class="pill">' +
+              '<div class="fill" style="height:' + val + '%;"></div>' +
+              '<div class="speaker">' + ico + '</div>' +
+            '</div>' +
+          '</div>' +
+          '</div>';
+      } else if (currentPreset === 'atv-expanded') {
+        target.innerHTML = '<div class="arch-atv-expanded' + muteCls + '">' +
+          '<div class="dev-label" style="margin-bottom:12px; font-size:13px; color:rgba(255,255,255,0.8); font-weight:600;">' + dev + '</div>' +
+          '<div class="pill-wide">' +
+            '<div class="center-num">' + (isMute ? 'OFF' : currentVol) + '</div>' +
+            '<div class="fill-wide" style="height:' + val + '%;"></div>' +
+            '<div class="speaker-bottom">' + ico + '</div>' +
+          '</div>' +
+          '</div>';
+      } else if (currentPreset === 'atv-island') {
+        target.innerHTML = '<div class="arch-atv-island' + muteCls + '">' +
+          '<div class="isl-icon">' + ico + '</div>' +
+          '<div class="isl-dev">' + dev + '</div>' +
+          '<div class="isl-track"><div class="isl-fill" style="width:' + val + '%;"></div></div>' +
+          '<div class="isl-num">' + (isMute ? 'MUTE' : currentVol) + '</div>' +
+          '</div>';
+      } else if (currentPreset === 'braun') {
+        target.innerHTML = '<div class="arch-braun' + muteCls + '">' +
+          '<div class="b-header">VOL</div>' +
+          '<div class="b-meter">' +
+            '<div class="b-fill" style="height:' + val + '%;"></div>' +
+            '<div class="b-ticks"></div>' +
+          '</div>' +
+          '<div class="b-num">' + (isMute ? 'OFF' : currentVol) + '</div>' +
+          '</div>';
+      } else if (currentPreset === 'bo-dial') {
+        var circumference = 408;
+        var offset = circumference - (circumference * val / 100);
+        target.innerHTML = '<div class="arch-bo-dial' + muteCls + '">' +
+          '<svg viewBox="0 0 150 150">' +
+            '<circle class="circle-bg" cx="75" cy="75" r="65"></circle>' +
+            '<circle class="circle-val" cx="75" cy="75" r="65" style="stroke-dashoffset:' + offset + ';"></circle>' +
+          '</svg>' +
+          '<div class="center-info">' +
+            '<div class="bo-val">' + (isMute ? 'MUTE' : currentVol) + '</div>' +
+            '<div class="bo-dev">' + dev + '</div>' +
+          '</div>' +
+          '</div>';
+      } else if (currentPreset === 'devialet') {
+        target.innerHTML = '<div class="arch-devialet' + muteCls + '">' +
+          '<div class="dev-brand">' + dev + '</div>' +
+          '<div class="dev-track"><div class="dev-fill" style="width:' + val + '%;"></div></div>' +
+          '<div class="dev-val">' + (isMute ? 'MUTE' : currentVol + '%') + '</div>' +
+          '</div>';
+      } else if (currentPreset === 'teenage') {
+        var leds = '';
+        var numSegments = 14;
+        var activeCount = Math.round((val / 100) * numSegments);
+        for (var i = 0; i < numSegments; i++) {
+          var onCls = (i < activeCount && !isMute) ? ' on' : '';
+          leds += '<div class="led-segment' + onCls + '"></div>';
+        }
+        target.innerHTML = '<div class="arch-teenage' + muteCls + '">' +
+          '<div class="te-label">LVL</div>' +
+          '<div class="led-stack">' + leds + '</div>' +
+          '<div class="te-val">' + (isMute ? 'MUT' : currentVol) + '</div>' +
+          '</div>';
+      } else if (currentPreset === 'sony-ps5') {
+        target.innerHTML = '<div class="arch-sony-ps5' + muteCls + '">' +
+          '<div class="ps-ico">' + ico + '</div>' +
+          '<div class="ps-mid">' +
+            '<div class="ps-dev">' + dev + '</div>' +
+            '<div class="ps-bar"><div class="ps-fill" style="width:' + val + '%;"></div></div>' +
+          '</div>' +
+          '<div class="ps-val">' + (isMute ? 'MUTE' : currentVol) + '</div>' +
+          '</div>';
+      } else if (currentPreset === 'googletv') {
+        target.innerHTML = '<div class="arch-googletv' + muteCls + '">' +
+          '<div class="gt-ico">' + ico + '</div>' +
+          '<div class="gt-track"><div class="gt-fill" style="width:' + val + '%;"></div></div>' +
+          '<div class="gt-num">' + (isMute ? 'MUTE' : currentVol) + '</div>' +
+          '</div>';
+      } else if (currentPreset === 'sonos') {
+        target.innerHTML = '<div class="arch-sonos' + muteCls + '">' +
+          '<div class="so-label">' + dev + '</div>' +
+          '<div class="so-track"><div class="so-fill" style="width:' + val + '%;"></div></div>' +
+          '<div class="so-val">' + (isMute ? 'MUTE' : currentVol) + '</div>' +
+          '</div>';
+      } else if (currentPreset === 'cyber') {
+        target.innerHTML = '<div class="arch-cyber' + muteCls + '">' +
+          '<div class="cy-title">AUDIO // ' + dev.toUpperCase() + '</div>' +
+          '<div class="cy-track"><div class="cy-fill" style="width:' + val + '%;"></div></div>' +
+          '<div class="cy-val">' + (isMute ? 'MUT' : currentVol) + '</div>' +
+          '</div>';
+      }
+    }
+
+    function deployChosen() {
+      var hint = document.getElementById('deployHint');
+      hint.style.display = 'block';
+      hint.textContent = 'Wybrano styl: ' + currentPreset + '! Odpowiedz w czacie, że wybierasz ten styl, a od razu wgram go na Twój telewizor.';
+    }
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowUp' || e.key === ']' || e.key === '+') { stepVol(1); e.preventDefault(); }
+      if (e.key === 'ArrowDown' || e.key === '[' || e.key === '-') { stepVol(-1); e.preventDefault(); }
+      if (e.key === 'm' || e.key === 'M') { toggleMute(); e.preventDefault(); }
+    });
+
+    setBg('movie');
+    resizeStage();
+    render();
+  </script>
+</body>
+</html>

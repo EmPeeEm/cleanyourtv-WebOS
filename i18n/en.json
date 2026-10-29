@@ -723,5 +723,15 @@
  "Scenes": "Scenes",
  "Scripts": "Scripts",
  "Automations": "Automations",
- "Helpers": "Helpers"
+ "Helpers": "Helpers",
+ "Mute": "Mute",
+ "Volume bar": "Volume bar",
+ "Apple TV Pro": "Apple TV Pro",
+ "Vertical pill on the right": "Vertical pill on the right",
+ "Dynamic Island": "Dynamic Island",
+ "Horizontal bar at the top": "Horizontal bar at the top",
+ "Bang & Olufsen Dial": "Bang & Olufsen Dial",
+ "Circular dial on the right": "Circular dial on the right",
+ "System default (LG webOS)": "System default (LG webOS)",
+ "Stock TV volume bar": "Stock TV volume bar"
 }

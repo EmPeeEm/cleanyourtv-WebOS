@@ -18,6 +18,8 @@ const HOME = 'com.webos.app.home';
 
 function create(ctx) {
   const { config, luna } = ctx;
+  const audio = ctx.audio || (ctx.audio = require('./audio').create(ctx));
+  if (audio.start) audio.start();
 
   // ---- the installed apps. The app manager takes a moment to answer (a luna-send each time), and Home is opened often: after the first
   // answer the list is given at once from memory and asked again in the background when it is older than 5 seconds, so an app installed
@@ -238,7 +240,8 @@ function create(ctx) {
     const out = {};
     if (strs(b.dock)) out.dock = strs(b.dock).slice(0, 8);
     if (strs(b.hidden)) out.hidden = strs(b.hidden);
-    if (b.sort === 'usage' || b.sort === 'alpha') out.sort = b.sort;
+    if (b.sort === 'usage' || b.sort === 'alpha' || b.sort === 'custom') out.sort = b.sort;
+    if (strs(b.order)) out.order = strs(b.order);
     if (['auto', '24', '12'].includes(b.clock)) out.clock = b.clock;
     if (b.runDots === true) out.runDots = true; // the green dot on open apps (off unless switched on)
     // Wallpapers in the launcher: on or off, and how often the photo changes
@@ -300,6 +303,7 @@ function create(ctx) {
       const out = await uninstallApp(b && b.id);
       return web.json(res, out, out.returnValue ? 200 : 400);
     }
+    if (u === '/api/audio/volume') return audio.handle(req, res, u);
     const m = u.match(/^\/icon\/([\w.\-]+)$/);
     if (m) {
       const a = (await apps()).find(x => x.id === m[1]);
@@ -313,7 +317,16 @@ function create(ctx) {
 
   return {
     name: 'apps',
-    paths: ['/api/apps', '/api/inputs', '/api/inputs/pin', '/api/foreground', '/api/launch', '/api/config', '/api/apps/uninstall'],
+    paths: [
+      '/api/apps',
+      '/api/inputs',
+      '/api/inputs/pin',
+      '/api/foreground',
+      '/api/launch',
+      '/api/config',
+      '/api/apps/uninstall',
+      '/api/audio/volume',
+    ],
     prefix: '/icon/',
     handle,
     start: () => setInterval(pollForeground, 4000),

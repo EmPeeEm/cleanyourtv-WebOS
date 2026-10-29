@@ -436,7 +436,8 @@
    "options": {
     "debloat": false,
     "inputKey": false,
-    "liveTv": true
+    "liveTv": true,
+    "volumeTheme": "apple-pro"
    },
    "picker": {
     "mode": "overlay",
@@ -518,7 +519,8 @@
    "options": {
     "debloat": false,
     "inputKey": false,
-    "liveTv": true
+    "liveTv": true,
+    "volumeTheme": "apple-pro"
    },
    "picker": {
     "mode": "overlay",
@@ -618,7 +620,8 @@
    "options": {
     "debloat": false,
     "inputKey": false,
-    "liveTv": false
+    "liveTv": false,
+    "volumeTheme": "apple-pro"
    },
    "picker": {
     "mode": "overlay",
@@ -857,7 +860,8 @@
   "options": {
    "debloat": false,
    "inputKey": false,
-   "liveTv": false
+   "liveTv": false,
+   "volumeTheme": "apple-pro"
   },
   "sort": "alpha",
   "theme": {

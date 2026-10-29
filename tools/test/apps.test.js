@@ -69,6 +69,11 @@ run(async () => {
   });
   await call(apps, '/api/config', 'POST', { dock: ['a.one'], sort: 'alpha' });
   ok(config.get().pinnedInputs.length === 2, "saving the launcher's settings keeps the pinned inputs");
+  await call(apps, '/api/config', 'POST', { dock: ['a.one'], sort: 'custom', order: ['a.two', 'a.one'] });
+  ok(
+    config.get().sort === 'custom' && JSON.stringify(config.get().order) === JSON.stringify(['a.two', 'a.one']),
+    'custom sort and order are saved in config'
+  );
   await call(apps, '/api/config', 'POST', { dock: ['a.one'], runDots: true });
   const on = config.get().runDots === true;
   await call(apps, '/api/config', 'POST', { dock: ['a.one'], runDots: 'yes' });
@@ -207,4 +212,11 @@ run(async () => {
   }
   for (const bad of ['..', '.hidden', '../x'])
     ok((await call(apps, '/api/apps/uninstall', 'POST', { id: bad })).j.error === 'refused', 'the id ' + bad + ' is refused');
+
+  // audio volume status and polling
+  r = await call(apps, '/api/audio/volume');
+  ok(
+    r.j && typeof r.j.volume === 'number' && typeof r.j.seq === 'number' && typeof r.j.theme === 'string',
+    'the launcher can query audio volume and theme'
+  );
 });

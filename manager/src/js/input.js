@@ -56,6 +56,7 @@ function wantView() {
       },
       function () {}
     );
+  if (p && p.open === 'volumebar') push('volumebar');
   if (p && p.open === 'cards') {
     cardsFromHome = true;
     openCards();

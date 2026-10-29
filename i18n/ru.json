@@ -694,5 +694,15 @@
  "Uninstall %s?": "Удалить %s?",
  "Uninstalling %s...": "Удаление %s...",
  "%s uninstalled.": "Приложение %s удалено.",
- "Could not uninstall %s.": "Не удалось удалить %s."
+ "Could not uninstall %s.": "Не удалось удалить %s.",
+ "Mute": "Без звука",
+ "Volume bar": "Панель громкости",
+ "Apple TV Pro": "Apple TV Pro",
+ "Vertical pill on the right": "Вертикальная полоса справа",
+ "Dynamic Island": "Dynamic Island",
+ "Horizontal bar at the top": "Горизонтальная полоса сверху",
+ "Bang & Olufsen Dial": "Круговой индикатор Bang & Olufsen",
+ "Circular dial on the right": "Круговой индикатор справа",
+ "System default (LG webOS)": "Системный по умолчанию (LG webOS)",
+ "Stock TV volume bar": "Стандартная панель громкости телевизора"
 }

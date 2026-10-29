@@ -128,6 +128,10 @@ function draw() {
     $('sub').textContent = tr('Input key');
     return;
   }
+  if (view === 'volumebar') {
+    $('sub').textContent = tr('Volume bar');
+    return;
+  }
   if (view === 'confirm-home' || view === 'confirm-uninstall') {
     $('sub').textContent = tr(view === 'confirm-uninstall' ? 'Remove CleanYourTV?' : 'Switch Home?');
     return;

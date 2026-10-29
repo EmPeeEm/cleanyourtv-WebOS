@@ -87,5 +87,11 @@ require('./server')
     }
     // what this TV is (webOS version, firmware): the Input key's default follows it
     ctx.profile.refresh().then(() => inputkey && inputkey.syncMode());
+    try {
+      if (!ctx.audio) ctx.audio = require('./audio').create(ctx);
+      ctx.audio.start();
+    } catch (e) {
+      console.error('audio failed to start: ' + e.message);
+    }
     if (manager) setTimeout(() => manager.check(), 60000);
   });

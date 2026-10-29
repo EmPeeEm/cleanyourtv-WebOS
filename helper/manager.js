@@ -77,6 +77,7 @@ function create(ctx) {
     const cur = config.options();
     const next = Object.assign({}, cur);
     for (const k of ['debloat', 'inputKey', 'liveTv']) if (typeof o[k] === 'boolean') next[k] = o[k];
+    if (typeof o.volumeTheme === 'string') next.volumeTheme = o.volumeTheme;
     if (Array.isArray(o.debloatOff)) next.debloatOff = debloat.cleanOff(o.debloatOff);
     config.update('manager', c => {
       // the language of every screen: a two-letter code, or '' to follow the TV
@@ -102,6 +103,9 @@ function create(ctx) {
     inputkey().syncMode();
     if (next.debloat !== cur.debloat) await debloat.apply(next.debloat);
     else if (next.debloat) await debloat.change(debloat.cleanOff(cur.debloatOff), debloat.cleanOff(next.debloatOff));
+    if (next.volumeTheme !== cur.volumeTheme && ctx.audio && ctx.audio.syncStockVolumeOSD) {
+      ctx.audio.syncStockVolumeOSD(next.volumeTheme);
+    }
     ensureHook();
     return next;
   }

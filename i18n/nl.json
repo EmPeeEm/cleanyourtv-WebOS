@@ -723,5 +723,15 @@
  "Scenes": "Scènes",
  "Scripts": "Scripts",
  "Automations": "Automatiseringen",
- "Helpers": "Helpers"
+ "Helpers": "Helpers",
+ "Mute": "Dempen",
+ "Volume bar": "Volumebalk",
+ "Apple TV Pro": "Apple TV Pro",
+ "Vertical pill on the right": "Verticale pil aan de rechterkant",
+ "Dynamic Island": "Dynamic Island",
+ "Horizontal bar at the top": "Horizontale balk bovenaan",
+ "Bang & Olufsen Dial": "Bang & Olufsen Draaiknop",
+ "Circular dial on the right": "Ronde draaiknop rechts",
+ "System default (LG webOS)": "Systeemstandaard (LG webOS)",
+ "Stock TV volume bar": "Originele volumebalk van de tv"
 }

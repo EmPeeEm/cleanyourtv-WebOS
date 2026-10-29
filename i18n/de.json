@@ -723,5 +723,15 @@
  "Scenes": "Szenen",
  "Scripts": "Skripte",
  "Automations": "Automationen",
- "Helpers": "Helfer"
+ "Helpers": "Helfer",
+ "Mute": "Stumm",
+ "Volume bar": "Lautstärkeleiste",
+ "Apple TV Pro": "Apple TV Pro",
+ "Vertical pill on the right": "Vertikale Pille auf der rechten Seite",
+ "Dynamic Island": "Dynamic Island",
+ "Horizontal bar at the top": "Horizontaler Balken oben",
+ "Bang & Olufsen Dial": "Bang & Olufsen Skala",
+ "Circular dial on the right": "Kreisförmige Skala rechts",
+ "System default (LG webOS)": "Systemstandard (LG webOS)",
+ "Stock TV volume bar": "Standard-Lautstärkeleiste des Fernsehers"
 }
