@@ -694,5 +694,9 @@
  "Uninstall %s?": "Odinstalować %s?",
  "Uninstalling %s...": "Odinstalowywanie %s...",
  "%s uninstalled.": "Odinstalowano %s.",
- "Could not uninstall %s.": "Nie udało się odinstalować %s."
+ "Could not uninstall %s.": "Nie udało się odinstalować %s.",
+ "Custom static": "Własna (statyczna)",
+ "Arrange apps...": "Uporządkuj aplikacje...",
+ "Move": "Przesuń",
+ "Use arrows to move, press OK when done": "Użyj strzałek, aby przesunąć; naciśnij OK, aby zakończyć"
 }

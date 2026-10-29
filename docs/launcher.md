@@ -9,7 +9,7 @@ same on every supported webOS version.
 
 - **Dock.** Up to four apps, large, on the first row.
 - **Top shelf.** The name of the focused app and an ambient glow taken from its icon.
-- **Grid.** All other apps, sorted by how often you use each one (or A to Z).
+- **Grid.** All other apps, sorted by how often you use each one, A to Z, or your own custom static order.
 - **Top buttons.** Inputs, Live TV, Settings and Customise, and a clock. The buttons you see are yours to change.
 - **Open apps.** Optionally a green dot on the tile of every app that is open, as on the active input in the Inputs list: off by
   default, **Customise** > **Mark running apps** switches it on, in the launcher and in the Inputs picker. Back on the home screen lists
@@ -20,7 +20,7 @@ same on every supported webOS version.
 | Action | How |
 |---|---|
 | Open an app | OK |
-| App options (dock, hide, uninstall) | Hold OK on an app |
+| App options (move, dock, hide, uninstall) | Hold OK on an app |
 | Move or remove a top button | Hold OK on it |
 | Customise | The **Customise** button |
 | Live TV | The **Live TV** button or tile |
@@ -51,10 +51,10 @@ system apps are never in it. The list is read when it opens and closes when you 
 **Customise** holds how Home looks:
 
 - the **dock**: each app in it can be replaced (an app already in the dock swaps places), moved or removed, and **Add an app...**
-  fills a free place. Holding OK on an app gives **Add to dock**, **Move left**, **Move right**, **Remove from dock**, **Hide app** and **Uninstall** (with a confirmation prompt, for user-installed LG Store and Homebrew apps);
+  fills a free place. Holding OK on an app gives **Move** (to rearrange tiles interactively with arrow keys and confirm with OK), **Add to dock** or **Remove from dock**, **Hide app** and **Uninstall** (with a confirmation prompt, for user-installed LG Store and Homebrew apps);
 - the **top buttons**: move one left or right, remove it, or add Inputs, Settings, Live TV or any app;
 - **hidden apps** (show them again);
-- the **app order** (most used first, or A to Z);
+- the **app order** (most used first, A to Z, or custom static);
 - **mark running apps** (a green dot on their tiles, or none);
 - the **clock** format (automatic, 12 or 24 hour);
 - the **theme** (see [Themes](themes.md)) and the **accent colour**; the theme list shows each theme's screenshot;

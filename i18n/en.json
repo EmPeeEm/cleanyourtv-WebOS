@@ -331,9 +331,7 @@
  "More settings...": "More settings...",
  "Most used first": "Most used first",
  "Move left": "Move left",
- "Move left in dock": "Move left in dock",
  "Move right": "Move right",
- "Move right in dock": "Move right in dock",
  "Name (optional)": "Name (optional)",
  "names, texts, card options": "names, texts, card options",
  "needs Home Assistant": "needs Home Assistant",
@@ -723,5 +721,9 @@
  "Scenes": "Scenes",
  "Scripts": "Scripts",
  "Automations": "Automations",
- "Helpers": "Helpers"
+ "Helpers": "Helpers",
+ "Custom static": "Custom static",
+ "Arrange apps...": "Arrange apps...",
+ "Use arrows to move, press OK when done": "Use arrows to move, press OK when done",
+ "Move": "Move"
 }

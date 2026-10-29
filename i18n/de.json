@@ -331,9 +331,7 @@
  "More settings...": "Weitere Einstellungen...",
  "Most used first": "Meistgenutzte zuerst",
  "Move left": "Nach links",
- "Move left in dock": "Im Dock nach links",
  "Move right": "Nach rechts",
- "Move right in dock": "Im Dock nach rechts",
  "Name (optional)": "Name (optional)",
  "names, texts, card options": "Namen, Texte, Kartenoptionen",
  "needs Home Assistant": "braucht Home Assistant",
@@ -723,5 +721,9 @@
  "Scenes": "Szenen",
  "Scripts": "Skripte",
  "Automations": "Automationen",
- "Helpers": "Helfer"
+ "Helpers": "Helfer",
+ "Custom static": "Benutzerdefiniert (statisch)",
+ "Arrange apps...": "Apps anordnen...",
+ "Move": "Verschieben",
+ "Use arrows to move, press OK when done": "Mit Pfeiltasten verschieben, mit OK bestätigen"
 }

@@ -331,9 +331,7 @@
  "More settings...": "Meer instellingen...",
  "Most used first": "Meest gebruikt eerst",
  "Move left": "Naar links",
- "Move left in dock": "Naar links in dock",
  "Move right": "Naar rechts",
- "Move right in dock": "Naar rechts in dock",
  "Name (optional)": "Naam (optioneel)",
  "names, texts, card options": "namen, teksten, kaartopties",
  "needs Home Assistant": "Home Assistant nodig",
@@ -723,5 +721,9 @@
  "Scenes": "Scènes",
  "Scripts": "Scripts",
  "Automations": "Automatiseringen",
- "Helpers": "Helpers"
+ "Helpers": "Helpers",
+ "Custom static": "Aangepast (statisch)",
+ "Arrange apps...": "Apps rangschikken...",
+ "Move": "Verplaatsen",
+ "Use arrows to move, press OK when done": "Gebruik pijltjestoetsen om te verplaatsen, druk op OK als je klaar bent"
 }

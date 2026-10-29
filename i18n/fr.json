@@ -331,9 +331,7 @@
  "More settings...": "Plus de réglages...",
  "Most used first": "Les plus utilisées d’abord",
  "Move left": "Déplacer à gauche",
- "Move left in dock": "Déplacer à gauche dans le dock",
  "Move right": "Déplacer à droite",
- "Move right in dock": "Déplacer à droite dans le dock",
  "Name (optional)": "Nom (facultatif)",
  "names, texts, card options": "noms, textes, options des cartes",
  "needs Home Assistant": "nécessite Home Assistant",
@@ -690,5 +688,9 @@
  "Uninstall %s?": "Désinstaller %s ?",
  "Uninstalling %s...": "Désinstallation de %s...",
  "%s uninstalled.": "%s désinstallé.",
- "Could not uninstall %s.": "Impossible de désinstaller %s."
+ "Could not uninstall %s.": "Impossible de désinstaller %s.",
+ "Custom static": "Personnalisé (statique)",
+ "Arrange apps...": "Organiser les apps...",
+ "Move": "Déplacer",
+ "Use arrows to move, press OK when done": "Utilisez les flèches pour déplacer, appuyez sur OK pour terminer"
 }

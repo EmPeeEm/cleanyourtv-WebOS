@@ -399,6 +399,15 @@ body {
   transform: scale(0.96) !important;
   transition-duration: calc(0.06s * var(--spd));
 }
+.tile.moving {
+  z-index: 10;
+  transform: scale(1.08);
+  box-shadow: 0 28px 42px rgba(0, 0, 0, 0.75);
+}
+.tile.moving::before {
+  border-style: dashed;
+  border-color: var(--accent);
+}
 .tile.launching {
   opacity: 0.82;
 }
