@@ -58,6 +58,15 @@ run(async () => {
       tv.decide({}).homeTakeover === 'mount',
     "LG's native Home is taken over by a stand-in for its program (no app manager restart); flutter, web and unknown by the mount"
   );
+  ok(
+    tv.decide({ cmdline: 'console=ttyS0 criu_enabled root=/dev/mmcblk0p9' }).criu === true &&
+      tv.decide({ cmdline: 'criu_enabled' }).criu === true &&
+      tv.decide({ cmdline: 'console=ttyS0 root=/dev/mmcblk0p9' }).criu === false &&
+      tv.decide({ cmdline: 'no_criu_enabled_here' }).criu === false &&
+      tv.decide({}).criu === false &&
+      tv.decide({ home: 'com.webos.app.home native', cmdline: 'criu_enabled' }).homeTakeover === 'standin',
+    'CRIU on the kernel command line is reported (issues 72 and 84) but does not change the way: the setup tries the stand-in first'
+  );
   // Issue 21: ARC remained silent after SAM restarted, although the controller was active.
   const arc = { model: 'OLED65C35LA.AEU', sdk: '11.2.0', home: 'com.webos.app.home flutter' };
   ok(tv.decide(arc).afterSam === 'arccontroller', 'webOS 26 restarts the ARC controller after SAM (issue 21), whatever the model name');

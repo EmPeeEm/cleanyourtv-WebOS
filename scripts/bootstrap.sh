@@ -205,27 +205,45 @@ start_install() {
   [ "$(opt debloat)" = 1 ] && sh $D/debloat-stop.sh </dev/null
 }
 
-# ---- check that the new Home came up; roll back if not ----
-verify() {
-  say "checking that the new Home came up..."
-  ok=0
+# ---- check that the new Home came up; with the stand-in way try the mount way once; roll back if neither works ----
+# wait_home: up to two minutes for the launcher as Home and the service of this version; sets type and hv; true when it came up
+wait_home() {
   for i in $(seq 1 40); do
     sleep 3
     type=$(luna com.webos.applicationManager/getAppInfo '{"id":"com.webos.app.home"}' | sed -n 's/.*"type": *"\([^"]*\)".*/\1/p' | head -1)
     # the stand-in way (LG's native Home): sam still sees LG's native Home, and webapp-mgr holds the launcher
     if [ -f $R/tmp/cleanyourtv-home-standin ] && luna com.palm.webappmanager/listRunningApps '{}' | grep -q '"com.webos.app.home"'; then type=web; fi
     hv=$(service_answers)
-    if [ "$type" = web ] && [ "$hv" = "$VERSION" ]; then ok=1; break; fi
+    if [ "$type" = web ] && [ "$hv" = "$VERSION" ]; then return 0; fi
   done
-  if [ $ok = 0 ]; then
-    warn "the new Home did not come up (app type: ${type:-none}, service: ${hv:-not answering}); rolling back"
-    # restoring LG's Home live does not always work; without the boot scripts a restart brings it back
-    cp /tmp/cleanyourtv-helper.log $MD/cytv-setup.log.service 2>/dev/null
-    rm -f $INITD/10-cleanyourtv-home $INITD/15-cleanyourtv-debloat
-    echo '{"lastAppId":"com.webos.app.home"}' > $R/var/luna/preferences/bootd_last_foreground_app_id.json 2>/dev/null
-    (sleep 4; reboot) </dev/null >/dev/null 2>&1 &
-    die "rolled back: the boot scripts are removed and the TV restarts with LG's Home. Details: /media/developer/cytv-setup.log and cytv-setup.log.service"
+  return 1
+}
+verify() {
+  say "checking that the new Home came up..."
+  wait_home && return 0
+  if [ "$($TV get homeTakeover --home "$HOMEKIND")" = standin ] && [ "$(cat $D/home-method 2>/dev/null)" != mount ]; then
+    # Some TVs with a native Home never run the stand-in program: with CRIU (criu_enabled on the kernel command line) LG's Home is
+    # restored from a checkpoint instead of being started from its program (issues 72 and 84). The mount way works there, so it is
+    # used from now on, also at the next boots (home-method). A TV where the stand-in works never gets here.
+    CRIU=$(grep -o criu_enabled $R/proc/cmdline 2>/dev/null | head -1)
+    warn "the stand-in did not bring the launcher up (app type: ${type:-none}, service: ${hv:-not answering})${CRIU:+; this TV has CRIU}. Trying the other way: the launcher mounted over LG's Home"
+    echo mount > $D/home-method; RETRIED=1
+    # the boot script has put LG's Home back by now; make sure of it (this lifts the debloat, which is started again below)
+    [ -f $R/tmp/cleanyourtv-home-standin ] && sh $D/undo-home.sh temp </dev/null
+    pkill -f "[c]leanyourtv/watchdog.sh"; pkill -f "[c]leanyourtv/helper.js"; sleep 1
+    sh $D/10-cleanyourtv-home </dev/null
+    [ "$(opt debloat)" = 1 ] && sh $D/debloat-stop.sh </dev/null
+    say "checking again..."
+    wait_home && return 0
   fi
+  warn "the new Home did not come up (app type: ${type:-none}, service: ${hv:-not answering}); rolling back"
+  # restoring LG's Home live does not always work; without the boot scripts a restart brings it back
+  cp /tmp/cleanyourtv-helper.log $MD/cytv-setup.log.service 2>/dev/null
+  rm -f $INITD/10-cleanyourtv-home $INITD/15-cleanyourtv-debloat
+  [ -n "$RETRIED" ] && rm -f $D/home-method   # only the file this setup wrote
+  echo '{"lastAppId":"com.webos.app.home"}' > $R/var/luna/preferences/bootd_last_foreground_app_id.json 2>/dev/null
+  (sleep 4; reboot) </dev/null >/dev/null 2>&1 &
+  die "rolled back: the boot scripts are removed and the TV restarts with LG's Home. Details: /media/developer/cytv-setup.log and cytv-setup.log.service"
 }
 
 finish() {

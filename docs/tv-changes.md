@@ -35,6 +35,10 @@ uninstall. Optional features contact other services only when you switch them on
       so the Home key shows the open launcher again. If the launcher is not open in `webapp-mgr` within 30 seconds, the stand-in is
       removed and LG's Home comes back until the next reboot. A file `/media/developer/cleanyourtv/home-method` holding `mount`
       makes such a TV use the first way.
+      On some of these TVs the stand-in never runs: the kernel has CRIU (`criu_enabled` in `/proc/cmdline`), which restores LG's Home
+      from a checkpoint instead of starting its program (issues 72 and 84). When the launcher does not come up after the setup, the
+      setup tries the first way once and writes `home-method` itself, so the next boots use it too; only when that fails as well is
+      everything rolled back. TVs where the stand-in works are not touched.
 
    Whenever the app manager is restarted on a TV with LG's native Home or on webOS before 7 (the first way, or the setup registering
    our extra apps), the services that talk to it (`eim`, `webapp-mgr`, `preload-manager`, `memorymanager`, those the TV has) are
