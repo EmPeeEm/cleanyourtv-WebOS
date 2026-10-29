@@ -57,6 +57,9 @@ card are small and stay single files.
       the launcher the same way. `/tmp/cleanyourtv-home-standin` holds the program's path while it is mounted; `reload-home.sh`,
       `undo-home.sh`, the debloat hook and the manager's status read it. If `webapp-mgr` does not list the launcher within 30
       seconds, `undo-home.sh temp` brings LG's Home back. `home-method` holding `mount` forces the first way.
+      `bootstrap.sh verify` does the same once: when the launcher does not come up after a stand-in setup (a TV with CRIU never runs
+      the stand-in, issues 72 and 84; `criu` in `tvprofile.js` records it but does not decide), it writes `home-method` `mount`, runs the boot
+      script again and checks again; the rollback removes the file only if the setup wrote it.
 4. A **watchdog** (`watchdog.sh`, one per boot, started by the boot script also while LG's Home is selected) asks the service every 10
    seconds. When the service has stopped, it starts it again (also while LG's Home is back after a fallback, but not while
    `bootstrap.sh` runs), notes that in `/tmp/cleanyourtv-boot.log` and adds the log of the run that ended to
