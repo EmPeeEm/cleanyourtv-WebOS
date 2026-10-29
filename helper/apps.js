@@ -1,6 +1,7 @@
 // The launcher's own API: the list of apps with their icons, how often each is used, the inputs, launching, and the launcher's
 // settings (dock, hidden apps, sort order, clock, top buttons).
 //   GET /api/apps  GET /api/inputs  GET /api/foreground  POST /api/launch {id, params}  POST /api/config {...}  GET /icon/<app id>
+//   GET /api/inputs: the HDMI ports, plus LG's own Live TV (the tuner) while its app is installed ({appId, tuner: true})
 //   POST /api/inputs/pin {id, on}   pin an input (its input app, e.g. com.webos.app.hdmi2) to Home, or take it off again
 // A pinned input is listed with the apps ({id, title, input: <port>, off: <nothing connected>}), so the dock, the grid, the saved
 // layout and the order by use treat it as an app; it is kept in config.json (pinnedInputs), apart from the launcher's own keys.
@@ -140,6 +141,53 @@ function create(ctx) {
     return (inputCache && inputCache.devices) || [];
   }
   const portLabel = d => 'HDMI ' + d.port;
+  // ---- LG's own Live TV (the tuner). It is the TV's antenna and cable input, but the TV does not report it with the inputs of
+  // getAllInputStatus (issue 69): it is listed here while its app is installed, so the Inputs list and the picker can show it. The app is
+  // asked once and the answer kept for five minutes; a TV without that app (no tuner) lists nothing extra ----
+  const TUNER = 'com.webos.app.livetv',
+    TUNER_MS = 5 * 60 * 1000; // how long its answer is kept: a TV does not gain or lose its tuner every minute
+  let tunerOn = null,
+    tunerAt = 0,
+    askingTuner = null,
+    foreground = '';
+  // getAppInfo puts the app's fields in appInfo on webOS 22 and newer ({appId, appInfo: {title, ...}}) and at the top on older ones;
+  // a refusal (or a stand-in that answers nothing) carries neither, and then this TV has no tuner
+  function tunerInReply(r) {
+    if (!r || r.returnValue === false) return false;
+    const info = r.appInfo || {};
+    return !!(r.id || r.title || info.id || info.title || r.appId);
+  }
+  function askTuner() {
+    if (tunerOn !== null && Date.now() - tunerAt < TUNER_MS) return Promise.resolve(tunerOn);
+    if (!askingTuner)
+      askingTuner = luna('luna://com.webos.applicationManager/getAppInfo', { id: TUNER }).then(
+        r => {
+          askingTuner = null;
+          tunerOn = tunerInReply(r);
+          tunerAt = Date.now();
+          return tunerOn;
+        },
+        () => {
+          askingTuner = null;
+          return false;
+        }
+      );
+    return askingTuner;
+  }
+  // the inputs the pages get: the HDMI ports, and LG's Live TV while its app is there (some firmware lists it itself: not twice)
+  // The manager's "Show LG's own Live TV" (options.tuner, on by default) switches the tuner off everywhere: the list leaves it out, also
+  // where the firmware reports it itself, and the launcher gets no TV button.
+  const tunerShown = () => config.options().tuner !== false;
+  async function inputsWithTuner() {
+    const r = await askInputs(),
+      list = (r && r.devices) || [];
+    if (!tunerShown())
+      return r && Array.isArray(r.devices) ? Object.assign({}, r, { devices: list.filter(d => !d || d.appId !== TUNER) }) : r;
+    if (!(await askTuner()) || list.some(d => d && d.appId === TUNER)) return r;
+    const tuner = { id: 'TV', appId: TUNER, tuner: true };
+    if (foreground === TUNER) tuner.activate = true;
+    return Object.assign({}, r, { devices: list.concat([tuner]) });
+  }
   // the inputs pinned to Home, with the name and state the TV reports now (or what was saved when it was pinned)
   function pinned() {
     const now = {};
@@ -200,6 +248,7 @@ function create(ctx) {
     streak = 0,
     counted = null;
   async function onForeground(id) {
+    if (id) foreground = id; // the tuner is shown as the active input while LG's Live TV is the app in front
     if (id === HOME) {
       counted = null;
       cand = id;
@@ -281,9 +330,13 @@ function create(ctx) {
   }
 
   async function handle(req, res, u, body) {
-    if (u === '/api/apps')
-      return web.json(res, { apps: await apps(), config: launcherConfig(), usage: usageScores(), version: ctx.version });
-    if (u === '/api/inputs') return web.json(res, await askInputs());
+    if (u === '/api/apps') {
+      const reply = { apps: await apps(), config: launcherConfig(), usage: usageScores(), version: ctx.version };
+      // the launcher offers its TV button only where LG's Live TV is installed (a TV without a tuner has no such app)
+      if (tunerShown() && (await askTuner())) reply.tuner = true;
+      return web.json(res, reply);
+    }
+    if (u === '/api/inputs') return web.json(res, await inputsWithTuner());
     if (u === '/api/inputs/pin' && req.method === 'POST') return web.json(res, await pin(await body(req)));
     if (u === '/api/foreground') return web.json(res, await luna('luna://com.webos.applicationManager/getForegroundAppInfo', {}));
     if (u === '/api/launch' && req.method === 'POST') {
@@ -318,6 +371,7 @@ function create(ctx) {
     handle,
     start: () => setInterval(pollForeground, 4000),
     apps,
+    onForeground, // which app is in front: it marks the tuner as the active input
   };
 }
 

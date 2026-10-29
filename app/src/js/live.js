@@ -893,6 +893,9 @@ var LIVE = (function () {
           lesc(p.code) +
           '</b><div class="small">' +
           t('Then paste your M3U playlist address. This page closes by itself.') +
+          '</div>' +
+          '<div class="small">' +
+          t('This plays your own playlist, not the TV\u2019s tuner. For antenna or cable, add a TV button in Customise.') +
           '</div>'
       );
       clearInterval(setupT);

@@ -617,6 +617,7 @@
  "This is not valid JSON.": "Das ist kein gültiges JSON.",
  "This stream is protected by DRM and cannot be played here.": "Dieser Stream ist DRM-geschützt und kann hier nicht abgespielt werden.",
  "This theme has no places for cards": "Dieses Design hat keine Plätze für Karten",
+ "This plays your own playlist, not the TV’s tuner. For antenna or cable, add a TV button in Customise.": "Dies spielt deine eigene Playlist ab, nicht den Tuner des Fernsehers. Für Antenne oder Kabel füge unter Anpassen eine TV-Schaltfläche hinzu.",
  "This theme has no places for cards. Choose a theme with cards (Lock Screen) in Customise > Theme.": "Dieses Theme hat keine Plätze für Karten. Wähle ein Theme mit Karten (Lock Screen) unter Anpassen > Theme.",
  "This TV also has LG’s full-screen Home: if the Home button opens that instead of this launcher, set TV Settings > General > Home Settings > Home Style to Basic.": "Dieser Fernseher hat auch LGs Vollbild-Home: Öffnet die Home-Taste dieses statt des Launchers, stelle Einstellungen > Allgemein > Home-Einstellungen > Home-Stil auf Einfach.",
  "Thunderstorm": "Gewitter",
@@ -625,7 +626,9 @@
  "Total": "Gesamt",
  "Try again": "Erneut versuchen",
  "Try it now": "Jetzt ausprobieren",
+ "Tuner": "Tuner",
  "Tuning...": "Sender wird eingestellt...",
+ "TV": "TV",
  "TV language: %s": "Sprache des Fernsehers: %s",
  "Uninstall": "Deinstallieren",
  "untested firmware; a failed start restarts the TV": "ungetestete Firmware; ein fehlgeschlagener Start startet den Fernseher neu",
@@ -723,5 +726,7 @@
  "Scenes": "Szenen",
  "Scripts": "Skripte",
  "Automations": "Automationen",
- "Helpers": "Helfer"
+ "Helpers": "Helfer",
+ "Show LG’s own Live TV": "LGs eigenes Live-TV anzeigen",
+ "On: LG’s own Live TV (the antenna or cable tuner) is in the Inputs list and the Input key list, and the launcher offers a TV button. Off: none of that, for a TV that only plays a playlist or external boxes. Independent of Show Live TV, so you can have both, one of them, or neither.": "An: LGs eigenes Live-TV (der Antennen- oder Kabeltuner) steht in der Eingangsliste und in der Liste der Eingabetaste, und der Launcher bietet eine TV-Schaltfläche an. Aus: nichts davon, für einen Fernseher, der nur eine Playlist oder externe Geräte nutzt. Unabhängig von „Live-TV anzeigen“: beides, eines von beiden oder keines ist möglich."
 }

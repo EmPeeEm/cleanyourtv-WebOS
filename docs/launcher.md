@@ -10,7 +10,8 @@ same on every supported webOS version.
 - **Dock.** Up to four apps, large, on the first row.
 - **Top shelf.** The name of the focused app and an ambient glow taken from its icon.
 - **Grid.** All other apps, sorted by how often you use each one (or A to Z).
-- **Top buttons.** Inputs, Live TV, Settings and Customise, and a clock. The buttons you see are yours to change.
+- **Top buttons.** Inputs, Live TV (your playlist), TV (LG's own tuner), Settings and Customise, and a clock. The buttons you see are
+yours to change.
 - **Open apps.** Optionally a green dot on the tile of every app that is open, as on the active input in the Inputs list: off by
   default, **Customise** > **Mark running apps** switches it on, in the launcher and in the Inputs picker. Back on the home screen lists
   the open apps to close them (see [Running apps](#running-apps)).
@@ -24,6 +25,7 @@ same on every supported webOS version.
 | Move or remove a top button | Hold OK on it |
 | Customise | The **Customise** button |
 | Live TV | The **Live TV** button or tile |
+| LG's own Live TV (the tuner) | A **TV** button, or **TV** in the Inputs list |
 | Switch input | The **Inputs** button |
 | Put an input on Home | Hold OK on it in the Inputs list |
 | Close running apps | Back on the home screen |
@@ -52,7 +54,8 @@ system apps are never in it. The list is read when it opens and closes when you 
 
 - the **dock**: each app in it can be replaced (an app already in the dock swaps places), moved or removed, and **Add an app...**
   fills a free place. Holding OK on an app gives **Add to dock**, **Move left**, **Move right**, **Remove from dock**, **Hide app** and **Uninstall** (with a confirmation prompt, for user-installed LG Store and Homebrew apps);
-- the **top buttons**: move one left or right, remove it, or add Inputs, Settings, Live TV or any app;
+- the **top buttons**: move one left or right, remove it, or add Inputs, Settings, Live TV, TV or any app. **TV** opens LG's own Live TV (the
+tuner) and is offered only when the TV has that app and **Show LG's own Live TV** is on in the manager;
 - **hidden apps** (show them again);
 - the **app order** (most used first, or A to Z);
 - **mark running apps** (a green dot on their tiles, or none);

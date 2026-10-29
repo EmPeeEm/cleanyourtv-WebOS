@@ -340,6 +340,17 @@ function inputsMenu() {
         return d.appId;
       })
       .map(function (d) {
+        /* LG's own Live TV (the tuner) is an input too: it opens LG's player with the antenna or cable channels. It is not pinned to
+           Home like an HDMI port (a button does that), so it has no hold action */
+        if (d.tuner)
+          return {
+            icon: 'tv',
+            label: t('TV'),
+            sub: t('Tuner') + (d.activate ? ' \u00B7 ' + t('Active') : ''),
+            fn: function () {
+              launch(d.appId);
+            },
+          };
         var port = 'HDMI ' + d.port,
           named = d.label && d.label !== port && d.label !== 'HDMI ' + d.port,
           parts = [];
@@ -1037,7 +1048,8 @@ function addButtonMenu() {
     saveCfg();
   };
   var items = PRESETS.filter(function (p) {
-    return liveOn() || p.action !== 'live';
+    /* LG's own Live TV: the button is offered only where that app is installed, as the Inputs list offers the tuner */
+    return (liveOn() || p.action !== 'live') && (tunerOn || p.app !== 'com.webos.app.livetv');
   }).map(function (p) {
     return {
       icon: p.icon,

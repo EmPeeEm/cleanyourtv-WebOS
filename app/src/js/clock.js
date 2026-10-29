@@ -15,11 +15,13 @@ function barLabel(o) {
     ? t('Inputs')
     : o.app === 'com.palm.app.settings'
       ? t('Settings')
-      : o.action === 'customize'
-        ? t('Customise')
-        : o.action === 'live'
-          ? t('Live TV')
-          : o.label || '';
+      : o.app === 'com.webos.app.livetv'
+        ? t('TV') /* LG's own Live TV, the tuner */
+        : o.action === 'customize'
+          ? t('Customise')
+          : o.action === 'live'
+            ? t('Live TV')
+            : o.label || '';
 }
 function clockOpts() {
   var c = cfg.clock,
@@ -43,6 +45,7 @@ var apps = [],
   colors = {},
   tiles = {},
   lastSig = '',
+  tunerOn = false,
   gSide = 0,
   gColor = '',
   gT = 0,

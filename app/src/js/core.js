@@ -13,6 +13,7 @@ var PRESETS = [
   { label: 'Inputs', icon: 'inputs', action: 'inputs' },
   { label: 'Settings', icon: 'settings', app: 'com.palm.app.settings' },
   { label: 'Live TV', icon: 'tv', action: 'live' },
+  { label: 'TV', icon: 'tv', app: 'com.webos.app.livetv' },
 ];
 var ICONS = {
   inputs: '<path d="M15 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/>',

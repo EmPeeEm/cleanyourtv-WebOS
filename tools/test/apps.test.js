@@ -102,6 +102,82 @@ run(async () => {
     'an input taken off Home leaves the dock too'
   );
 
+  // LG's own Live TV is the TV's tuner input, but the TV does not report it with the HDMI ports (issue 69): the service adds it while
+  // its app is installed, after the ports, for the Inputs list and the Inputs picker
+  r = await call(apps, '/api/inputs');
+  ok(!(r.j.devices || []).some(d => d.tuner), "a TV without LG's Live TV app lists no tuner among its inputs");
+  // getAppInfo as an LG TV answers it on webOS 22 and newer: the app's fields in appInfo, not at the top (QNED86A6A, webOS 9)
+  const tunerLuna = async (uri, p) => {
+    if (/getAppInfo/.test(uri))
+      return p && p.id === 'com.webos.app.livetv'
+        ? { returnValue: true, appId: p.id, appInfo: { title: 'Live TV', icon: 'assets/icon_livetv_80.png' } }
+        : { returnValue: false };
+    if (/getAllInputStatus/.test(uri))
+      return { returnValue: true, devices: [{ appId: 'com.webos.app.hdmi1', port: 1, label: 'HDMI 1', hdmiPlugIn: true }] };
+    return { returnValue: true };
+  };
+  r = await call(apps, '/api/apps');
+  ok(r.j.tuner === undefined, "a TV without LG's Live TV app does not tell the launcher about a tuner (no TV button)");
+  const tunerApps = req('apps').create({ config: memoryConfig({}), luna: tunerLuna, version: '1.6.0', feature: () => null });
+  r = await call(tunerApps, '/api/apps');
+  ok(r.j.tuner === true, "a TV with LG's Live TV says so, so Customise offers the TV button");
+  r = await call(tunerApps, '/api/inputs');
+  ok(
+    r.j.devices.length === 2 &&
+      r.j.devices[1].appId === 'com.webos.app.livetv' &&
+      r.j.devices[1].tuner === true &&
+      !r.j.devices[1].activate,
+    "LG's Live TV is listed with the inputs while its app is installed, after the HDMI ports"
+  );
+  await tunerApps.onForeground('com.webos.app.livetv');
+  r = await call(tunerApps, '/api/inputs');
+  ok(
+    r.j.devices[1].activate === true,
+    "the tuner is the active input while LG's Live TV is the app in front (the green dot in the picker)"
+  );
+  r = await call(tunerApps, '/api/inputs/pin', 'POST', { id: 'com.webos.app.livetv', on: true });
+  ok(r.j.returnValue === false, 'the tuner is not pinned to Home like an HDMI port (a top button opens it)');
+  const ownLuna = async uri => {
+    if (/getAppInfo/.test(uri)) return { returnValue: true, id: 'com.webos.app.livetv', title: 'Live TV' };
+    if (/getAllInputStatus/.test(uri)) return { returnValue: true, devices: [{ id: 'TV', appId: 'com.webos.app.livetv', label: 'TV' }] };
+    return { returnValue: true };
+  };
+  const ownApps = req('apps').create({ config: memoryConfig({}), luna: ownLuna, version: '1.6.0', feature: () => null });
+  r = await call(ownApps, '/api/inputs');
+  ok(r.j.devices.length === 1, 'a TV that reports the tuner itself gets no second one');
+  // the manager's "Show LG's own Live TV" off: no tuner in the list (also where the firmware reports it), no TV button, the HDMI ports stay
+  const offApps = req('apps').create({
+    config: memoryConfig({ options: { tuner: false } }),
+    luna: tunerLuna,
+    version: '1.6.0',
+    feature: () => null,
+  });
+  r = await call(offApps, '/api/inputs');
+  const offApps2 = req('apps').create({
+    config: memoryConfig({ options: { tuner: false } }),
+    luna: ownLuna,
+    version: '1.6.0',
+    feature: () => null,
+  });
+  const r2 = await call(offApps2, '/api/inputs');
+  ok(
+    r.j.devices.length === 1 && r.j.devices[0].appId === 'com.webos.app.hdmi1' && r2.j.devices.length === 0,
+    "with Show LG's own Live TV off the tuner is left out of the inputs, also where the TV reports it itself"
+  );
+  r = await call(offApps, '/api/apps');
+  ok(r.j.tuner === undefined, "with Show LG's own Live TV off the launcher gets no TV button");
+  const onApps = req('apps').create({
+    config: memoryConfig({ options: { tuner: true, liveTv: false } }),
+    luna: tunerLuna,
+    version: '1.6.0',
+    feature: () => null,
+  });
+  r = await call(onApps, '/api/inputs');
+  ok(
+    r.j.devices.length === 2 && r.j.devices[1].tuner === true,
+    'the tuner does not depend on Show Live TV (the playlist): each is its own switch'
+  );
+
   // uninstalling apps
   r = await call(apps, '/api/apps/uninstall', 'POST', { id: 'bad id!' });
   ok(r.code === 400 && r.j.returnValue === false, 'uninstall with bad id is refused');

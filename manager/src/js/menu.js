@@ -436,6 +436,13 @@ function build() {
       },
     });
     rows.push({
+      label: 'Show LG\u2019s own Live TV',
+      sub: onoff(st.options.tuner !== false),
+      fn: function () {
+        opt({ tuner: st.options.tuner === false });
+      },
+    });
+    rows.push({
       label: 'Playlist',
       sub: l2.configured
         ? l2.channels +

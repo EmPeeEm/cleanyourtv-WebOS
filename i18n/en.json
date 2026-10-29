@@ -723,5 +723,10 @@
  "Scenes": "Scenes",
  "Scripts": "Scripts",
  "Automations": "Automations",
- "Helpers": "Helpers"
+ "Helpers": "Helpers",
+ "TV": "TV",
+ "This plays your own playlist, not the TV’s tuner. For antenna or cable, add a TV button in Customise.": "This plays your own playlist, not the TV’s tuner. For antenna or cable, add a TV button in Customise.",
+ "Tuner": "Tuner",
+ "Show LG’s own Live TV": "Show LG’s own Live TV",
+ "On: LG’s own Live TV (the antenna or cable tuner) is in the Inputs list and the Input key list, and the launcher offers a TV button. Off: none of that, for a TV that only plays a playlist or external boxes. Independent of Show Live TV, so you can have both, one of them, or neither.": "On: LG’s own Live TV (the antenna or cable tuner) is in the Inputs list and the Input key list, and the launcher offers a TV button. Off: none of that, for a TV that only plays a playlist or external boxes. Independent of Show Live TV, so you can have both, one of them, or neither."
 }

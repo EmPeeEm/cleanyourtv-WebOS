@@ -76,7 +76,7 @@ function create(ctx) {
   async function setOptions(o) {
     const cur = config.options();
     const next = Object.assign({}, cur);
-    for (const k of ['debloat', 'inputKey', 'liveTv']) if (typeof o[k] === 'boolean') next[k] = o[k];
+    for (const k of ['debloat', 'inputKey', 'liveTv', 'tuner']) if (typeof o[k] === 'boolean') next[k] = o[k];
     if (Array.isArray(o.debloatOff)) next.debloatOff = debloat.cleanOff(o.debloatOff);
     config.update('manager', c => {
       // the language of every screen: a two-letter code, or '' to follow the TV
