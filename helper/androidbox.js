@@ -116,12 +116,31 @@ function create(ctx) {
         'LEANBACK_LAUNCHER 1 2>&1);; esac; echo "$o"'
     );
     let res = r;
-    if (r.ok && /No activities found|monkey aborted/i.test(r.out)) res = failure('launch', pkg + ' is not installed on the box');
+    const name = await titleOf(id);
+    if (r.ok && /No activities found|monkey aborted/i.test(r.out))
+      res = failure('launch', name + ' is not installed on the box (' + pkg + ')');
     last = { at: Date.now(), app: id, ok: res.ok, step: res.step, error: res.error };
     // the TV shows the box's screen by now, so say on it what went wrong
-    if (!res.ok) tell(res.error);
+    if (!res.ok) {
+      tell(
+        res.step === 'launch'
+          ? name + ' is not installed on the Android box. Install it there, or move it back to the TV under Android box > Choose apps.'
+          : name + ' could not open on the Android box: ' + res.error
+      );
+    }
     console.log('androidbox: ' + id + ' -> ' + pkg + (res.ok ? ' started' : ' failed at ' + res.step + ': ' + res.error));
     return res;
+  }
+
+  // the name of a TV app as the person knows it (the id when the TV does not say)
+  async function titleOf(id) {
+    try {
+      const a = ctx.feature && ctx.feature('apps');
+      const hit = ((a && (await a.apps())) || []).filter(x => x.id === id)[0];
+      return (hit && hit.title) || id;
+    } catch (_) {
+      return id;
+    }
   }
 
   // a message over whatever is on the TV (the notification window), best effort

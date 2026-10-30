@@ -124,7 +124,12 @@ run(async () => {
   box = await device({ trusted: KEY, reply: () => '** No activities found to run, monkey aborted.\n' });
   shown.length = 0;
   await fails('Plex is not installed', box.port, 'launch', 'not installed');
-  ok(shown.length >= 1 && /not installed/.test(shown[0].text) && shown[0].title === 'Android box', 'the TV says on screen what went wrong');
+  ok(
+    shown.length >= 1 &&
+      /^Plex is not installed on the Android box\. Install it there/.test(shown[0].text) &&
+      shown[0].title === 'Android box',
+    'the TV says on screen, by the app’s name, what went wrong: ' + (shown[0] && shown[0].text)
+  );
   box.close();
   box = await device({ trusted: '', prompt: 'deny' });
   await fails('the box has not allowed the TV', box.port, 'authorize', 'accept the question');
