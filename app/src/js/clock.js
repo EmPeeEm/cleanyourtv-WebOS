@@ -15,13 +15,15 @@ function barLabel(o) {
     ? t('Inputs')
     : o.app === 'com.palm.app.settings'
       ? t('Settings')
-      : o.app === 'com.webos.app.livetv'
-        ? t('TV') /* LG's own Live TV, the tuner */
-        : o.action === 'customize'
-          ? t('Customise')
-          : o.action === 'live'
-            ? t('Live TV')
-            : o.label || '';
+      : o.action === 'poweroff'
+        ? t('Power off')
+        : o.app === 'com.webos.app.livetv'
+          ? t('TV') /* LG's own Live TV, the tuner */
+          : o.action === 'customize'
+            ? t('Customise')
+            : o.action === 'live'
+              ? t('Live TV')
+              : o.label || '';
 }
 function clockOpts() {
   var c = cfg.clock,
