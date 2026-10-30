@@ -17,6 +17,9 @@ const P = require('./paths'),
 const HALF_LIFE = 30 * 24 * 3600 * 1000; // usage counts halve every 30 days
 const WALL_SECS = [0, 10, 30, 60, 180, 300, 900, 3600]; // the photo-change intervals Customise > Wallpapers offers
 const HOME = 'com.webos.app.home';
+// never offered for uninstall: the Homebrew Channel runs the boot scripts (root, CleanYourTV, the update blocking), and the other two keep
+// LG's firmware updates away
+const KEEP = ['org.webosbrew.hbchannel', 'org.webosbrew.safeupdate', 'org.webosbrew.appupdateblocker'];
 
 function create(ctx) {
   const { config, luna } = ctx;
@@ -29,7 +32,7 @@ function create(ctx) {
     asking = null;
   const uninstalledRecently = {};
   function isRemovable(a) {
-    if (!a || !a.id || a.id === HOME || /^com\.cleanyourtv\./.test(a.id)) return false;
+    if (!a || !a.id || a.id === HOME || /^com\.cleanyourtv\./.test(a.id) || KEEP.indexOf(a.id) >= 0) return false;
     if (a.removable === true) return true;
     if (a.removable === false || a.systemApp === true) return false;
     if (a.folderPath && (a.folderPath.indexOf('/media/developer/apps') === 0 || a.folderPath.indexOf('/var/luna/user/data/apps') === 0))
@@ -62,7 +65,14 @@ function create(ctx) {
 
   async function uninstallApp(id) {
     // an app id: letters, digits, dots and dashes, never starting with a dot (a folder name with rm -rf behind it)
-    if (!id || typeof id !== 'string' || !/^[\w\-][\w.\-]*$/.test(id) || /^com\.cleanyourtv\./.test(id) || id === HOME) {
+    if (
+      !id ||
+      typeof id !== 'string' ||
+      !/^[\w\-][\w.\-]*$/.test(id) ||
+      /^com\.cleanyourtv\./.test(id) ||
+      id === HOME ||
+      KEEP.indexOf(id) >= 0
+    ) {
       return { returnValue: false, error: 'refused' };
     }
     const all = await installed();

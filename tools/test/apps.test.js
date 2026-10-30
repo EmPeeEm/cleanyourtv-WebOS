@@ -221,6 +221,11 @@ run(async () => {
             removable: true,
           },
           { id: 'com.dev.app', title: 'Dev App', folderPath: '/media/developer/apps/usr/palm/applications/com.dev.app' },
+          {
+            id: 'org.webosbrew.hbchannel',
+            title: 'Homebrew Channel',
+            folderPath: '/media/developer/apps/usr/palm/applications/org.webosbrew.hbchannel',
+          },
         ],
       };
     }
@@ -234,8 +239,8 @@ run(async () => {
   const apps2 = req('apps').create({ config: config2, luna: luna2, version: '1.6.0', feature: () => null });
   const list2 = await call(apps2, '/api/apps');
   ok(
-    list2.j.apps.length === 2 && list2.j.apps[0].removable === true && list2.j.apps[1].removable === true,
-    'store and dev apps are marked removable'
+    list2.j.apps.length === 3 && list2.j.apps[0].removable === true && list2.j.apps[1].removable === true && !list2.j.apps[2].removable,
+    'store and dev apps are marked removable, the Homebrew Channel is not'
   );
 
   r = await call(apps2, '/api/apps/uninstall', 'POST', { id: 'com.store.app' });
@@ -303,6 +308,6 @@ run(async () => {
     fs.existsSync = exists;
     ex.execFile = execFile;
   }
-  for (const bad of ['..', '.hidden', '../x'])
+  for (const bad of ['..', '.hidden', '../x', 'org.webosbrew.hbchannel', 'org.webosbrew.safeupdate', 'org.webosbrew.appupdateblocker'])
     ok((await call(apps, '/api/apps/uninstall', 'POST', { id: bad })).j.error === 'refused', 'the id ' + bad + ' is refused');
 });
