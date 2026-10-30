@@ -264,7 +264,6 @@
  "Instructions for the AI": "Yapay zekâ için talimatlar",
  "just now": "az önce",
  "Keeps acr2 from starting: the service that recognises what is on screen (LG calls it LivePlus) and reports it.": "Ekrandakini tanıyan (LG buna LivePlus der) ve bildiren acr2 hizmetinin başlamasını engeller.",
- "Keeps admanager and adoverlay-service from starting and points three LG ad servers at nothing in /etc/hosts.": "admanager ve adoverlay-service'in başlamasını engeller ve LG'nin üç reklam sunucusunu /etc/hosts'ta hiçliğe yönlendirir.",
  "key, model, server": "anahtar, model, sunucu",
  "Language": "Dil",
  "Large": "Büyük",

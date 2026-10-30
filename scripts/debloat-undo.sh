@@ -8,7 +8,7 @@ units=""; bins=""
 on logs && units="$units remotelogger service-logger"
 on suggestions && { units="$units contentminer nudge"; bins="$bins sportsalarm"; }
 on tracking && bins="$bins acr2"
-on ads && bins="$bins admanager adoverlay-service"
+on ads && bins="$bins admanager adoverlay-service"   # admanager: a stub from before 1.6.11 (issue 47)
 for b in $bins; do
   for m in $(awk -v b="/usr/sbin/$b" 'substr($2,length($2)-length(b)+1)==b {print $2}' /proc/mounts | sort -r); do umount $m 2>/dev/null; done
 done
