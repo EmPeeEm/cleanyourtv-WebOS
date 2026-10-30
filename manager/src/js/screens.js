@@ -204,6 +204,38 @@ function openAndroidBox() {
     }
   );
 }
+/* Apps on the box: the TV's apps, each opening on the box or on the TV (OK switches); the usual Android package is filled in where it is known */
+function openAbApps() {
+  api('/api/androidbox/apps').then(
+    function (r) {
+      abl = r.apps || [];
+      if (view !== 'abapps') push('abapps');
+      else {
+        build();
+        draw();
+      }
+    },
+    function () {
+      banner('The service did not answer', 'err');
+    }
+  );
+}
+function abToggle(a) {
+  api('/api/androidbox/app', { id: a.id, on: !a.on }).then(
+    function (r) {
+      if (r.error) {
+        banner(r.error, 'err');
+        return;
+      }
+      ab = r;
+      banner('');
+      openAbApps();
+    },
+    function () {
+      banner('The service did not answer', 'err');
+    }
+  );
+}
 function abRefresh() {
   if (view === 'androidbox') openAndroidBox();
 }

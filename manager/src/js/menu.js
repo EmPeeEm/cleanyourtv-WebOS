@@ -874,6 +874,29 @@ function build() {
     rows.push({ label: 'Back', fn: pop });
     return;
   }
+  if (view === 'abapps') {
+    rows.push({
+      label: 'Apps on the box',
+      sub: 'OK moves an app to the box or back to the TV. The others stay on the TV.',
+      fn: function () {},
+    });
+    abl.forEach(function (a) {
+      rows.push({
+        label: a.title || a.id,
+        sub: a.on
+          ? 'on the box \u00B7 ' + a.pkg
+          : a.suggest
+            ? 'on the TV \u00B7 ' + a.suggest + ' on the box'
+            : 'on the TV \u00B7 needs its package from your phone',
+        fn: function () {
+          abToggle(a);
+        },
+      });
+    });
+    rows.push({ sep: true });
+    rows.push({ label: 'Back', fn: pop });
+    return;
+  }
   if (view === 'androidbox') {
     var a = ab || { configured: false, settings: null, key: {}, last: null },
       cfg = a.settings || {},
@@ -884,9 +907,16 @@ function build() {
       fn: openAbPair,
     });
     rows.push({
-      label: 'Apps on the box',
-      sub: a.configured ? Object.keys(cfg.apps).join(', ') : 'none yet',
-      fn: null,
+      label: 'Choose apps',
+      sub: a.configured
+        ? Object.keys(cfg.apps).length
+          ? Object.keys(cfg.apps).join(', ')
+          : 'none yet: the apps stay on the TV'
+        : 'set it up first',
+      dim: !a.configured,
+      fn: function () {
+        if (a.configured) openAbApps();
+      },
     });
     rows.push({ sep: true });
     rows.push({

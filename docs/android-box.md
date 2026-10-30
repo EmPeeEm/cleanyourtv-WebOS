@@ -40,6 +40,16 @@ curl -s -X POST http://127.0.0.1:8765/api/androidbox/test
 `apps` has the TV's app id on the left and the Android package on the right (up to 20). An empty host switches it off.
 `GET /api/androidbox` shows the settings, whether the key is ready, and what the last start did.
 
+## Choosing which apps open on the box
+
+Only the apps you choose move to the box; every other app opens on the TV as before.
+
+- **On the TV:** in the manager, **Android box > Choose apps** lists the TV's apps. OK moves an app to the box or back to the TV. The
+  usual Android package is filled in for well-known apps (Plex, Netflix, YouTube, Disney+, Prime Video, Spotify, Twitch, Kodi, Jellyfin).
+  For another app the TV asks for its package: type it on your phone.
+- **On your phone:** the setup page lists the TV's apps with a tick box. Tick the apps that open on the box and check or type their
+  package. With nothing ticked, the box stays set up and every app opens on the TV.
+
 ## What happens when you open the app
 
 1. The TV switches to the HDMI input at once.

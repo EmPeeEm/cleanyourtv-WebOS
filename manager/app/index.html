@@ -421,6 +421,7 @@ var napi = null,
   lv = null,
   wp = null,
   ab = null,
+  abl = [],
   vo = null,
   mdl = [],
   agl = [],
@@ -1380,6 +1381,29 @@ function build() {
     rows.push({ label: 'Back', fn: pop });
     return;
   }
+  if (view === 'abapps') {
+    rows.push({
+      label: 'Apps on the box',
+      sub: 'OK moves an app to the box or back to the TV. The others stay on the TV.',
+      fn: function () {},
+    });
+    abl.forEach(function (a) {
+      rows.push({
+        label: a.title || a.id,
+        sub: a.on
+          ? 'on the box \u00B7 ' + a.pkg
+          : a.suggest
+            ? 'on the TV \u00B7 ' + a.suggest + ' on the box'
+            : 'on the TV \u00B7 needs its package from your phone',
+        fn: function () {
+          abToggle(a);
+        },
+      });
+    });
+    rows.push({ sep: true });
+    rows.push({ label: 'Back', fn: pop });
+    return;
+  }
   if (view === 'androidbox') {
     var a = ab || { configured: false, settings: null, key: {}, last: null },
       cfg = a.settings || {},
@@ -1390,9 +1414,16 @@ function build() {
       fn: openAbPair,
     });
     rows.push({
-      label: 'Apps on the box',
-      sub: a.configured ? Object.keys(cfg.apps).join(', ') : 'none yet',
-      fn: null,
+      label: 'Choose apps',
+      sub: a.configured
+        ? Object.keys(cfg.apps).length
+          ? Object.keys(cfg.apps).join(', ')
+          : 'none yet: the apps stay on the TV'
+        : 'set it up first',
+      dim: !a.configured,
+      fn: function () {
+        if (a.configured) openAbApps();
+      },
     });
     rows.push({ sep: true });
     rows.push({
@@ -2210,6 +2241,38 @@ function openAndroidBox() {
         build();
         draw();
       }
+    },
+    function () {
+      banner('The service did not answer', 'err');
+    }
+  );
+}
+/* Apps on the box: the TV's apps, each opening on the box or on the TV (OK switches); the usual Android package is filled in where it is known */
+function openAbApps() {
+  api('/api/androidbox/apps').then(
+    function (r) {
+      abl = r.apps || [];
+      if (view !== 'abapps') push('abapps');
+      else {
+        build();
+        draw();
+      }
+    },
+    function () {
+      banner('The service did not answer', 'err');
+    }
+  );
+}
+function abToggle(a) {
+  api('/api/androidbox/app', { id: a.id, on: !a.on }).then(
+    function (r) {
+      if (r.error) {
+        banner(r.error, 'err');
+        return;
+      }
+      ab = r;
+      banner('');
+      openAbApps();
     },
     function () {
       banner('The service did not answer', 'err');

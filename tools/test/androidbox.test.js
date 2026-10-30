@@ -25,8 +25,8 @@ run(async () => {
   ok(mod.clean(Object.assign({}, good, { host: '' })) === null, 'no host: the box is switched off');
   ok(mod.clean(Object.assign({}, good, { input: 'netflix' })) === null, 'only an HDMI input app is accepted');
   ok(
-    mod.clean(Object.assign({}, good, { apps: { plex: 'com.x; id' } })) === null,
-    'a package with shell characters is dropped, and without apps there is no box'
+    JSON.stringify(mod.clean(Object.assign({}, good, { apps: { plex: 'com.x; id' } })).apps) === '{}',
+    'a package with shell characters is dropped (a box may have no apps: everything opens on the TV)'
   );
   ok(
     JSON.stringify(mod.clean(Object.assign({}, good, { apps: { plex: 'com.plexapp.android', bad: 'nodots', 'a b': 'com.a.b' } })).apps) ===
@@ -46,6 +46,7 @@ run(async () => {
       { id: 'plex', title: 'Plex' },
       { id: 'com.webos.app.hdmi2', title: 'PlayStation', input: 2 },
       { id: 'netflix', title: 'Netflix' },
+      { id: 'mytv.player', title: 'My Player' },
     ],
   };
   const f = mod.create({ config: conf, luna, feature: n => (n === 'apps' ? appsStub : null) });
@@ -136,6 +137,53 @@ run(async () => {
     'no valid app is refused: ' + r.j.error
   );
 
+  // ---- choosing apps: each one on the box or on the TV, the others stay as they were ----
+  r = await call(f, '/api/androidbox/apps');
+  const byId = {};
+  r.j.apps.forEach(x => (byId[x.id] = x));
+  ok(r.j.apps.length === 3 && !byId['com.webos.app.hdmi2'], 'the TV’s apps are listed, without the inputs');
+  ok(byId.plex.on === true && byId.plex.pkg === 'com.plexapp.android', 'an app that opens on the box says so, with its package');
+  ok(byId.netflix.on === false && byId.netflix.suggest === 'com.netflix.ninja', 'a known app that stays on the TV has a suggested package');
+  ok(byId['mytv.player'].suggest === '', 'an unknown app has no suggestion');
+  ok(mod.suggest({ id: 'cdp-30', title: 'Plex' }) === 'com.plexapp.android', 'the suggestion also finds an app by its title');
+  ok(
+    mod.suggest({ id: 'amazon', title: 'Prime Video' }) === 'com.amazon.amazonvideo.livingroom' &&
+      mod.suggest({ id: 'amazon.alexa.view', title: 'Amazon Alexa' }) === '',
+    'Prime Video is suggested, Alexa is not'
+  );
+  r = await call(f, '/api/androidbox/app', 'POST', { id: 'netflix', on: true });
+  ok(
+    r.code === 200 &&
+      conf.get().androidBox.apps.netflix === 'com.netflix.ninja' &&
+      conf.get().androidBox.apps.plex === 'com.plexapp.android' &&
+      f.handles('netflix'),
+    'one app moved to the box with its suggested package, the others stay'
+  );
+  r = await call(f, '/api/androidbox/app', 'POST', { id: 'mytv.player', on: true });
+  ok(
+    r.code === 400 && /phone/.test(r.j.error) && !f.handles('mytv.player'),
+    'an app without a known package asks for it from the phone: ' + r.j.error
+  );
+  r = await call(f, '/api/androidbox/app', 'POST', { id: 'mytv.player', on: true, pkg: 'org.example.player' });
+  ok(r.code === 200 && conf.get().androidBox.apps['mytv.player'] === 'org.example.player', 'a package that is given is used');
+  r = await call(f, '/api/androidbox/app', 'POST', { id: 'mytv.player', on: true, pkg: 'bad package;' });
+  ok(
+    r.code === 400 && conf.get().androidBox.apps['mytv.player'] === 'org.example.player',
+    'an invalid package is refused and nothing changes'
+  );
+  r = await call(f, '/api/androidbox/app', 'POST', { id: 'bad id!', on: false });
+  ok(r.code === 400, 'an invalid app id is refused');
+  for (const id of ['plex', 'netflix', 'mytv.player']) await call(f, '/api/androidbox/app', 'POST', { id, on: false });
+  ok(
+    JSON.stringify(conf.get().androidBox.apps) === '{}' && conf.get().androidBox.host === '127.0.0.1' && !f.handles('plex'),
+    'with the last app back on the TV the box stays set up, and every app opens on the TV'
+  );
+  await call(f, '/api/androidbox/app', 'POST', { id: 'plex', on: true });
+  ok(f.handles('plex'), 'an app can be put back on the box');
+  const g = mod.create({ config: memoryConfig({}), luna, feature: () => null });
+  r = await call(g, '/api/androidbox/app', 'POST', { id: 'plex', on: true });
+  ok(r.code === 400, 'without a box set up nothing can be chosen');
+
   // ---- the phone page ----
   const phone = (method, p, code, body) =>
     new Promise(res => {
@@ -163,8 +211,12 @@ run(async () => {
   ok((await phone('GET', '/api/state', 'wrong')).code === 403, 'the data needs the code');
   const st = JSON.parse((await phone('GET', '/api/state', pr.j.code)).body);
   ok(
-    st.settings.host === '127.0.0.1' && st.apps.length === 2 && st.apps[0].id === 'plex',
-    'the page gets the settings and the TV apps, without inputs'
+    st.settings.host === '127.0.0.1' &&
+      st.apps.length === 3 &&
+      st.apps[0].id === 'plex' &&
+      st.suggest.netflix === 'com.netflix.ninja' &&
+      !st.suggest['mytv.player'],
+    'the page gets the settings, the TV apps without inputs, and the usual packages of known apps'
   );
   pg = await phone('POST', '/api/save', pr.j.code, {
     host: '192.168.1.60',
@@ -183,8 +235,13 @@ run(async () => {
   ok(sv > 0, 'and the status shows when, for the manager');
   pg = await phone('POST', '/api/save', pr.j.code, { host: '192.168.1.60', input: 'com.webos.app.hdmi3', apps: {} });
   ok(
+    JSON.parse(pg.body).ok && conf.get().androidBox.host === '192.168.1.60' && JSON.stringify(conf.get().androidBox.apps) === '{}',
+    'a box with no app ticked is saved: every app opens on the TV'
+  );
+  pg = await phone('POST', '/api/save', pr.j.code, { host: '192.168.1.61', input: 'com.webos.app.hdmi3', apps: { plex: 'nodots' } });
+  ok(
     JSON.parse(pg.body).error && conf.get().androidBox.host === '192.168.1.60',
-    'a save that is not valid is explained and changes nothing: ' + JSON.parse(pg.body).error
+    'a save with an invalid package is explained and changes nothing: ' + JSON.parse(pg.body).error
   );
   for (let i = 0; i < 9; i++) await phone('GET', '/api/state', '000000');
   await sleep(100);

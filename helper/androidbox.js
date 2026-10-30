@@ -2,6 +2,8 @@
 // from the launcher switches the TV to the HDMI input the box is on and starts the box's app over ADB (network, port 5555).
 //   GET  /api/androidbox        the settings, whether the key exists, what the last start did, and the phone page's state
 //   POST /api/androidbox        {host, port, input, apps: {<TV app id>: <Android package>}} saves the settings; an empty host switches it off
+//   GET  /api/androidbox/apps   the TV's apps with whether each opens on the box, its package, and a suggested package where it is known
+//   POST /api/androidbox/app    {id, on, pkg?} one app on or off the box (the package: given, else the one saved, else the suggestion)
 //   POST /api/androidbox/test   connects to the box and asks for its model, without switching the input
 //   POST /api/androidbox/pair   {stop?} opens (or closes) the phone page on the LAN, port 8793, with a code shown on the TV
 // The settings are kept in config.json (androidBox), apart from the launcher's own keys. The box must have network debugging on; the first
@@ -25,6 +27,33 @@ const PAIR_PORT = 8793, // after the Cards page (8792)
   PAIR_MS = 10 * 60 * 1000;
 const KEY_FILE = () => path.join(P.D, 'adb', 'adbkey'); // the key the box allows; a key copied from a computer (~/.android/adbkey) works too
 
+// The usual Android package of well-known apps, found by the TV app's id or title. It is only a suggestion that the person can change;
+// an app that is not on the box is reported when it is opened.
+const KNOWN = [
+  { re: /plex/i, pkg: 'com.plexapp.android' },
+  { re: /netflix/i, pkg: 'com.netflix.ninja' },
+  { re: /youtube/i, pkg: 'com.google.android.youtube.tv' },
+  { re: /disney/i, pkg: 'com.disney.disneyplus' },
+  { re: /prime video|^amazon /i, pkg: 'com.amazon.amazonvideo.livingroom' },
+  { re: /spotify/i, pkg: 'com.spotify.tv.android' },
+  { re: /twitch/i, pkg: 'tv.twitch.android.app' },
+  { re: /kodi/i, pkg: 'org.xbmc.kodi' },
+  { re: /jellyfin/i, pkg: 'org.jellyfin.androidtv' },
+];
+function suggest(app) {
+  const text = (app.id || '') + ' ' + (app.title || '');
+  for (const k of KNOWN) if (k.re.test(text)) return k.pkg;
+  return '';
+}
+function suggestions(list) {
+  const out = {};
+  list.forEach(x => {
+    const s = suggest(x);
+    if (s) out[x.id] = s;
+  });
+  return out;
+}
+
 // the settings as they may be stored: only what is valid, or null when the box is not set up
 function clean(b) {
   const o = b && typeof b === 'object' ? b : {};
@@ -39,7 +68,6 @@ function clean(b) {
     .forEach(id => {
       if (APP.test(id) && typeof src[id] === 'string' && PACKAGE.test(src[id])) apps[id] = src[id];
     });
-  if (!Object.keys(apps).length) return null;
   return { host, port: port > 0 && port < 65536 ? port : 5555, input: o.input, apps };
 }
 
@@ -47,7 +75,7 @@ function clean(b) {
 function why(o) {
   if (!HOST.test(typeof o.host === 'string' ? o.host.trim() : '')) return 'The address of the box is not valid.';
   if (!INPUT.test(o.input || '')) return 'Choose the HDMI input the box is on.';
-  return 'Add at least one app with its Android package, for example ' + page.PLEX + '.';
+  return 'The Android package of an app is not valid, for example ' + page.PLEX + '.';
 }
 
 function create(ctx) {
@@ -117,7 +145,8 @@ function create(ctx) {
     const o = b && typeof b === 'object' ? b : {};
     const off = typeof o.host === 'string' && !o.host.trim();
     const next = off ? null : clean(o);
-    if (!off && !next) return { error: why(o) };
+    const asked = o.apps && typeof o.apps === 'object' ? Object.keys(o.apps).length : 0;
+    if (!off && (!next || (asked && !Object.keys(next.apps).length))) return { error: why(o) };
     config.update('androidbox', c => {
       if (next) c.androidBox = next;
       else delete c.androidBox;
@@ -169,7 +198,45 @@ function create(ctx) {
   async function installedApps() {
     const a = ctx.feature && ctx.feature('apps');
     const list = a ? await a.apps() : [];
-    return list.filter(x => !x.input && !x.sys).map(x => ({ id: x.id, title: x.title }));
+    return list.filter(x => !x.input && !x.sys && x.id !== 'com.cleanyourtv.manager').map(x => ({ id: x.id, title: x.title }));
+  }
+  // the TV's apps for choosing: on = opens on the box, pkg = its package there, suggest = the usual package where the app is known
+  async function choices() {
+    const cfg = settings();
+    const have = (cfg && cfg.apps) || {};
+    const list = (await installedApps()).map(x => ({
+      id: x.id,
+      title: x.title,
+      on: !!have[x.id],
+      pkg: have[x.id] || '',
+      suggest: suggest(x),
+    }));
+    Object.keys(have).forEach(id => {
+      if (!list.some(x => x.id === id)) list.push({ id, title: id, on: true, pkg: have[id], suggest: '' });
+    });
+    return list;
+  }
+  // one app on or off the box; the other choices stay. Needs a box that is set up.
+  async function toggle(b) {
+    const cfg = settings();
+    if (!cfg) return { error: 'Set up the box first.' };
+    const id = b && typeof b.id === 'string' ? b.id : '';
+    if (!APP.test(id)) return { error: 'This app is not valid.' };
+    const apps = Object.assign({}, cfg.apps);
+    if (b.on === false) delete apps[id];
+    else {
+      const known = (await choices()).filter(x => x.id === id)[0];
+      const pkg = typeof b.pkg === 'string' && b.pkg.trim() ? b.pkg.trim() : apps[id] || (known && known.suggest) || '';
+      if (!pkg) return { error: 'This app needs its Android package: type it on your phone (Set up from your phone).' };
+      if (!PACKAGE.test(pkg)) return { error: 'The Android package of this app is not valid.' };
+      if (!apps[id] && Object.keys(apps).length >= MAX_APPS) return { error: 'Up to ' + MAX_APPS + ' apps can open on the box.' };
+      apps[id] = pkg;
+    }
+    config.update('androidbox', c => {
+      c.androidBox = Object.assign({}, cfg, { apps });
+    });
+    savedAt = Date.now();
+    return status();
   }
   async function phone(req, res, code, wrong) {
     // a page that was closed (or replaced by a newer one) answers nothing, also on a connection a phone kept open
@@ -192,7 +259,7 @@ function create(ctx) {
       return json({ error: 'wrong code' }, 403);
     }
     touch();
-    if (u === '/api/state') return json({ settings: settings(), apps: await installedApps() });
+    if (u === '/api/state') return json({ settings: settings(), apps: await installedApps(), suggest: suggestions(await installedApps()) });
     if (u === '/api/save' && req.method === 'POST') {
       const r = await save(await web.body(req, 65536));
       return json(r.error ? { error: i18n.tr(i18n.lang(req, config.get().lang), r.error) } : { ok: true, settings: r.settings });
@@ -206,6 +273,11 @@ function create(ctx) {
       return web.json(res, r, r.error ? 400 : 200);
     }
     if (u === '/api/androidbox') return web.json(res, await status());
+    if (u === '/api/androidbox/apps') return web.json(res, { apps: await choices() });
+    if (u === '/api/androidbox/app' && req.method === 'POST') {
+      const r = await toggle(await body(req));
+      return web.json(res, r, r.error ? 400 : 200);
+    }
     if (u === '/api/androidbox/test' && req.method === 'POST') return web.json(res, await test());
     if (u === '/api/androidbox/pair' && req.method === 'POST') {
       const b = await body(req);
@@ -214,7 +286,13 @@ function create(ctx) {
     web.notFound(res);
   }
 
-  return { name: 'androidbox', paths: ['/api/androidbox', '/api/androidbox/test', '/api/androidbox/pair'], handle, handles, open };
+  return {
+    name: 'androidbox',
+    paths: ['/api/androidbox', '/api/androidbox/apps', '/api/androidbox/app', '/api/androidbox/test', '/api/androidbox/pair'],
+    handle,
+    handles,
+    open,
+  };
 }
 
-module.exports = { create, clean };
+module.exports = { create, clean, suggest };
