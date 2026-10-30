@@ -92,7 +92,13 @@ async function change(size, run) {
     // and can take a while. Short of memory, the TV could stall or kill apps, so wait for the user to close some.
     const need = now.stored - now.ram + MARGIN;
     if (now.memAvailable && now.memAvailable < need)
-      return 'Not enough free memory to switch compressed memory off now (' + now.memAvailable + ' MB free, ' + need + ' MB needed). Close some apps and try again.';
+      return (
+        'Not enough free memory to switch compressed memory off now (' +
+        now.memAvailable +
+        ' MB free, ' +
+        need +
+        ' MB needed). Close some apps and try again.'
+      );
     const r = await run('swapoff', [DEV], { timeout: 120000 });
     if (!r.ok) return 'swapoff: ' + why(r);
   }

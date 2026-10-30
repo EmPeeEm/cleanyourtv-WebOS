@@ -3,7 +3,7 @@
 const fs = require('fs'),
   path = require('path'),
   { EventEmitter } = require('events');
-const { ok, call, tmp, memoryConfig, run } = require('./lib');
+const { ok, call, memoryConfig, run } = require('./lib');
 const P = require(path.join(__dirname, '..', '..', 'helper', 'paths'));
 const audio = require(path.join(__dirname, '..', '..', 'helper', 'audio'));
 const KEY = 'com.webos.surfacemanager.volumeOSD';
@@ -13,7 +13,8 @@ function tv(o) {
   let value = o.value;
   const luna = async (uri, payload) => {
     calls.push(uri.split('/').pop() + ' ' + JSON.stringify(payload));
-    if (/getConfigs$/.test(uri)) return value === undefined ? { returnValue: true, configs: {} } : { returnValue: true, configs: { [KEY]: value } };
+    if (/getConfigs$/.test(uri))
+      return value === undefined ? { returnValue: true, configs: {} } : { returnValue: true, configs: { [KEY]: value } };
     if (/setConfigs$/.test(uri)) {
       if (o.refuse) return { returnValue: false, errorText: 'refused' };
       value = payload.configs[KEY];
@@ -35,7 +36,10 @@ const saved = path.join(P.D, 'backup', 'volume-osd.orig');
 const wait = () => new Promise(r => setTimeout(r, 20));
 
 run(async () => {
-  ok(audio.DEFAULT_THEME === 'system' && audio.THEMES.join() === 'pill,capsule,dial,system', 'LG’s own bar is the default; three custom themes');
+  ok(
+    audio.DEFAULT_THEME === 'system' && audio.THEMES.join() === 'pill,capsule,dial,system',
+    'LG’s own bar is the default; three custom themes'
+  );
 
   // the default theme touches nothing
   let t = tv({ value: true });
@@ -89,9 +93,15 @@ run(async () => {
   a = audio.create({ config: memoryConfig({ options: { volumeTheme: 'pill' } }), luna: t.luna, spawn: t.spawn });
   a.start();
   await wait();
-  t.procs[0].stdout.emit('data', Buffer.from('{"volumeStatus":{"volume":37,"muteStatus":false,"soundOutput":"external_arc","maxVolume":100}}\n'));
+  t.procs[0].stdout.emit(
+    'data',
+    Buffer.from('{"volumeStatus":{"volume":37,"muteStatus":false,"soundOutput":"external_arc","maxVolume":100}}\n')
+  );
   let x = await call(a, '/api/audio/volume');
-  ok(x.j.volume === 37 && x.j.output === 'external_arc' && x.j.theme === 'pill' && x.j.mute === false, 'volume, output and theme from the subscription');
+  ok(
+    x.j.volume === 37 && x.j.output === 'external_arc' && x.j.theme === 'pill' && x.j.mute === false,
+    'volume, output and theme from the subscription'
+  );
   const seq = x.j.seq;
   t.procs[0].stdout.emit('data', Buffer.from('{"volumeStatus":{"volume":40,"muteStatus":true}}\n'));
   x = await call(a, '/api/audio/volume?since=' + seq);

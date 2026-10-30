@@ -526,7 +526,11 @@ function build() {
   }
   if (view === 'volumebar') {
     var curV = (st.options && st.options.volumeTheme) || 'system';
-    rows.push({ label: 'Volume bar', sub: 'Replaces LG\u2019s own bar; System default puts it back. Tried on webOS 5 only.', fn: function () {} });
+    rows.push({
+      label: 'Volume bar',
+      sub: 'Replaces LG\u2019s own bar; System default puts it back. Tried on webOS 5 only.',
+      fn: function () {},
+    });
     var themes = [
       { id: 'pill', label: tr('Pill'), sub: tr('Vertical pill on the right') },
       { id: 'capsule', label: tr('Capsule'), sub: tr('Horizontal bar at the top') },
@@ -628,7 +632,11 @@ function build() {
     return;
   }
   if (view === 'experimental') {
-    rows.push({ label: 'Experimental', sub: 'off by default · tried on one TV · switch off to get LG\u2019s own setup back', fn: function () {} });
+    rows.push({
+      label: 'Experimental',
+      sub: 'off by default · tried on one TV · switch off to get LG\u2019s own setup back',
+      fn: function () {},
+    });
     rows.push({
       label: 'Volume bar',
       sub: volumeSub((st.options || {}).volumeTheme) + ' \u00B7 replaces LG\u2019s own bar',

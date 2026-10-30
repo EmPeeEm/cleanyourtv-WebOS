@@ -166,8 +166,13 @@ run(async () => {
     log = path.join(tmp, 'umount.log');
   const undoHosts = () => {
     fs.writeFileSync(log, '');
-    const code = line.replace(/\/etc\/hosts/g, etc).replace(/\/tmp\/cleanyourtv-hosts\.mounted/g, mark).replace(/\/tmp\/cleanyourtv-hosts/g, ours);
-    cp.spawnSync('/bin/sh', ['-c', 'umount() { echo "$1" >> "$LOG"; return 0; }; ' + code], { env: Object.assign({}, process.env, { LOG: log }) });
+    const code = line
+      .replace(/\/etc\/hosts/g, etc)
+      .replace(/\/tmp\/cleanyourtv-hosts\.mounted/g, mark)
+      .replace(/\/tmp\/cleanyourtv-hosts/g, ours);
+    cp.spawnSync('/bin/sh', ['-c', 'umount() { echo "$1" >> "$LOG"; return 0; }; ' + code], {
+      env: Object.assign({}, process.env, { LOG: log }),
+    });
     return { umounted: fs.readFileSync(log, 'utf8').trim(), copy: fs.existsSync(ours), marker: fs.existsSync(mark) };
   };
   for (const f of [ours, top, etc, mark]) fs.rmSync(f, { force: true });
