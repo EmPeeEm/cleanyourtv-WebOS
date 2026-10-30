@@ -32,6 +32,11 @@ and, for **Ads**, removes the marked hosts lines. Switching the last group off s
 It does not block updates: firmware update blocking (for example with the Homebrew Channel's tools) is separate and is not touched.
 It does not claim to remove all tracking. It stops the services listed above and nothing else.
 
+**With Glasshouse.** If you also run [Glasshouse](https://github.com/rorygallagher2024/glasshouse) with its ad blocking on, both
+tools put ad servers in `/etc/hosts` and both stop LG's ad services, so the **Ads** group is mostly redundant. To let one tool own
+that file, switch the **Ads** group off in the manager (or set up with `--no-debloat`). If you leave it on, the two work side by
+side: the debloat adds its two marked lines to the file that is mounted at the time, and its undo removes only its own mount.
+
 **Blocking more on the network.** The **Ads** group blocks three ad servers on the TV itself. A DNS blocker on your network
 (Pi-hole, AdGuard Home) can block many more with a community list such as
 [hugobatista/lg-tv-ad-block](https://github.com/hugobatista/lg-tv-ad-block). Apply it to the TV only (in Pi-hole, a group with

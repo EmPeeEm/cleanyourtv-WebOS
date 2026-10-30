@@ -156,6 +156,35 @@ run(async () => {
     /mount --bind \/tmp\/cleanyourtv-hosts \/etc\/hosts/.test(stop) && /umount \/etc\/hosts/.test(undo),
     'where /etc/hosts is read-only (issue 11) the ad servers go into a copy in RAM, and the undo removes it'
   );
+  // the undo unmounts /etc/hosts only when the RAM copy is what it shows: a table mounted over it later (Glasshouse) stays
+  const line = undo.split('\n').filter(l => /^if \[ -e \/tmp\/cleanyourtv-hosts\.mounted \]/.test(l))[0];
+  ok(!!line && /\/etc\/hosts -ef \/tmp\/cleanyourtv-hosts/.test(line), 'the undo checks that the RAM copy is the top /etc/hosts mount');
+  const ours = path.join(tmp, 'hosts-ours'),
+    top = path.join(tmp, 'hosts-top'),
+    etc = path.join(tmp, 'hosts-etc'),
+    mark = path.join(tmp, 'hosts-mounted'),
+    log = path.join(tmp, 'umount.log');
+  const undoHosts = () => {
+    fs.writeFileSync(log, '');
+    const code = line.replace(/\/etc\/hosts/g, etc).replace(/\/tmp\/cleanyourtv-hosts\.mounted/g, mark).replace(/\/tmp\/cleanyourtv-hosts/g, ours);
+    cp.spawnSync('/bin/sh', ['-c', 'umount() { echo "$1" >> "$LOG"; return 0; }; ' + code], { env: Object.assign({}, process.env, { LOG: log }) });
+    return { umounted: fs.readFileSync(log, 'utf8').trim(), copy: fs.existsSync(ours), marker: fs.existsSync(mark) };
+  };
+  for (const f of [ours, top, etc, mark]) fs.rmSync(f, { force: true });
+  fs.writeFileSync(ours, '127.0.0.1 x # cleanyourtv-debloat\n');
+  fs.linkSync(ours, etc); // the same file: our copy is what /etc/hosts shows
+  fs.writeFileSync(mark, '');
+  let h = undoHosts();
+  ok(h.umounted === etc && !h.copy && !h.marker, 'our RAM copy on top: unmounted and removed');
+  for (const f of [ours, etc, mark]) fs.rmSync(f, { force: true });
+  fs.writeFileSync(ours, '127.0.0.1 x # cleanyourtv-debloat\n');
+  fs.writeFileSync(etc, '0.0.0.0 ads.example\n'); // another table on top (a different file)
+  fs.writeFileSync(mark, '');
+  h = undoHosts();
+  ok(h.umounted === '' && h.copy && h.marker, 'another table on top: nothing is unmounted and the marker stays');
+  fs.rmSync(mark);
+  h = undoHosts();
+  ok(h.umounted === '', 'without the marker nothing is unmounted');
   // admanager is not stubbed (HBO Max and Disney+ stay on their loader without it, issue 47); a stub of an older version is lifted
   ok(
     /on ads && bins="\$bins adoverlay-service"/.test(stop) &&
