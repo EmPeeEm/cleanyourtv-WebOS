@@ -49,7 +49,9 @@ run(async () => {
       { id: 'mytv.player', title: 'My Player' },
     ],
   };
-  const f = mod.create({ config: conf, luna, feature: n => (n === 'apps' ? appsStub : null) });
+  const shown = [];
+  const notifyStub = { show: async p => (shown.push(p), {}) };
+  const f = mod.create({ config: conf, luna, feature: n => (n === 'apps' ? appsStub : n === 'notify' ? notifyStub : null) });
   let box = await device({ trusted: KEY, reply: () => 'Events injected: 1\n' });
   const at = port => Object.assign({}, good, { port });
 
@@ -71,9 +73,34 @@ run(async () => {
   await sleep(600);
   ok(
     box.seen.commands.length === 1 &&
-      box.seen.commands[0] === 'input keyevent KEYCODE_WAKEUP; monkey -p com.plexapp.android -c android.intent.category.LAUNCHER 1',
+      /^input keyevent KEYCODE_WAKEUP; o=\$\(monkey -p com\.plexapp\.android -c android\.intent\.category\.LAUNCHER 1 2>&1\)/.test(
+        box.seen.commands[0]
+      ),
     'the box wakes and the app starts by its launcher entry: ' + box.seen.commands[0]
   );
+  // the command as the box's shell runs it: an app made only for Android TV (no LAUNCHER entry) is started by its LEANBACK_LAUNCHER entry
+  const cp = require('child_process');
+  const onBoxShell = only =>
+    cp.spawnSync(
+      '/bin/sh',
+      [
+        '-c',
+        'input() { :; }; monkey() { case "$*" in *' +
+          only +
+          '*) echo "Events injected: 1";; *) echo "** No activities found to run, monkey aborted.";; esac; }; ' +
+          box.seen.commands[0],
+      ],
+      { encoding: 'utf8' }
+    ).stdout;
+  ok(
+    /Events injected/.test(onBoxShell('category.LAUNCHER')) && !/No activities/.test(onBoxShell('category.LAUNCHER')),
+    'an app with a LAUNCHER entry starts'
+  );
+  ok(
+    /Events injected/.test(onBoxShell('LEANBACK_LAUNCHER')) && !/No activities/.test(onBoxShell('LEANBACK_LAUNCHER')),
+    'an Android TV only app starts by its LEANBACK_LAUNCHER entry'
+  );
+  ok(/No activities found/.test(onBoxShell('nothing-matches')), 'an app that has neither is reported as not found');
   ok(box.seen.good === 1, "the box accepted the TV's key");
   r = await call(f, '/api/androidbox');
   ok(r.j.last && r.j.last.ok === true && r.j.last.app === 'plex', 'the result of the start is in the status');
@@ -95,7 +122,9 @@ run(async () => {
   }
   box.close();
   box = await device({ trusted: KEY, reply: () => '** No activities found to run, monkey aborted.\n' });
+  shown.length = 0;
   await fails('Plex is not installed', box.port, 'launch', 'not installed');
+  ok(shown.length >= 1 && /not installed/.test(shown[0].text) && shown[0].title === 'Android box', 'the TV says on screen what went wrong');
   box.close();
   box = await device({ trusted: '', prompt: 'deny' });
   await fails('the box has not allowed the TV', box.port, 'authorize', 'accept the question');

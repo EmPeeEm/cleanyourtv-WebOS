@@ -105,12 +105,32 @@ function create(ctx) {
   async function startOnBox(cfg, id) {
     const pkg = cfg.apps[id];
     // wake the box, then start the app by its launcher entry (no need to know the activity name)
-    const r = await onBox(cfg, 'input keyevent KEYCODE_WAKEUP; monkey -p ' + pkg + ' -c android.intent.category.LAUNCHER 1');
+    // (an app made only for Android TV has no LAUNCHER entry, just a LEANBACK_LAUNCHER one: try that when the first finds nothing)
+    const start = 'monkey -p ' + pkg + ' -c android.intent.category.';
+    const r = await onBox(
+      cfg,
+      'input keyevent KEYCODE_WAKEUP; o=$(' +
+        start +
+        'LAUNCHER 1 2>&1); case "$o" in *"No activities found"*) o=$(' +
+        start +
+        'LEANBACK_LAUNCHER 1 2>&1);; esac; echo "$o"'
+    );
     let res = r;
     if (r.ok && /No activities found|monkey aborted/i.test(r.out)) res = failure('launch', pkg + ' is not installed on the box');
     last = { at: Date.now(), app: id, ok: res.ok, step: res.step, error: res.error };
+    // the TV shows the box's screen by now, so say on it what went wrong
+    if (!res.ok) tell(res.error);
     console.log('androidbox: ' + id + ' -> ' + pkg + (res.ok ? ' started' : ' failed at ' + res.step + ': ' + res.error));
     return res;
+  }
+
+  // a message over whatever is on the TV (the notification window), best effort
+  function tell(text) {
+    try {
+      const n = ctx.feature && ctx.feature('notify');
+      if (n && n.show)
+        Promise.resolve(n.show({ title: 'Android box', text: String(text || '').slice(0, 200), seconds: 8 }, true)).catch(() => {});
+    } catch (_) {}
   }
 
   const handles = id => !!(settings() && settings().apps[id]);
