@@ -62,6 +62,7 @@ if (notify) load('notifyapi', () => require('./notifyapi').create(ctx));
 const manager = load('manager', () => require('./manager').create(ctx));
 load('apps', () => require('./apps').create(ctx));
 load('running', () => require('./running').create(ctx));
+load('zram', () => require('./zram').create(ctx));
 
 require('./server')
   .create({ features: () => loaded })
