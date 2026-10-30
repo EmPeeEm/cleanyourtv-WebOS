@@ -2,6 +2,7 @@
 // settings (dock, hidden apps, sort order, clock, top buttons).
 //   GET /api/apps  GET /api/inputs  GET /api/foreground  POST /api/launch {id, params}  POST /api/config {...}  GET /icon/<app id>
 //   GET /api/inputs: the HDMI ports, plus LG's own Live TV (the tuner) while its app is installed ({appId, tuner: true})
+//   POST /api/power/off   switch the TV off completely (the cold-boot power-off, not the standby of the remote)
 //   POST /api/inputs/pin {id, on}   pin an input (its input app, e.g. com.webos.app.hdmi2) to Home, or take it off again
 // A pinned input is listed with the apps ({id, title, input: <port>, off: <nothing connected>}), so the dock, the grid, the saved
 // layout and the order by use treat it as an app; it is kept in config.json (pinnedInputs), apart from the launcher's own keys.
@@ -344,6 +345,12 @@ function create(ctx) {
       if (!/^[\w.\-]+$/.test(b.id || '')) return web.json(res, { error: 'bad id' }, 400);
       return web.json(res, await luna('luna://com.webos.applicationManager/launch', { id: b.id, params: b.params || {} }));
     }
+    // a full power-off (tvpower/power/shutDown, issue 50): not the standby of the remote's power key, which keeps Quick Start+ and draws power.
+    // Wake-on-LAN no longer wakes the TV afterwards and the next start is a cold boot. The reply comes before the TV goes down.
+    if (u === '/api/power/off' && req.method === 'POST') {
+      luna('luna://com.webos.service.tvpower/power/shutDown', { reason: 'remoteKey' }).catch(() => {});
+      return web.json(res, { returnValue: true });
+    }
     if (u === '/api/config' && req.method === 'POST') {
       saveLauncherConfig(await body(req));
       return web.json(res, { returnValue: true });
@@ -366,7 +373,16 @@ function create(ctx) {
 
   return {
     name: 'apps',
-    paths: ['/api/apps', '/api/inputs', '/api/inputs/pin', '/api/foreground', '/api/launch', '/api/config', '/api/apps/uninstall'],
+    paths: [
+      '/api/apps',
+      '/api/inputs',
+      '/api/inputs/pin',
+      '/api/foreground',
+      '/api/launch',
+      '/api/config',
+      '/api/apps/uninstall',
+      '/api/power/off',
+    ],
     prefix: '/icon/',
     handle,
     start: () => setInterval(pollForeground, 4000),

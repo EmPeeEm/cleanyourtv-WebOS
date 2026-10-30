@@ -581,6 +581,33 @@ function disintegrateApp(a, done) {
   }, 50);
 }
 
+/* Power off completely (issue 50): the TV switches off for good, unlike the remote's power key, which keeps Quick Start+ standby. The
+   next start is a cold boot, so the launcher takes its usual time, and Wake-on-LAN does not wake the TV. Asked first, never one press. */
+function confirmPowerOff() {
+  openMenu(t('Power off completely?'), [
+    {
+      label: t('Power off completely'),
+      sub: t('The next start is slower, and Wake-on-LAN no longer wakes the TV.'),
+      icon: 'power',
+      fn: function () {
+        closeMenus();
+        toast(t('Powering off...'));
+        api('/api/power/off', {}).then(
+          function () {},
+          function () {
+            toast(t('The service did not answer.'), true);
+          }
+        );
+      },
+    },
+    {
+      label: t('Cancel'),
+      fn: function () {
+        backMenu();
+      },
+    },
+  ]);
+}
 function confirmUninstall(a) {
   openMenu(t('Uninstall %s?').replace('%s', a.title), [
     {

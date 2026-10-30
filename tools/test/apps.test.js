@@ -178,6 +178,28 @@ run(async () => {
     'the tuner does not depend on Show Live TV (the playlist): each is its own switch'
   );
 
+  // a full power-off (issue 50): tvpower/power/shutDown, only on POST, and the reply does not wait for the TV
+  const powerCalls = [];
+  const powerApps = req('apps').create({
+    config: memoryConfig({}),
+    luna: async (uri, p) => {
+      powerCalls.push([uri, p]);
+      return { returnValue: true };
+    },
+    version: '1.6.0',
+    feature: () => null,
+  });
+  r = await call(powerApps, '/api/power/off', 'POST', {});
+  ok(
+    r.j.returnValue === true &&
+      powerCalls.length === 1 &&
+      powerCalls[0][0] === 'luna://com.webos.service.tvpower/power/shutDown' &&
+      powerCalls[0][1].reason === 'remoteKey',
+    'Power off switches the TV off completely through tvpower/power/shutDown'
+  );
+  r = await call(powerApps, '/api/power/off', 'GET');
+  ok(powerCalls.length === 1 && r.code !== 200, 'a GET does not power the TV off');
+
   // uninstalling apps
   r = await call(apps, '/api/apps/uninstall', 'POST', { id: 'bad id!' });
   ok(r.code === 400 && r.j.returnValue === false, 'uninstall with bad id is refused');
