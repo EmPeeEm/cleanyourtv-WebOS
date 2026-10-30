@@ -26,8 +26,8 @@ jobs:
           go=1
           if [ "${{ github.event_name }}" = schedule ]; then
             h=$(TZ=Europe/Amsterdam date +%H)
-            # a scheduled run can start late: 04 or 05 counts, but only one release a day
-            case "$h" in 04|05) ;; *) echo "not 04:00 in Amsterdam ($h)"; go=0 ;; esac
+            # GitHub starts scheduled runs late, often by hours (09:00 instead of 04:00): 04:00 until noon counts, once a day
+            case "$h" in 04|05|06|07|08|09|10|11) ;; *) echo "not between 04:00 and 12:00 in Amsterdam ($h)"; go=0 ;; esac
             [ "$HOLD" = 1 ] && { echo "RELEASE_HOLD is set"; go=0; }
             today=$(TZ=Europe/Amsterdam date +%F)
             pub=$(gh release view --repo "$GITHUB_REPOSITORY" --json publishedAt -q .publishedAt 2>/dev/null || true)

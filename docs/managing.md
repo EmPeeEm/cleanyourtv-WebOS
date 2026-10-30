@@ -19,7 +19,7 @@ latest GitHub release, each checked against its SHA-256 file.
 
 | Channel | What it follows |
 |---|---|
-| **Stable releases** | The latest published release: at most one a day, at 04:00 Amsterdam time, and only when something changed. This is the default. |
+| **Stable releases** | The latest published release: at most one a day, early in the morning (planned for 04:00 Amsterdam time; GitHub can start it a few hours late), and only when something changed. This is the default. |
 | **Dev builds** | Every change, as soon as it is on the `dev` branch: for people who want fixes early or are asked to try one. |
 
 ### Dev builds
