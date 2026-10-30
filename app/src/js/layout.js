@@ -296,6 +296,7 @@ function load() {
         x.config,
         rank,
       ]);
+      retryTileIcons();
       if (sig === lastSig) return;
       lastSig = sig;
       apps = x.apps.map(function (a) {
