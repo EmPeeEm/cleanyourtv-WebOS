@@ -156,6 +156,15 @@ run(async () => {
     /mount --bind \/tmp\/cleanyourtv-hosts \/etc\/hosts/.test(stop) && /umount \/etc\/hosts/.test(undo),
     'where /etc/hosts is read-only (issue 11) the ad servers go into a copy in RAM, and the undo removes it'
   );
+  // the installer waits until the TV says "installed" before it removes the package: on an update the files are there already, and an early
+  // yes deleted the package while the TV was still unpacking it, so the old version stayed in place
+  const installSh = fs.readFileSync(path.join(root, 'install.sh'), 'utf8');
+  ok(
+    /dev\/install "[^\n]*\\"subscribe\\":true/.test(installSh) &&
+      /"state": \*"installed"/.test(installSh) &&
+      installSh.indexOf('"state": *"installed"') < installSh.indexOf('rm -f /tmp/cytv-install.log /tmp/cytv-manager.ipk'),
+    'install.sh subscribes to the install and waits for installed before it removes the package'
+  );
   // the undo unmounts /etc/hosts only when the RAM copy is what it shows: a table mounted over it later (Glasshouse) stays
   const line = undo.split('\n').filter(l => /^if \[ -e \/tmp\/cleanyourtv-hosts\.mounted \]/.test(l))[0];
   ok(!!line && /\/etc\/hosts -ef \/tmp\/cleanyourtv-hosts/.test(line), 'the undo checks that the RAM copy is the top /etc/hosts mount');
