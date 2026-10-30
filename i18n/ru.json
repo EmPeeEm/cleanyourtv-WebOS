@@ -695,5 +695,15 @@
  "Custom static": "Своя (статическая)",
  "Arrange apps...": "Упорядочить приложения...",
  "Move": "Переместить",
- "Use arrows to move, press OK when done": "Перемещайте стрелками, нажмите OK для завершения"
+ "Use arrows to move, press OK when done": "Перемещайте стрелками, нажмите OK для завершения",
+ "Mute": "Без звука",
+ "Volume bar": "Панель громкости",
+ "Pill": "Таблетка",
+ "Vertical pill on the right": "Вертикальная полоса справа",
+ "Capsule": "Капсула",
+ "Horizontal bar at the top": "Горизонтальная полоса сверху",
+ "Dial": "Круговой индикатор",
+ "Circular dial on the right": "Круговой индикатор справа",
+ "System default (LG webOS)": "Системный по умолчанию (LG webOS)",
+ "Stock TV volume bar": "Стандартная панель громкости телевизора"
 }

@@ -735,5 +735,15 @@
  "Custom static": "Benutzerdefiniert (statisch)",
  "Arrange apps...": "Apps anordnen...",
  "Move": "Verschieben",
- "Use arrows to move, press OK when done": "Mit Pfeiltasten verschieben, mit OK bestätigen"
+ "Use arrows to move, press OK when done": "Mit Pfeiltasten verschieben, mit OK bestätigen",
+ "Mute": "Stumm",
+ "Volume bar": "Lautstärkeleiste",
+ "Pill": "Pille",
+ "Vertical pill on the right": "Vertikale Pille auf der rechten Seite",
+ "Capsule": "Kapsel",
+ "Horizontal bar at the top": "Horizontaler Balken oben",
+ "Dial": "Skala",
+ "Circular dial on the right": "Kreisförmige Skala rechts",
+ "System default (LG webOS)": "Systemstandard (LG webOS)",
+ "Stock TV volume bar": "Standard-Lautstärkeleiste des Fernsehers"
 }

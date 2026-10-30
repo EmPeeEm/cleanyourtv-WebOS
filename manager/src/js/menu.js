@@ -524,6 +524,28 @@ function build() {
     rows.push({ label: 'No, keep it', fn: pop });
     return;
   }
+  if (view === 'volumebar') {
+    var curV = (st.options && st.options.volumeTheme) || 'system';
+    rows.push({ label: 'Volume bar', sub: 'Replaces LG\u2019s own bar; System default puts it back. Tried on webOS 5 only.', fn: function () {} });
+    var themes = [
+      { id: 'pill', label: tr('Pill'), sub: tr('Vertical pill on the right') },
+      { id: 'capsule', label: tr('Capsule'), sub: tr('Horizontal bar at the top') },
+      { id: 'dial', label: tr('Dial'), sub: tr('Circular dial on the right') },
+      { id: 'system', label: tr('System default (LG webOS)'), sub: tr('Stock TV volume bar') },
+    ];
+    themes.forEach(function (t) {
+      rows.push({
+        label: t.label,
+        sub: (t.id === curV ? 'selected \u00B7 ' : '') + t.sub,
+        fn: function () {
+          opt({ volumeTheme: t.id });
+        },
+      });
+    });
+    rows.push({ sep: true });
+    rows.push({ label: 'Back', fn: pop });
+    return;
+  }
   if (view === 'inputkey') {
     var hk = st.inputhook || {},
       na = hk.hook && !hk.hook.attached;
@@ -607,6 +629,13 @@ function build() {
   }
   if (view === 'experimental') {
     rows.push({ label: 'Experimental', sub: 'off by default · tried on one TV · switch off to get LG\u2019s own setup back', fn: function () {} });
+    rows.push({
+      label: 'Volume bar',
+      sub: volumeSub((st.options || {}).volumeTheme) + ' \u00B7 replaces LG\u2019s own bar',
+      fn: function () {
+        push('volumebar');
+      },
+    });
     if (zr && zr.available) {
       rows.push({
         label: 'Compressed memory',
@@ -1025,7 +1054,7 @@ function build() {
       push('debloat');
     },
   });
-  rows.push({ label: 'Experimental', sub: 'compressed memory', fn: zramLoad });
+  rows.push({ label: 'Experimental', sub: 'compressed memory, volume bar', fn: zramLoad });
   rows.push({
     label: 'More',
     sub: 'Home Assistant, voice, language, network notifications',
@@ -1115,4 +1144,12 @@ function debloatToggle(id) {
       return g !== id;
     }),
   });
+}
+
+function volumeSub(theme) {
+  if (theme === 'system') return tr('System default (LG webOS)');
+  if (theme === 'capsule') return tr('Capsule');
+  if (theme === 'dial') return tr('Dial');
+  if (theme === 'pill') return tr('Pill');
+  return tr('System default (LG webOS)');
 }

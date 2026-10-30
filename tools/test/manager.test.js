@@ -63,6 +63,10 @@ run(async () => {
   ok(r.j.options.liveTv === false, 'only a boolean changes an option');
   r = await ask('options', 'POST', { inputKey: false });
   ok(r.j.options.inputKey === false && r.j.options.liveTv === false, 'one option does not reset another');
+  r = await ask('options', 'POST', { volumeTheme: 'dial' });
+  ok(r.j.options.volumeTheme === 'dial' && conf.get().options.volumeTheme === 'dial', 'volumeTheme option is saved');
+  r = await ask('options', 'POST', { volumeTheme: 'no-such-theme' });
+  ok(r.j.options.volumeTheme === 'dial', 'a theme that does not exist is not saved');
 
   r = await ask('options', 'POST', { pickerMode: 'overlay' });
   ok(

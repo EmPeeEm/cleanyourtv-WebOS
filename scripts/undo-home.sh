@@ -8,6 +8,8 @@ for id in com.cleanyourtv.manager com.cleanyourtv.picker com.cleanyourtv.notify;
 done
 LASTAPP=/var/luna/preferences/bootd_last_foreground_app_id.json
 grep -q cleanyourtv $LASTAPP 2>/dev/null && echo '{"lastAppId":"com.webos.app.home"}' > $LASTAPP
+# LG's own volume bar, if a custom one switched it off
+[ -f /media/developer/cleanyourtv/volume-osd-restore.sh ] && sh /media/developer/cleanyourtv/volume-osd-restore.sh </dev/null >/dev/null 2>&1
 # LG's own Home needs the ad services the debloat blocks (it fails to start without them), so lift the debloat first
 [ -f /media/developer/cleanyourtv/debloat-undo.sh ] && sh /media/developer/cleanyourtv/debloat-undo.sh </dev/null >/dev/null 2>&1
 # the stand-in way (LG's native Home): unmount it from LG's Home program and close the launcher; sam was never restarted

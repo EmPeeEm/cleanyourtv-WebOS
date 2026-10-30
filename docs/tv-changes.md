@@ -55,6 +55,13 @@ uninstall. Optional features contact other services only when you switch them on
 
 Either bind mount lives in RAM. A reboot without the boot scripts, or the Homebrew Channel's failsafe mode, leaves LG's Home as it was.
 
+## Experimental (off by default)
+
+Both are switched on in the manager app, **Experimental**, and put back by switching them off.
+
+- **Volume bar.** A Pill, Capsule or Dial replaces LG's volume bar. LG's own setting `com.webos.surfacemanager.volumeOSD` is switched off for that; the value the TV had is saved in `backup/volume-osd.orig` and put back by **System default**, `undo-home.sh` and the uninstall. See [Volume bar themes](volume-themes.md).
+- **Compressed memory.** zram (`/dev/zram0`, lz4) as swap in RAM ahead of LG's `eswap`, and `vm.page-cluster` 0 while it is on. Nothing is written to disk; switching it off, or a reboot without CleanYourTV, leaves the TV as LG ships it. See [the manager](manager.md#compressed-memory-experimental).
+
 ## Processes and ports
 
 | What | Port |
@@ -65,5 +72,5 @@ Either bind mount lives in RAM. A reboot without the boot scripts, or the Homebr
 
 ## What the uninstall removes
 
-The apps, the boot scripts, the Input-key and voice-key binds, the debloat changes and the folder
+The apps, the boot scripts, the Input-key and voice-key binds, the debloat changes, a switched-off LG volume bar (put back) and the folder
 `/media/developer/cleanyourtv` (with `--keep-config`, the settings and usage history stay). The TV then restarts with LG's Home.

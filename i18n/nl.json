@@ -732,5 +732,15 @@
  "Custom static": "Aangepast (statisch)",
  "Arrange apps...": "Apps rangschikken...",
  "Move": "Verplaatsen",
- "Use arrows to move, press OK when done": "Gebruik pijltjestoetsen om te verplaatsen, druk op OK als je klaar bent"
+ "Use arrows to move, press OK when done": "Gebruik pijltjestoetsen om te verplaatsen, druk op OK als je klaar bent",
+ "Mute": "Dempen",
+ "Volume bar": "Volumebalk",
+ "Pill": "Pil",
+ "Vertical pill on the right": "Verticale pil aan de rechterkant",
+ "Capsule": "Capsule",
+ "Horizontal bar at the top": "Horizontale balk bovenaan",
+ "Dial": "Draaiknop",
+ "Circular dial on the right": "Ronde draaiknop rechts",
+ "System default (LG webOS)": "Systeemstandaard (LG webOS)",
+ "Stock TV volume bar": "Originele volumebalk van de tv"
 }

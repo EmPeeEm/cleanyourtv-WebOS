@@ -735,5 +735,15 @@
  "Custom static": "Custom static",
  "Arrange apps...": "Arrange apps...",
  "Use arrows to move, press OK when done": "Use arrows to move, press OK when done",
- "Move": "Move"
+ "Move": "Move",
+ "Mute": "Mute",
+ "Volume bar": "Volume bar",
+ "Pill": "Pill",
+ "Vertical pill on the right": "Vertical pill on the right",
+ "Capsule": "Capsule",
+ "Horizontal bar at the top": "Horizontal bar at the top",
+ "Dial": "Dial",
+ "Circular dial on the right": "Circular dial on the right",
+ "System default (LG webOS)": "System default (LG webOS)",
+ "Stock TV volume bar": "Stock TV volume bar"
 }

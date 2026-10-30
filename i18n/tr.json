@@ -670,5 +670,15 @@
  "Custom static": "Özel (statik)",
  "Arrange apps...": "Uygulamaları düzenle...",
  "Move": "Taşı",
- "Use arrows to move, press OK when done": "Taşımak için ok tuşlarını kullanın, bitirince OK tuşuna basın"
+ "Use arrows to move, press OK when done": "Taşımak için ok tuşlarını kullanın, bitirince OK tuşuna basın",
+ "Mute": "Sessiz",
+ "Volume bar": "Ses çubuğu",
+ "Pill": "Hap",
+ "Vertical pill on the right": "Sağda dikey hap tasarımı",
+ "Capsule": "Kapsül",
+ "Horizontal bar at the top": "Üstte yatay çubuk",
+ "Dial": "Kadran",
+ "Circular dial on the right": "Sağda dairesel kadran",
+ "System default (LG webOS)": "Sistem varsayılanı (LG webOS)",
+ "Stock TV volume bar": "Orijinal TV ses çubuğu"
 }

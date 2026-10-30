@@ -688,5 +688,15 @@
     "Custom static": "Personalitzat (estàtic)",
     "Arrange apps...": "Organitza les aplicacions...",
     "Move": "Mou",
-    "Use arrows to move, press OK when done": "Fes servir les fletxes per moure, prem D'acord en acabar"
+    "Use arrows to move, press OK when done": "Fes servir les fletxes per moure, prem D'acord en acabar",
+    "Mute": "Silenci",
+    "Volume bar": "Barra de volum",
+    "Pill": "Píndola",
+    "Vertical pill on the right": "Píndola vertical a la dreta",
+    "Capsule": "Càpsula",
+    "Horizontal bar at the top": "Barra horitzontal a la part superior",
+    "Dial": "Dial",
+    "Circular dial on the right": "Dial circular a la dreta",
+    "System default (LG webOS)": "Predeterminat del sistema (LG webOS)",
+    "Stock TV volume bar": "Barra de volum original del televisor"
 }

@@ -315,4 +315,11 @@ run(async () => {
   }
   for (const bad of ['..', '.hidden', '../x', 'org.webosbrew.hbchannel', 'org.webosbrew.safeupdate', 'org.webosbrew.appupdateblocker'])
     ok((await call(apps, '/api/apps/uninstall', 'POST', { id: bad })).j.error === 'refused', 'the id ' + bad + ' is refused');
+
+  // audio volume status and polling
+  r = await call(apps, '/api/audio/volume');
+  ok(
+    r.j && typeof r.j.volume === 'number' && typeof r.j.seq === 'number' && typeof r.j.theme === 'string',
+    'the launcher can query audio volume and theme'
+  );
 });

@@ -23,6 +23,8 @@ const KEEP = ['org.webosbrew.hbchannel', 'org.webosbrew.safeupdate', 'org.webosb
 
 function create(ctx) {
   const { config, luna } = ctx;
+  const audio = ctx.audio || (ctx.audio = require('./audio').create(ctx));
+  if (audio.start) audio.start();
 
   // ---- the installed apps. The app manager takes a moment to answer (a luna-send each time), and Home is opened often: after the first
   // answer the list is given at once from memory and asked again in the background when it is older than 5 seconds, so an app installed
@@ -371,6 +373,7 @@ function create(ctx) {
       const out = await uninstallApp(b && b.id);
       return web.json(res, out, out.returnValue ? 200 : 400);
     }
+    if (u === '/api/audio/volume') return audio.handle(req, res, u);
     const m = u.match(/^\/icon\/([\w.\-]+)$/);
     if (m) {
       const a = (await apps()).find(x => x.id === m[1]);
@@ -393,6 +396,7 @@ function create(ctx) {
       '/api/config',
       '/api/apps/uninstall',
       '/api/power/off',
+      '/api/audio/volume',
     ],
     prefix: '/icon/',
     handle,

@@ -12,6 +12,7 @@ rm -f $INITD/10-cleanyourtv-home $INITD/15-cleanyourtv-debloat
 for id in com.cleanyourtv.manager com.cleanyourtv.picker com.cleanyourtv.notify; do
   luna-send -n 1 -w 3000 luna://com.webos.applicationManager/closeByAppId "{\"id\":\"$id\"}" </dev/null >/dev/null 2>&1
 done
+[ -f $D/volume-osd-restore.sh ] && sh $D/volume-osd-restore.sh </dev/null   # LG's own volume bar, if a custom one switched it off
 LASTAPP=/var/luna/preferences/bootd_last_foreground_app_id.json
 grep -q cleanyourtv $LASTAPP 2>/dev/null && echo '{"lastAppId":"com.webos.app.home"}' > $LASTAPP
 [ -f $D/debloat-undo.sh ] && sh $D/debloat-undo.sh </dev/null

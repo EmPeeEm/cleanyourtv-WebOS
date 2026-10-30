@@ -691,5 +691,15 @@
  "Custom static": "Personnalisé (statique)",
  "Arrange apps...": "Organiser les apps...",
  "Move": "Déplacer",
- "Use arrows to move, press OK when done": "Utilisez les flèches pour déplacer, appuyez sur OK pour terminer"
+ "Use arrows to move, press OK when done": "Utilisez les flèches pour déplacer, appuyez sur OK pour terminer",
+ "Mute": "Muet",
+ "Volume bar": "Barre de volume",
+ "Pill": "Pilule",
+ "Vertical pill on the right": "Pilule verticale sur la droite",
+ "Capsule": "Capsule",
+ "Horizontal bar at the top": "Barre horizontale en haut",
+ "Dial": "Cadran",
+ "Circular dial on the right": "Cadran circulaire à droite",
+ "System default (LG webOS)": "Par défaut du système (LG webOS)",
+ "Stock TV volume bar": "Barre de volume d'origine du téléviseur"
 }

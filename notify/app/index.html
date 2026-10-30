@@ -23,35 +23,612 @@ html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:transpa
 #dots i:nth-child(2){animation-delay:.2s}#dots i:nth-child(3){animation-delay:.4s}
 @keyframes bar{50%{transform:scaleY(1)}}
 @keyframes dot{50%{opacity:1}}
+
+/* ========================================================================= */
+/* Pluggable Volume Themes Styles                                            */
+/* ========================================================================= */
+#vol-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1920px;
+  height: 1080px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease-out;
+}
+#vol-card.on {
+  opacity: 1;
+}
+
+/* 1. Pill (vertical pill on the right) */
+.arch-pill {
+  position: absolute;
+  right: 56px;
+  top: 50%;
+  transform: translateY(-50%) translateX(100px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+#vol-card.on .arch-pill {
+  transform: translateY(-50%) translateX(0);
+}
+.arch-pill .dev-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.2px;
+  margin-bottom: 14px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  white-space: nowrap;
+}
+.arch-pill .pill-wide {
+  position: relative;
+  width: 62px;
+  height: 280px;
+  border-radius: 31px;
+  background: rgba(20, 22, 28, 0.90);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.arch-pill .fill-wide {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 31px;
+  transition: height 0.06s linear;
+  will-change: height;
+}
+.arch-pill .center-num {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  z-index: 10;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.12s ease;
+}
+.arch-pill .speaker-bottom {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 26px;
+  color: #ffffff;
+  z-index: 10;
+  transition: color 0.12s ease;
+}
+.arch-pill.mute .fill-wide {
+  background: #ef4444;
+}
+
+/* 2. Capsule (horizontal bar at the top centre) */
+.arch-capsule {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-60px);
+  height: 66px;
+  padding: 0 28px;
+  border-radius: 33px;
+  background: rgba(20, 22, 28, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  color: #fff;
+  min-width: 520px;
+  box-sizing: border-box;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+#vol-card.on .arch-capsule {
+  transform: translateX(-50%) translateY(0);
+}
+.arch-capsule .cap-icon {
+  width: 28px;
+  height: 28px;
+  color: #fff;
+  margin-right: 18px;
+  flex-shrink: 0;
+}
+.arch-capsule .cap-dev {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-right: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.arch-capsule .cap-track {
+  flex: 1;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 7px;
+  overflow: hidden;
+  margin-right: 20px;
+}
+.arch-capsule .cap-fill {
+  height: 100%;
+  background: #ffffff;
+  border-radius: 7px;
+  transition: width 0.06s linear;
+  will-change: width;
+}
+.arch-capsule .cap-num {
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 42px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.arch-capsule.mute .cap-icon,
+.arch-capsule.mute .cap-num {
+  color: #ef4444;
+}
+.arch-capsule.mute .cap-fill {
+  background: #ef4444;
+}
+
+/* 3. Dial (circular dial on the right) */
+.arch-dial {
+  position: absolute;
+  right: 64px;
+  top: 50%;
+  transform: translateY(-50%) scale(0.85);
+  width: 150px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 20px 40px rgba(0,0,0,0.8));
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+#vol-card.on .arch-dial {
+  transform: translateY(-50%) scale(1);
+}
+.arch-dial svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.arch-dial .circle-bg {
+  fill: rgba(20, 22, 30, 0.88);
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 6;
+}
+.arch-dial .circle-val {
+  fill: none;
+  stroke: #f1f5f9;
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-dasharray: 408;
+  transition: stroke-dashoffset 0.06s linear;
+}
+.arch-dial .center-info {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 5;
+}
+.arch-dial .dial-val {
+  font-size: 34px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.arch-dial .dial-dev {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.65);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 6px;
+}
+.arch-dial.mute .circle-val {
+  stroke: #ef4444;
+}
+.arch-dial.mute .dial-val {
+  color: #ef4444;
+  font-size: 20px;
+}
 </style></head><body>
 <div id="card"><div id="bars"><i></i><i></i><i></i><i></i><i></i></div><div id="dots"><i></i><i></i><i></i></div><img id="img" alt=""><div id="title"></div><div id="q"></div><div id="text"></div></div>
+
+<div id="vol-card"></div>
+
 <script>
-var card=document.getElementById('card'),img=document.getElementById('img'),timer=0;
+var card = document.getElementById('card'),
+  img = document.getElementById('img'),
+  volCard = document.getElementById('vol-card'),
+  timer = 0,
+  volTimer = 0,
+  closeTimer = 0;
+
+/* ========================================================================= */
+/* PLUGGABLE VOLUME THEMES REGISTRY                                          */
+/* Contributors can add new volume themes here:                              */
+/* 1. Add theme ID and render function to VOLUME_THEMES                      */
+/* 2. Add scoped CSS rules in <style> above                                  */
+/* ========================================================================= */
+var VOLUME_THEMES = {
+  'pill': {
+    name: 'Pill',
+    render: function (s) {
+      var val = s.mute ? 0 : s.pct;
+      var spkColor = s.mute ? '#ef4444' : (val >= 14 ? '#0f172a' : '#ffffff');
+      var numColor = s.mute ? '#ef4444' : (val >= 88 ? '#0f172a' : '#ffffff');
+      return '<div class="arch-pill' + (s.mute ? ' mute' : '') + '">' +
+        '<div class="dev-label">' + s.device + '</div>' +
+        '<div class="pill-wide">' +
+          '<div class="center-num" style="color:' + numColor + ';">' + (s.mute ? 'OFF' : s.volume) + '</div>' +
+          '<div class="fill-wide" style="height:' + val + '%;"></div>' +
+          '<div class="speaker-bottom" style="color:' + spkColor + ';">' + s.icon + '</div>' +
+        '</div>' +
+      '</div>';
+    },
+    update: function (el, s) {
+      var refs = el._refs;
+      if (!refs) {
+        refs = el._refs = {
+          dev: el.querySelector('.dev-label'),
+          num: el.querySelector('.center-num'),
+          fill: el.querySelector('.fill-wide'),
+          spk: el.querySelector('.speaker-bottom')
+        };
+      }
+      var val = s.mute ? 0 : s.pct;
+      if (s.mute) {
+        if (!el._isMute) { el.classList.add('mute'); el._isMute = true; }
+      } else {
+        if (el._isMute) { el.classList.remove('mute'); el._isMute = false; }
+      }
+      if (refs.dev && refs.dev.textContent !== s.device) refs.dev.textContent = s.device;
+      var numTxt = s.mute ? 'OFF' : String(s.volume);
+      if (refs.num && refs.num.textContent !== numTxt) refs.num.textContent = numTxt;
+      var hStr = val + '%';
+      if (refs.fill && refs.fill.style.height !== hStr) refs.fill.style.height = hStr;
+
+      var spkColor = s.mute ? '#ef4444' : (val >= 14 ? '#0f172a' : '#ffffff');
+      if (refs.spk && refs.spk.style.color !== spkColor) refs.spk.style.color = spkColor;
+
+      var numColor = s.mute ? '#ef4444' : (val >= 88 ? '#0f172a' : '#ffffff');
+      if (refs.num && refs.num.style.color !== numColor) refs.num.style.color = numColor;
+
+      if (el._lastMute !== s.mute) {
+        el._lastMute = s.mute;
+        if (refs.spk) refs.spk.innerHTML = s.icon;
+      }
+    }
+  },
+  'capsule': {
+    name: 'Capsule',
+    render: function (s) {
+      var val = s.mute ? 0 : s.pct;
+      return '<div class="arch-capsule' + (s.mute ? ' mute' : '') + '">' +
+        '<div class="cap-icon">' + s.icon + '</div>' +
+        '<div class="cap-dev">' + s.device + '</div>' +
+        '<div class="cap-track"><div class="cap-fill" style="width:' + val + '%;"></div></div>' +
+        '<div class="cap-num">' + (s.mute ? 'MUTE' : s.volume) + '</div>' +
+      '</div>';
+    },
+    update: function (el, s) {
+      var refs = el._refs;
+      if (!refs) {
+        refs = el._refs = {
+          dev: el.querySelector('.cap-dev'),
+          num: el.querySelector('.cap-num'),
+          fill: el.querySelector('.cap-fill'),
+          icn: el.querySelector('.cap-icon')
+        };
+      }
+      var val = s.mute ? 0 : s.pct;
+      if (s.mute) {
+        if (!el._isMute) { el.classList.add('mute'); el._isMute = true; }
+      } else {
+        if (el._isMute) { el.classList.remove('mute'); el._isMute = false; }
+      }
+      if (refs.dev && refs.dev.textContent !== s.device) refs.dev.textContent = s.device;
+      var numTxt = s.mute ? 'MUTE' : String(s.volume);
+      if (refs.num && refs.num.textContent !== numTxt) refs.num.textContent = numTxt;
+      var wStr = val + '%';
+      if (refs.fill && refs.fill.style.width !== wStr) refs.fill.style.width = wStr;
+      if (el._lastMute !== s.mute) {
+        el._lastMute = s.mute;
+        if (refs.icn) refs.icn.innerHTML = s.icon;
+      }
+    }
+  },
+  'dial': {
+    name: 'Dial',
+    render: function (s) {
+      var val = s.mute ? 0 : s.pct;
+      var circumference = 408;
+      var offset = circumference - (circumference * val / 100);
+      return '<div class="arch-dial' + (s.mute ? ' mute' : '') + '">' +
+        '<svg viewBox="0 0 150 150" width="150" height="150">' +
+          '<circle class="circle-bg" cx="75" cy="75" r="65"></circle>' +
+          '<circle class="circle-val" cx="75" cy="75" r="65" style="stroke-dashoffset:' + offset + ';"></circle>' +
+        '</svg>' +
+        '<div class="center-info">' +
+          '<div class="dial-val">' + (s.mute ? 'MUTE' : s.volume) + '</div>' +
+          '<div class="dial-dev">' + s.device + '</div>' +
+        '</div>' +
+      '</div>';
+    },
+    update: function (el, s) {
+      var refs = el._refs;
+      if (!refs) {
+        refs = el._refs = {
+          circle: el.querySelector('.circle-val'),
+          valEl: el.querySelector('.dial-val'),
+          dev: el.querySelector('.dial-dev')
+        };
+      }
+      var val = s.mute ? 0 : s.pct;
+      if (s.mute) {
+        if (!el._isMute) { el.classList.add('mute'); el._isMute = true; }
+      } else {
+        if (el._isMute) { el.classList.remove('mute'); el._isMute = false; }
+      }
+      var circumference = 408;
+      var offset = String(circumference - (circumference * val / 100));
+      if (refs.circle && refs.circle.style.strokeDashoffset !== offset) refs.circle.style.strokeDashoffset = offset;
+      var valTxt = s.mute ? 'MUTE' : String(s.volume);
+      if (refs.valEl && refs.valEl.textContent !== valTxt) refs.valEl.textContent = valTxt;
+      if (refs.dev && refs.dev.textContent !== s.device) refs.dev.textContent = s.device;
+    }
+  }
+};
+
 /* never take the remote or the pointer: an empty input region and key mask. Newer webOS wants an array; webOS 5 throws for that and
    wants a JSON string. The array goes first, the string only when that fails, so a TV that takes the array never sees the string. */
-function setBoth(name,value){try{webOSSystem[name](value)}catch(e){try{webOSSystem[name](JSON.stringify(value))}catch(e2){}}}
-setBoth('setInputRegion',[{x:0,y:0,width:0,height:0}]);
-setBoth('setKeyMask',[]);
-/* safety net: if the region was not honoured and a key reaches this window anyway, close the card at once instead of holding the remote for the whole duration */
-document.addEventListener('keydown',function(){clearTimeout(timer);card.classList.remove('on');setTimeout(function(){try{window.close()}catch(e){}},300)},true);
-function place(pos,wide){
-  var m=64,s=card.style,w=wide?900:640;s.left=s.right=s.top=s.bottom='auto';
-  if(/left/.test(pos))s.left=m+'px';else if(/center/.test(pos))s.left=(1920-w)/2+'px';else s.right=m+'px';
-  if(/bottom/.test(pos))s.bottom=m+'px';else if(/middle/.test(pos))s.top='300px';else s.top=m+'px'}
-function reveal(){requestAnimationFrame(function(){requestAnimationFrame(function(){card.classList.add('on')})})}   // only after the first full layout, so nothing jumps
-function show(){
-  var p={};try{p=JSON.parse(webOSSystem.launchParams||'{}')}catch(e){}
-  var inplace=!!p.kind&&card.classList.contains('on')&&card.className.indexOf('k-')>=0;   // a voice card that is already showing is updated without fading out
-  if(!inplace)card.classList.remove('on');
-  card.className=(card.classList.contains('on')?'on ':'')+(p.kind?'v k-'+p.kind:'');
-  document.getElementById('title').textContent=p.title||'';document.getElementById('q').textContent=p.question||'';document.getElementById('text').textContent=p.text||'';
-  place(p.position||'top-right',!!p.kind);
+function setBoth(name, value) {
+  try { webOSSystem[name](value); } catch (e) {
+    try { webOSSystem[name](JSON.stringify(value)); } catch (e2) {}
+  }
+}
+setBoth('setInputRegion', [{ x: 0, y: 0, width: 0, height: 0 }]);
+setBoth('setKeyMask', []);
+
+/* safety net: if the region was not honoured and a key reaches this window anyway, close the cards at once */
+document.addEventListener('keydown', function () {
   clearTimeout(timer);
-  timer=setTimeout(function(){card.classList.remove('on');setTimeout(function(){try{window.close()}catch(e){}},500)},Math.max(2,Math.min(120,p.seconds||8))*1000+500);
-  if(!p.image){img.style.display='none';img.removeAttribute('src');reveal();return}
-  // load the picture first, then show the finished card in one go
-  var im=new Image(),done=false,go=function(ok){if(done)return;done=true;if(ok){img.src=p.image;img.style.display='block'}else{img.style.display='none'}reveal()};
-  im.onload=function(){go(true)};im.onerror=function(){go(false)};setTimeout(function(){go(false)},3000);im.src=p.image}
-document.addEventListener('webOSRelaunch',show);
+  clearTimeout(volTimer);
+  card.classList.remove('on');
+  volCard.classList.remove('on');
+  stopVolumePoll();
+  setTimeout(function () {
+    try { window.close(); } catch (e) {}
+  }, 300);
+}, true);
+
+function getVolIcon(mute) {
+  if (mute) {
+    return '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="currentColor"><path d="M3.63 3.63a1 1 0 0 0 0 1.41l3.58 3.58L7 9H4a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l4 3.33A1 1 0 0 0 12.67 17.5l2.45 2.45a1 1 0 0 0 1.41-1.41L5.05 3.63a1 1 0 0 0-1.42 0zM12 5.33l-2.4 2 5.07 5.07c.21-.77.33-1.58.33-2.4a6 6 0 0 0-3-5.2v.53zM18.8 8.4A9.95 9.95 0 0 1 20 12c0 1.7-.43 3.3-1.2 4.7l1.45 1.45A11.93 11.93 0 0 0 22 12c0-2.8-1-5.37-2.67-7.4l-1.43 1.43c.31.75.55 1.55.7 2.37h.2z"/></svg>';
+  }
+  return '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="currentColor"><path d="M4 9h3l4-3.33A1 1 0 0 1 12.67 6.5v11a1 1 0 0 1-1.67.83L7 15H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1zm11 3a4 4 0 0 0-2-3.46v6.92A4 4 0 0 0 15 12zm2.5 0c0 2.22-1.2 4.15-3 5.19v2.09c2.9-1.2 5-4.04 5-7.28s-2.1-6.08-5-7.28v2.09c1.8 1.04 3 2.97 3 5.19z"/></svg>';
+}
+
+function formatOutput(s) {
+  if (!s || s === 'tv_speaker' || s === 'internal_speaker') return 'TV';
+  if (s === 'bt_soundbar' || s === 'soundbar') return 'SOUNDBAR';
+  if (s === 'external_arc') return 'HDMI eARC';
+  if (s === 'optical') return 'OPTICAL';
+  if (s === 'headphone') return 'AIRPODS';
+  return s.replace(/_/g, ' ').toUpperCase();
+}
+
+var currentThemeId = '';
+var lastVolSeq = 0;
+var volPollXhr = null;
+var isPollingVolume = false;
+var pendingVolState = null;
+var volRafId = 0;
+
+function stopVolumePoll() {
+  isPollingVolume = false;
+  if (volPollXhr) {
+    try { volPollXhr.abort(); } catch (e) {}
+    volPollXhr = null;
+  }
+}
+
+function startVolumePoll(sinceSeq) {
+  if (isPollingVolume) return;
+  isPollingVolume = true;
+  pollNext(sinceSeq || 0);
+}
+
+function pollNext(seq) {
+  if (!isPollingVolume) return;
+  var xhr = new XMLHttpRequest();
+  volPollXhr = xhr;
+  xhr.open('GET', 'http://127.0.0.1:8765/api/audio/volume?since=' + (seq || 0) + '&client=notify');
+  xhr.timeout = 25000;
+  xhr.onload = function () {
+    if (!isPollingVolume) return;
+    if (xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        if (data && typeof data.volume === 'number') {
+          showVolume({
+            kind: 'volume',
+            volume: data.volume,
+            mute: data.mute,
+            output: data.output,
+            max: data.max,
+            theme: data.theme || currentThemeId,
+            seq: data.seq,
+            seconds: 2
+          });
+          pollNext(data.seq);
+          return;
+        }
+      } catch (e) {}
+    }
+    if (isPollingVolume) {
+      setTimeout(function () { pollNext(seq); }, 500);
+    }
+  };
+  xhr.onerror = xhr.ontimeout = function () {
+    if (isPollingVolume) {
+      setTimeout(function () { pollNext(seq); }, 500);
+    }
+  };
+  xhr.send(null);
+}
+
+function applyVolumeUpdate() {
+  volRafId = 0;
+  if (!pendingVolState) return;
+  var p = pendingVolState;
+  pendingVolState = null;
+
+  var vol = Math.max(0, Math.min(100, typeof p.volume === 'number' ? p.volume : 0));
+  var isMute = !!p.mute;
+  var max = typeof p.max === 'number' && p.max > 0 ? p.max : 100;
+  var pct = Math.max(0, Math.min(100, Math.round((vol / max) * 100)));
+  var themeId = p.theme || currentThemeId || 'pill';
+  var theme = VOLUME_THEMES[themeId] || VOLUME_THEMES['pill'];
+
+  var state = {
+    volume: vol,
+    pct: pct,
+    mute: isMute,
+    output: p.output,
+    device: formatOutput(p.output),
+    icon: getVolIcon(isMute)
+  };
+
+  var el = volCard.firstElementChild;
+  if (currentThemeId === themeId && el && typeof theme.update === 'function') {
+    theme.update(el, state);
+  } else {
+    currentThemeId = themeId;
+    volCard.innerHTML = theme.render(state);
+  }
+  volCard.classList.add('on');
+}
+
+function showVolume(p) {
+  if (typeof p.seq === 'number' && p.seq > lastVolSeq) {
+    lastVolSeq = p.seq;
+  }
+  pendingVolState = p;
+  if (!volRafId) {
+    volRafId = requestAnimationFrame(applyVolumeUpdate);
+  }
+
+  clearTimeout(volTimer);
+  volTimer = setTimeout(function () {
+    volCard.classList.remove('on');
+  }, Math.max(1, Math.min(10, p.seconds || 2)) * 1000);
+
+  // Keep window alive in background so next volume key responds instantly without app launch lag
+  clearTimeout(closeTimer);
+  closeTimer = setTimeout(function () {
+    stopVolumePoll();
+    try { window.close(); } catch (e) {}
+  }, 60000);
+
+  startVolumePoll(lastVolSeq);
+}
+
+function place(pos, wide) {
+  var m = 64, s = card.style, w = wide ? 900 : 640;
+  s.left = s.right = s.top = s.bottom = 'auto';
+  if (/left/.test(pos)) s.left = m + 'px';
+  else if (/center/.test(pos)) s.left = (1920 - w) / 2 + 'px';
+  else s.right = m + 'px';
+  if (/bottom/.test(pos)) s.bottom = m + 'px';
+  else if (/middle/.test(pos)) s.top = '300px';
+  else s.top = m + 'px';
+}
+
+function reveal() {
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () {
+      card.classList.add('on');
+    });
+  });
+}
+
+function show() {
+  var p = {};
+  try { p = JSON.parse(webOSSystem.launchParams || '{}'); } catch (e) {}
+
+  if (p.kind === 'volume') {
+    card.classList.remove('on');
+    showVolume(p);
+    return;
+  }
+
+  volCard.classList.remove('on');
+  stopVolumePoll();
+  var inplace = !!p.kind && card.classList.contains('on') && card.className.indexOf('k-') >= 0;
+  if (!inplace) card.classList.remove('on');
+  card.className = (card.classList.contains('on') ? 'on ' : '') + (p.kind ? 'v k-' + p.kind : '');
+  document.getElementById('title').textContent = p.title || '';
+  document.getElementById('q').textContent = p.question || '';
+  document.getElementById('text').textContent = p.text || '';
+  place(p.position || 'top-right', !!p.kind);
+  clearTimeout(timer);
+  timer = setTimeout(function () {
+    card.classList.remove('on');
+    setTimeout(function () {
+      try { window.close(); } catch (e) {}
+    }, 500);
+  }, Math.max(2, Math.min(120, p.seconds || 8)) * 1000 + 500);
+
+  if (!p.image) {
+    img.style.display = 'none';
+    img.removeAttribute('src');
+    reveal();
+    return;
+  }
+  var im = new Image(),
+    done = false,
+    go = function (ok) {
+      if (done) return;
+      done = true;
+      if (ok) {
+        img.src = p.image;
+        img.style.display = 'block';
+      } else {
+        img.style.display = 'none';
+      }
+      reveal();
+    };
+  im.onload = function () { go(true); };
+  im.onerror = function () { go(false); };
+  setTimeout(function () { go(false); }, 3000);
+  im.src = p.image;
+}
+
+document.addEventListener('webOSRelaunch', show);
 show();
 </script></body></html>
