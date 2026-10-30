@@ -175,19 +175,19 @@ run(async () => {
     });
     return { umounted: fs.readFileSync(log, 'utf8').trim(), copy: fs.existsSync(ours), marker: fs.existsSync(mark) };
   };
-  for (const f of [ours, top, etc, mark]) fs.rmSync(f, { force: true });
+  for (const f of [ours, top, etc, mark]) if (fs.existsSync(f)) fs.unlinkSync(f);
   fs.writeFileSync(ours, '127.0.0.1 x # cleanyourtv-debloat\n');
   fs.linkSync(ours, etc); // the same file: our copy is what /etc/hosts shows
   fs.writeFileSync(mark, '');
   let h = undoHosts();
   ok(h.umounted === etc && !h.copy && !h.marker, 'our RAM copy on top: unmounted and removed');
-  for (const f of [ours, etc, mark]) fs.rmSync(f, { force: true });
+  for (const f of [ours, etc, mark]) if (fs.existsSync(f)) fs.unlinkSync(f);
   fs.writeFileSync(ours, '127.0.0.1 x # cleanyourtv-debloat\n');
   fs.writeFileSync(etc, '0.0.0.0 ads.example\n'); // another table on top (a different file)
   fs.writeFileSync(mark, '');
   h = undoHosts();
   ok(h.umounted === '' && h.copy && h.marker, 'another table on top: nothing is unmounted and the marker stays');
-  fs.rmSync(mark);
+  fs.unlinkSync(mark);
   h = undoHosts();
   ok(h.umounted === '', 'without the marker nothing is unmounted');
   // admanager is not stubbed (HBO Max and Disney+ stay on their loader without it, issue 47); a stub of an older version is lifted
