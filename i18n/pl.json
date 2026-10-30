@@ -340,9 +340,7 @@
  "More settings...": "Więcej ustawień...",
  "Most used first": "Najczęściej używane na początku",
  "Move left": "Przesuń w lewo",
- "Move left in dock": "Przesuń w lewo w docku",
  "Move right": "Przesuń w prawo",
- "Move right in dock": "Przesuń w prawo w docku",
  "Name (optional)": "Nazwa (opcjonalnie)",
  "names, texts, card options": "nazwy, teksty, opcje kart",
  "needs Home Assistant": "wymaga Home Assistanta",
@@ -737,5 +735,9 @@
  "This plays your own playlist, not the TV’s tuner. For antenna or cable, add a TV button in Customise.": "To odtwarza Twoją playlistę, nie tuner telewizora. Do anteny lub kablówki dodaj przycisk TV w Dostosuj.",
  "Tuner": "Tuner",
  "Show LG’s own Live TV": "Pokaż telewizję na żywo LG",
- "On: LG’s own Live TV (the antenna or cable tuner) is in the Inputs list and the Input key list, and the launcher offers a TV button. Off: none of that, for a TV that only plays a playlist or external boxes. Independent of Show Live TV, so you can have both, one of them, or neither.": "Wł.: telewizja na żywo LG (tuner anteny lub kablówki) jest na liście wejść i na liście klawisza Input, a launcher ma przycisk TV. Wył.: nic z tego, dla telewizora, który odtwarza tylko playlistę lub zewnętrzne dekodery. Niezależne od Pokaż telewizję na żywo, więc możesz mieć obie, jedną z nich albo żadną."
+ "On: LG’s own Live TV (the antenna or cable tuner) is in the Inputs list and the Input key list, and the launcher offers a TV button. Off: none of that, for a TV that only plays a playlist or external boxes. Independent of Show Live TV, so you can have both, one of them, or neither.": "Wł.: telewizja na żywo LG (tuner anteny lub kablówki) jest na liście wejść i na liście klawisza Input, a launcher ma przycisk TV. Wył.: nic z tego, dla telewizora, który odtwarza tylko playlistę lub zewnętrzne dekodery. Niezależne od Pokaż telewizję na żywo, więc możesz mieć obie, jedną z nich albo żadną.",
+ "Custom static": "Własna (statyczna)",
+ "Arrange apps...": "Uporządkuj aplikacje...",
+ "Move": "Przesuń",
+ "Use arrows to move, press OK when done": "Użyj strzałek, aby przesunąć; naciśnij OK, aby zakończyć"
 }

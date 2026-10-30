@@ -69,6 +69,11 @@ run(async () => {
   });
   await call(apps, '/api/config', 'POST', { dock: ['a.one'], sort: 'alpha' });
   ok(config.get().pinnedInputs.length === 2, "saving the launcher's settings keeps the pinned inputs");
+  await call(apps, '/api/config', 'POST', { dock: ['a.one'], sort: 'custom', order: ['a.two', 'a.one'] });
+  ok(
+    config.get().sort === 'custom' && JSON.stringify(config.get().order) === JSON.stringify(['a.two', 'a.one']),
+    'custom sort and order are saved in config'
+  );
   await call(apps, '/api/config', 'POST', { dock: ['a.one'], runDots: true });
   const on = config.get().runDots === true;
   await call(apps, '/api/config', 'POST', { dock: ['a.one'], runDots: 'yes' });

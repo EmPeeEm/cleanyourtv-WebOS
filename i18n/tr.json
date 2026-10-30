@@ -315,9 +315,7 @@
  "More settings...": "Diğer ayarlar...",
  "Most used first": "Önce en çok kullanılan",
  "Move left": "Sola taşı",
- "Move left in dock": "Dock'ta sola taşı",
  "Move right": "Sağa taşı",
- "Move right in dock": "Dock'ta sağa taşı",
  "Name (optional)": "Ad (isteğe bağlı)",
  "names, texts, card options": "adlar, metinler, kart seçenekleri",
  "needs Home Assistant": "Home Assistant gerekli",
@@ -668,5 +666,9 @@
  "Uninstall %s?": "%s kaldırılsın mı?",
  "Uninstalling %s...": "%s kaldırılıyor...",
  "%s uninstalled.": "%s kaldırıldı.",
- "Could not uninstall %s.": "%s kaldırılamadı."
+ "Could not uninstall %s.": "%s kaldırılamadı.",
+ "Custom static": "Özel (statik)",
+ "Arrange apps...": "Uygulamaları düzenle...",
+ "Move": "Taşı",
+ "Use arrows to move, press OK when done": "Taşımak için ok tuşlarını kullanın, bitirince OK tuşuna basın"
 }

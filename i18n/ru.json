@@ -340,9 +340,7 @@
  "More settings...": "Другие настройки...",
  "Most used first": "Сначала часто используемые",
  "Move left": "Влево",
- "Move left in dock": "Влево в доке",
  "Move right": "Вправо",
- "Move right in dock": "Вправо в доке",
  "Name (optional)": "Имя (необязательно)",
  "names, texts, card options": "имена, тексты, параметры карточек",
  "needs Home Assistant": "нужен Home Assistant",
@@ -693,5 +691,9 @@
  "Uninstall %s?": "Удалить %s?",
  "Uninstalling %s...": "Удаление %s...",
  "%s uninstalled.": "Приложение %s удалено.",
- "Could not uninstall %s.": "Не удалось удалить %s."
+ "Could not uninstall %s.": "Не удалось удалить %s.",
+ "Custom static": "Своя (статическая)",
+ "Arrange apps...": "Упорядочить приложения...",
+ "Move": "Переместить",
+ "Use arrows to move, press OK when done": "Перемещайте стрелками, нажмите OK для завершения"
 }

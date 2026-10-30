@@ -350,9 +350,7 @@
  "More settings...": "المزيد من الإعدادات...",
  "Most used first": "الأكثر استخدامًا أولًا",
  "Move left": "نقل لليسار",
- "Move left in dock": "نقل لليسار في الشريط",
  "Move right": "نقل لليمين",
- "Move right in dock": "نقل لليمين في الشريط",
  "Name (optional)": "الاسم (اختياري)",
  "names, texts, card options": "الأسماء والنصوص وخيارات البطاقات",
  "needs Home Assistant": "يتطلب Home Assistant",
@@ -703,5 +701,9 @@
  "Uninstall %s?": "هل تريد إلغاء تثبيت %s؟",
  "Uninstalling %s...": "جارٍ إلغاء تثبيت %s...",
  "%s uninstalled.": "تم إلغاء تثبيت %s.",
- "Could not uninstall %s.": "تعذر إلغاء تثبيت %s."
+ "Could not uninstall %s.": "تعذر إلغاء تثبيت %s.",
+ "Custom static": "مخصص (ثابت)",
+ "Arrange apps...": "ترتيب التطبيقات...",
+ "Move": "نقل",
+ "Use arrows to move, press OK when done": "استخدم الأسهم للنقل، واضغط على OK عند الانتهاء"
 }

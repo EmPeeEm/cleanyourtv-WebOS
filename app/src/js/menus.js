@@ -256,6 +256,7 @@ document.addEventListener(
     if (lastKey - lastWheel < (stack.length ? 70 : 100)) return;
     lastWheel = lastKey;
     if (stack.length) menuKey(e.deltaY > 0 ? 40 : 38);
+    else if (moving) handleMoveKey(e.deltaY > 0 ? 39 : 37); /* while a tile is moved, the wheel moves it along the row */
     else homeStep(e.deltaY > 0 ? 1 : -1);
   },
   { passive: false }
@@ -415,12 +416,6 @@ function appMenu(a) {
   openBuilt(a.title, function () {
     var di = dockIds(),
       pos = di.indexOf(a.id),
-      move = function (d) {
-        var x = di.slice();
-        x[pos] = x[pos + d];
-        x[pos + d] = a.id;
-        setDock(x);
-      },
       items = [
         {
           label: t('Open'),
@@ -428,24 +423,14 @@ function appMenu(a) {
             launch(a.id);
           },
         },
+        {
+          label: t('Move'),
+          fn: function () {
+            startMoving(a.id);
+          },
+        },
       ];
     if (pos >= 0) {
-      if (pos > 0)
-        items.push({
-          label: t('Move left in dock'),
-          stay: true,
-          fn: function () {
-            move(-1);
-          },
-        });
-      if (pos < di.length - 1)
-        items.push({
-          label: t('Move right in dock'),
-          stay: true,
-          fn: function () {
-            move(1);
-          },
-        });
       items.push({
         label: t('Remove from dock'),
         stay: true,
@@ -728,13 +713,23 @@ function customizeMenu() {
       { label: t('Hidden apps'), sub: nh ? String(nh) : '', stay: true, fn: hiddenMenu },
       {
         label: t('App order'),
-        sub: cfg.sort === 'alpha' ? t('A to Z') : t('Most used first'),
+        sub: cfg.sort === 'alpha' ? t('A to Z') : cfg.sort === 'custom' ? t('Custom static') : t('Most used first'),
         stay: true,
         fn: function () {
-          cfg.sort = cfg.sort === 'alpha' ? 'usage' : 'alpha';
+          cfg.sort = cfg.sort === 'alpha' ? 'custom' : cfg.sort === 'custom' ? 'usage' : 'alpha';
+          if (cfg.sort === 'custom' && (!cfg.order || !cfg.order.length)) {
+            cfg.order = gridAppIds();
+          }
           saveCfg();
         },
       },
+      cfg.sort === 'custom'
+        ? {
+            label: t('Arrange apps...'),
+            stay: true,
+            fn: gridAppsMenu,
+          }
+        : null,
       {
         label: t('Mark running apps'),
         sub: cfg.runDots === true ? t('Green dot') : t('No dot'),
@@ -882,6 +877,19 @@ function dockMenu() {
         },
       });
     return items;
+  });
+}
+function gridAppsMenu() {
+  openBuilt(t('Apps'), function () {
+    var ga = gridApps();
+    return ga.map(function (a) {
+      return {
+        label: a.title,
+        fn: function () {
+          startMoving(a.id);
+        },
+      };
+    });
   });
 }
 /* one app in the dock; after a move the menu stays on the same app (now in its new place), so it can be moved again */

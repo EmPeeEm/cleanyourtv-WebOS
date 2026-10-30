@@ -331,9 +331,7 @@
  "More settings...": "Altre impostazioni...",
  "Most used first": "Più usate prima",
  "Move left": "Sposta a sinistra",
- "Move left in dock": "Sposta a sinistra nel dock",
  "Move right": "Sposta a destra",
- "Move right in dock": "Sposta a destra nel dock",
  "Name (optional)": "Nome (opzionale)",
  "names, texts, card options": "nomi, testi, opzioni schede",
  "needs Home Assistant": "richiede Home Assistant",
@@ -733,5 +731,9 @@
  "Power off completely?": "Spegnere completamente?",
  "Power off completely": "Spegni completamente",
  "The next start is slower, and Wake-on-LAN no longer wakes the TV.": "Il prossimo avvio è più lento, e Wake-on-LAN non accende più il TV.",
- "Powering off...": "Spegnimento..."
+ "Powering off...": "Spegnimento...",
+ "Custom static": "Personalizzato (fisso)",
+ "Arrange apps...": "Disponi le app...",
+ "Use arrows to move, press OK when done": "Usa le frecce per spostare, premi OK quando hai finito",
+ "Move": "Sposta"
 }

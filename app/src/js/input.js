@@ -24,6 +24,10 @@ function hit(e) {
     clearTimeout(pressT);
   });
   e.addEventListener('click', function () {
+    if (moving) {
+      stopMoving();
+      return;
+    }
     if (held) {
       held = false;
       return;
@@ -61,6 +65,18 @@ document.addEventListener('keydown', function (e) {
   if (LIVE.on) {
     LIVE.key(e);
     return;
+  }
+  if (moving) {
+    if (k === 13 || k === 461 || k === 27 || k === 8) {
+      stopMoving();
+      e.preventDefault();
+      return;
+    }
+    if (k >= 37 && k <= 40) {
+      handleMoveKey(k);
+      e.preventDefault();
+      return;
+    }
   }
   if (stack.length) {
     if (k === 13) {
@@ -210,6 +226,7 @@ document.addEventListener('visibilitychange', function () {
       return;
     }
     WALL.hidden();
+    stopMoving(); /* leaving Home while a tile is moved keeps where it is now */
     SCENES.hidden();
     if (LIVE.on) LIVE.exit();
     closeRunningMenu();

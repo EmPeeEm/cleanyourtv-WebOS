@@ -684,5 +684,9 @@
     "Uninstall %s?": "Vols desinstal·lar %s?",
     "Uninstalling %s...": "S'està desinstal·lant %s...",
     "%s uninstalled.": "S'ha desinstal·lat %s.",
-    "Could not uninstall %s.": "No s'ha pogut desinstal·lar %s."
+    "Could not uninstall %s.": "No s'ha pogut desinstal·lar %s.",
+    "Custom static": "Personalitzat (estàtic)",
+    "Arrange apps...": "Organitza les aplicacions...",
+    "Move": "Mou",
+    "Use arrows to move, press OK when done": "Fes servir les fletxes per moure, prem D'acord en acabar"
 }

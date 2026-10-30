@@ -331,9 +331,7 @@
  "More settings...": "Meer instellingen...",
  "Most used first": "Meest gebruikt eerst",
  "Move left": "Naar links",
- "Move left in dock": "Naar links in dock",
  "Move right": "Naar rechts",
- "Move right in dock": "Naar rechts in dock",
  "Name (optional)": "Naam (optioneel)",
  "names, texts, card options": "namen, teksten, kaartopties",
  "needs Home Assistant": "Home Assistant nodig",
@@ -730,5 +728,9 @@
  "Power off completely?": "Helemaal uitschakelen?",
  "Power off completely": "Helemaal uitschakelen",
  "The next start is slower, and Wake-on-LAN no longer wakes the TV.": "De volgende start duurt langer en Wake-on-LAN zet de tv niet meer aan.",
- "Powering off...": "Bezig met uitschakelen..."
+ "Powering off...": "Bezig met uitschakelen...",
+ "Custom static": "Aangepast (statisch)",
+ "Arrange apps...": "Apps rangschikken...",
+ "Move": "Verplaatsen",
+ "Use arrows to move, press OK when done": "Gebruik pijltjestoetsen om te verplaatsen, druk op OK als je klaar bent"
 }
