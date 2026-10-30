@@ -54,9 +54,14 @@ card are small and stay single files.
       so it starts the stand-in for Home. The stand-in sends `wam-launch.json` (written by `stage-home.sh` with `jtool.js wamlaunch`) to
       `com.palm.webappmanager/launchApp`, which opens the directory from step 2 as `com.webos.app.home`, and holds a registration
       with `sam` so the Home key sends it `relaunch`. Without registration, `sam` restarts the stand-in on the Home key, which opens
-      the launcher the same way. `/tmp/cleanyourtv-home-standin` holds the program's path while it is mounted; `reload-home.sh`,
+      the launcher the same way. When `sam` starts the stand-in only to preload Home (`"reason":"preload"`, seen on webOS 4.5 about
+      15 seconds after LG's Home is stopped), it registers but opens nothing, so the launcher does not cover the input on screen;
+      the first Home key opens it. `/tmp/cleanyourtv-home-standin` holds the program's path while it is mounted; `reload-home.sh`,
       `undo-home.sh`, the debloat hook and the manager's status read it. If `webapp-mgr` does not list the launcher within 30
-      seconds, `undo-home.sh temp` brings LG's Home back. `home-method` holding `mount` forces the first way.
+      seconds, `undo-home.sh temp` brings LG's Home back. That check starts about 3 seconds after the mount when Home is in the
+      foreground; when the TV started on an input or another app, it waits until Home is first asked for (the stand-in leaves
+      `/tmp/cleanyourtv-home-asked`; a preload does not count) or the app manager reports Home in the foreground without it (a stand-in
+      that does not run), so a broken stand-in still brings LG's Home back. `home-method` holding `mount` forces the first way.
       `bootstrap.sh verify` does the same once: when the launcher does not come up after a stand-in setup (a TV with CRIU never runs
       the stand-in, issues 72 and 84; `criu` in `tvprofile.js` records it but does not decide), it writes `home-method` `mount`, runs the boot
       script again and checks again; the rollback removes the file only if the setup wrote it.
