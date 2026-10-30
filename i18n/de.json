@@ -279,7 +279,7 @@
  "Instructions for the AI": "Anweisungen für die KI",
  "just now": "gerade eben",
  "Keeps acr2 from starting: the service that recognises what is on screen (LG calls it LivePlus) and reports it.": "Verhindert den Start von acr2: dem Dienst, der erkennt, was auf dem Bildschirm läuft (LG nennt es LivePlus), und es meldet.",
- "Keeps admanager and adoverlay-service from starting and points three LG ad servers at nothing in /etc/hosts.": "Verhindert den Start von admanager und adoverlay-service und lässt drei LG-Werbeserver in /etc/hosts ins Leere zeigen.",
+ "Keeps adoverlay-service from starting and points three LG ad servers at nothing in /etc/hosts.": "Verhindert den Start von adoverlay-service und lässt drei LG-Werbeserver in /etc/hosts ins Leere zeigen.",
  "key, model, server": "Schlüssel, Modell, Server",
  "Language": "Sprache",
  "Large": "Groß",

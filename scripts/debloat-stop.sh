@@ -1,7 +1,7 @@
 #!/bin/sh
 # Stop LG telemetry/ad daemons and keep the on-demand ones from starting (RAM-only; a reboot restores them unless run from init.d).
 # Four groups, each can be switched off in the manager (options.debloatOff in config.json lists the ones that are off):
-#   ads          admanager, adoverlay-service and the ad servers in /etc/hosts
+#   ads          adoverlay-service and the ad servers in /etc/hosts (not admanager: HBO Max and Disney+ wait for it at start, issue 47)
 #   tracking     acr2 (viewing tracking, LivePlus)
 #   logs         remotelogger, service-logger
 #   suggestions  contentminer, nudge, sportsalarm
@@ -20,11 +20,13 @@ units=""; bins=""
 on logs && units="$units remotelogger service-logger"
 on suggestions && { units="$units contentminer nudge"; bins="$bins sportsalarm"; }
 on tracking && bins="$bins acr2"
-on ads && bins="$bins admanager adoverlay-service"
+on ads && bins="$bins adoverlay-service"
 # --no-block: contentminer can take a minute to stop, which held up the rest of the script (and the manager waiting for it)
 for s in $units; do systemctl --no-block stop $s.service 2>&1 | sed "s/^/$s: /"; done
 # luna dynamic services: bind a do-nothing stub over the binary so ls-hubd cannot start them
 printf '#!/bin/sh\nexit 0\n' > $L/stub-noop; chmod +x $L/stub-noop
+# versions before 1.6.11 also stubbed admanager, and HBO Max and Disney+ stay on their loader without it (issue 47): lift our stub
+if grep -q " /usr/sbin/admanager " /proc/mounts && cmp -s /usr/sbin/admanager $L/stub-noop; then umount /usr/sbin/admanager 2>/dev/null; fi
 for b in $bins; do
   [ -e /usr/sbin/$b ] || continue
   grep -q " /usr/sbin/$b " /proc/mounts || mount --bind $L/stub-noop /usr/sbin/$b

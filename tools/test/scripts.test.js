@@ -156,6 +156,14 @@ run(async () => {
     /mount --bind \/tmp\/cleanyourtv-hosts \/etc\/hosts/.test(stop) && /umount \/etc\/hosts/.test(undo),
     'where /etc/hosts is read-only (issue 11) the ad servers go into a copy in RAM, and the undo removes it'
   );
+  // admanager is not stubbed (HBO Max and Disney+ stay on their loader without it, issue 47); a stub of an older version is lifted
+  ok(
+    /on ads && bins="\$bins adoverlay-service"/.test(stop) &&
+      !/bins="\$bins[^"]*admanager/.test(stop) &&
+      /cmp -s \/usr\/sbin\/admanager \$L\/stub-noop; then umount \/usr\/sbin\/admanager/.test(stop) &&
+      /admanager adoverlay-service/.test(undo),
+    'the ads group leaves admanager running (issue 47), lifts the stub that versions before 1.6.11 mounted, and the undo still removes it'
+  );
   ok(
     /TV="node \$S\/helper\/tvprofile\.js"/.test(bootText) &&
       /\$TV get notifyWindow/.test(bootText) &&

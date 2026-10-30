@@ -13,7 +13,7 @@ var INFO = {
     'Stops LG\u2019s ad, recommendation and telemetry services and blocks a few ad servers. Nothing is uninstalled, and it only applies while this launcher is Home.',
   'Debloat':
     'Stops LG\u2019s ad, tracking, telemetry and suggestion services, in four groups you can switch separately. Nothing is uninstalled, and it only applies while this launcher is Home.',
-  'Ads': 'Keeps admanager and adoverlay-service from starting and points three LG ad servers at nothing in /etc/hosts.',
+  'Ads': 'Keeps adoverlay-service from starting and points three LG ad servers at nothing in /etc/hosts.',
   'Viewing tracking (LivePlus)':
     'Keeps acr2 from starting: the service that recognises what is on screen (LG calls it LivePlus) and reports it.',
   'Telemetry logs': 'Stops remotelogger and service-logger, which collect logs and send them to LG.',
