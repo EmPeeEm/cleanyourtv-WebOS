@@ -43,3 +43,12 @@ side: the debloat adds its two marked lines to the file that is mounted at the t
 the TV as its only client): on one network it also blocked Philips Hue, `developers.google.com`, Apple services and parts of
 Prime Video for every other device. Its `list-store` variant also blocks the LG Content Store, so apps can no longer be installed or
 updated.
+
+## Preloaded apps
+
+LG starts some apps in the background at boot so they open faster (YouTube, Netflix, the web browser). On a TV with little
+memory that can cost more than it saves. In **Debloat** you can switch on **Close YouTube / Netflix / Web Browser preloaded at
+boot**: about 90 seconds after the service starts, and when you switch it on, the app is closed if it is running and not in front.
+The ids are listed in `options.closePreloaded` in `config.json`. Nothing is changed on the TV: LG preloads the app again at the
+next boot and the service closes it again, and the app opens a little slower the first time you start it. Home, the inputs and
+CleanYourTV's own apps are never closed this way.

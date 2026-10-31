@@ -618,6 +618,16 @@ function build() {
       });
     });
     rows.push({ sep: true });
+    PRELOAD.forEach(function (a) {
+      rows.push({
+        label: 'Close ' + a.label + ' preloaded at boot',
+        sub: onoff(preloadClosed(a.id)) + ' \u00B7 closes it in the background about 90 s after boot (not when it is in front)',
+        fn: function () {
+          preloadToggle(a.id);
+        },
+      });
+    });
+    rows.push({ sep: true });
     var anyOff = DEBLOAT.some(function (g) {
       return !debloatOn(g.id);
     });
@@ -1169,6 +1179,22 @@ var DEBLOAT = [
   { id: 'logs', label: 'Telemetry logs', what: 'remotelogger, service-logger' },
   { id: 'suggestions', label: 'Suggestions and nudges', what: 'contentminer, nudge, sportsalarm' },
 ];
+/* apps LG preloads at boot (helper/preload.js); options.closePreloaded lists the ones to close */
+var PRELOAD = [
+  { id: 'youtube.leanback.v4', label: 'YouTube' },
+  { id: 'netflix', label: 'Netflix' },
+  { id: 'com.webos.app.browser', label: 'Web Browser' },
+];
+function preloadClosed(id) {
+  return ((st.options || {}).closePreloaded || []).indexOf(id) >= 0;
+}
+function preloadToggle(id) {
+  var list = ((st.options || {}).closePreloaded || []).filter(function (x) {
+    return x !== id;
+  });
+  if (!preloadClosed(id)) list.push(id);
+  opt({ closePreloaded: list });
+}
 /* Experimental: compressed memory (zram, helper/zram.js). The service answers with what the TV has now. */
 var zr = null,
   zrSize = 512;
