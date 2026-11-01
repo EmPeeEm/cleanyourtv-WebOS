@@ -1,14 +1,14 @@
 # Add-ons
 
-An add-on is a feature that is loaded, installed and removed on its own. Live TV is the first: it ships in the package as the
-bundled add-on `iptv` (`helper/addons-bundled/iptv/`) and still answers `/api/live/...`, so the launcher and the manager did not
-change for it. Other add-ons come from a catalog in this repository and are installed from the manager (**Add-ons**).
+An add-on is a feature that is loaded, installed and removed on its own. Live TV and the Android box are bundled add-ons: they ship in the package (`helper/addons-bundled/iptv/` and
+`helper/addons-bundled/androidbox/`) and still answer their old paths (`/api/live/...`, `/api/androidbox...`), so the launcher and the
+manager did not change for them. A bundled add-on gets the service's own ctx as well as its add-on fields. Other add-ons come from a catalog in this repository and are installed from the manager (**Add-ons**).
 
 What is done, and what is not:
 
 - Done: the loader, pages served by the service and shown over Home, installing and removing from the catalog (every file checked
   against its SHA-256), the manager's Add-ons screen, and Live TV, both its service part and its player and guide.
-- Not done: voice, wallpapers and the Android box are still parts of the service.
+- Not done, on purpose: voice, wallpapers, the Input key, cards, notifications, themes and the debloat stay parts of the service.
 - Not tried on a TV: turning pages with the remote's number and colour buttons, Live TV inside the page, video playing in it, the
   page turn's smoothness on a weak GPU, and installing. The tests cover the service; the launcher with its page strip and the page
   turns were run in a desktop Chromium, not in Chromium 68 or 79.
@@ -46,6 +46,14 @@ What is done, and what is not:
   It has no `exec` or `luna`. This is a convention, not a sandbox: the code runs in the service, which is why a service add-on is
   only installed from the catalog, where every file is pinned by hash and reviewed. The service must run on Node.js 8.12.
 - `routes` and `enabledOption` are for bundled add-ons only.
+
+## The Android box (the androidbox add-on)
+
+`helper/addons-bundled/androidbox/` holds the service (`service.js`), the ADB client (`adbclient.js`) and the phone page (`page.js`). The
+manifest's `routes` is `/api/androidbox` (that path and everything below it). Its settings stay in `config.json` (`androidBox`) and the
+key in `adb/adbkey`, where they always were. The launch hook in `helper/apps.js` asks the loader for the add-on
+(`addons.module('androidbox')`), so an app set up for the box still switches the input. Switch the add-on off in the manager and its
+settings screen has nothing to talk to after the next start; the apps then open on the TV.
 
 ## Live TV (the iptv add-on)
 

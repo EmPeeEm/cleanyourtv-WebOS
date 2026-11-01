@@ -4,7 +4,7 @@ Some apps work better on an Android TV box than on the TV, Plex for example. Wit
 launcher switches the TV to the HDMI input the box is connected to and starts the app on the box, over the network (ADB). Nothing
 opens on the TV itself. It was written for the NVIDIA Shield; any Android box with classic _network debugging_ should work.
 
-No `adb` program is needed: the service speaks the protocol itself (`helper/adbclient.js`).
+No `adb` program is needed: the service speaks the protocol itself (`helper/addons-bundled/androidbox/adbclient.js`).
 
 ## What you need
 

@@ -8,7 +8,7 @@
 // https://github.com/cocool97/adb_client (MIT licence, Copyright (c) cocool97), used here as a known answer.
 const net = require('net'),
   crypto = require('crypto');
-const adb = require('../../helper/adbclient');
+const adb = require('../../helper/addons-bundled/androidbox/adbclient');
 
 const KEY = `-----BEGIN PRIVATE KEY-----
 MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC4Dyn85cxDJnjM

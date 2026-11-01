@@ -335,7 +335,7 @@ run(async () => {
     config: memoryConfig({ androidBox: { host: '192.168.1.50', port: 5555 }, dock: [] }),
     luna: spy,
     version: '1.6.0',
-    feature: n => (n === 'androidbox' ? box : null),
+    feature: n => (n === 'addons' ? { module: id => (id === 'androidbox' ? box : null) } : null),
   });
   r = await call(withBox, '/api/launch', 'POST', { id: 'plex' });
   ok(r.j.androidBox === 'starting' && opened[0] === 'plex' && sent.length === 0, 'an app set up for the box is not launched on the TV');
