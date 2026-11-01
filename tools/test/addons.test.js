@@ -61,7 +61,7 @@ run(async () => {
       version: '1.0.0',
       kind: 'service',
       entry: { service: 's.js' },
-      routes: ['/api/oldpath/', '/api/addons/'],
+      routes: ['/api/oldpath/', '/api/exact', '/api/addons/'],
       enabledOption: 'tuner',
     })
   );
@@ -112,6 +112,16 @@ run(async () => {
   ok(by('old') && by('old').bundled && by('old').status === 'running', 'a bundled add-on runs (enabled by its option)');
   r = await call(a, '/api/oldpath/status');
   ok(r.j && r.j.full === '/api/oldpath/status', 'an old API path reaches the bundled add-on with the whole path');
+  r = await call(a, '/api/exact');
+  ok(r.j && r.j.full === '/api/exact', 'a route without a trailing slash answers that path');
+  r = await call(a, '/api/exact/apps');
+  ok(r.j && r.j.full === '/api/exact/apps', 'and the paths below it');
+  r = await call(a, '/api/exactly');
+  ok(r.code === 404, 'but not a path that only starts with the same letters');
+  ok(
+    a.module('old') && typeof a.module('old').handle === 'function' && a.module('nope') === null,
+    'the loader gives the service part of a running add-on'
+  );
   r = await call(a, '/api/addons/old/enable', 'POST', { enabled: false });
   ok(cfg.options().tuner === false, 'switching an add-on with an option writes the option');
   a.load();
@@ -153,6 +163,12 @@ run(async () => {
   ok(
     !server.addonPageCall({ headers: { host: '127.0.0.1:8765' } }, 'http://127.0.0.1:8765', '/api/oldpath/x', may),
     'a call without a page as Referer does not'
+  );
+  const abm = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'helper', 'addons-bundled', 'androidbox', 'addon.json'), 'utf8'));
+  const abc = addons.check(abm, '1.6.12');
+  ok(
+    abc.manifest && abc.manifest.routes.join() === '/api/androidbox' && abc.manifest.kind === 'service',
+    'the Android box ships as the bundled add-on androidbox, answering /api/androidbox'
   );
   const iptvDir = path.join(__dirname, '..', '..', 'helper', 'addons-bundled', 'iptv');
   ok(

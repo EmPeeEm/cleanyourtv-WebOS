@@ -3,7 +3,7 @@
 const fs = require('fs'),
   http = require('http'),
   path = require('path');
-const { ok, call, sleep, req, memoryConfig, run } = require('./lib');
+const { ok, call, sleep, memoryConfig, run } = require('./lib');
 const { device, KEY } = require('./adbdevice');
 
 process.env.CYTV_ADB_AUTH_MS = '300'; // the time to answer the box's question, short for the test
@@ -15,7 +15,7 @@ run(async () => {
   fs.writeFileSync(keyFile, KEY, { mode: 0o600 });
 
   const good = { host: '127.0.0.1', port: 5555, input: 'com.webos.app.hdmi2', apps: { plex: 'com.plexapp.android' } };
-  const mod = req('androidbox');
+  const mod = require(path.join(__dirname, '..', '..', 'helper', 'addons-bundled', 'androidbox', 'service.js'));
 
   // ---- the settings ----
   ok(JSON.stringify(mod.clean(good)) === JSON.stringify(good), 'valid settings are kept as they are');

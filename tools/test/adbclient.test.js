@@ -5,11 +5,11 @@ const fs = require('fs'),
   path = require('path'),
   crypto = require('crypto'),
   net = require('net');
-const { ok, req, tmp, run } = require('./lib');
+const { ok, tmp, run } = require('./lib');
 const { device, KEY, KEY_ENCODED } = require('./adbdevice');
 
 run(async () => {
-  const adb = req('adbclient');
+  const adb = require(path.join(__dirname, '..', '..', 'helper', 'addons-bundled', 'androidbox', 'adbclient.js'));
   const key = adb.parseKey(KEY);
 
   // ---- the key ----

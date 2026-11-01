@@ -1,7 +1,7 @@
 // The phone page for the Android box settings (androidbox.js): address of the box, its HDMI input, and which apps open on it. It is served
 // by a short-lived server on the LAN (like the cards page) and needs the code shown on the TV in every request (header x-code).
-const web = require('./web'),
-  i18n = require('./i18n');
+const web = require('../../web'),
+  i18n = require('../../i18n');
 
 const PLEX = 'com.plexapp.android';
 const PHONE_JS = `var code='',S={},rows=[],$=function(i){return document.getElementById(i)};

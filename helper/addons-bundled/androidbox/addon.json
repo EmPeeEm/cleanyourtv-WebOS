@@ -1,0 +1,10 @@
+{
+  "id": "androidbox",
+  "name": "Android box",
+  "version": "1.0.0",
+  "kind": "service",
+  "description": "Open chosen apps on an Android box (NVIDIA Shield, ...) over ADB instead of on the TV.",
+  "entry": { "service": "service.js" },
+  "permissions": [],
+  "routes": ["/api/androidbox"]
+}

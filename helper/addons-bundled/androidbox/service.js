@@ -11,12 +11,12 @@
 // the box is adbclient.js: no adb program is needed. Every value is checked before it is used.
 const http = require('http'),
   path = require('path');
-const P = require('./paths'),
-  web = require('./web'),
-  i18n = require('./i18n'),
-  nc = require('./netcompat'),
+const P = require('../../paths'),
+  web = require('../../web'),
+  i18n = require('../../i18n'),
+  nc = require('../../netcompat'),
   adbclient = require('./adbclient'),
-  page = require('./androidboxpage');
+  page = require('./page');
 
 const HOST = /^(?:\d{1,3}(?:\.\d{1,3}){3}|[A-Za-z0-9][A-Za-z0-9.\-]{0,62})$/;
 const APP = /^[\w.\-]{1,100}$/;
@@ -325,13 +325,9 @@ function create(ctx) {
     web.notFound(res);
   }
 
-  return {
-    name: 'androidbox',
-    paths: ['/api/androidbox', '/api/androidbox/apps', '/api/androidbox/app', '/api/androidbox/test', '/api/androidbox/pair'],
-    handle,
-    handles,
-    open,
-  };
+  // the add-on's own part: /api/androidbox... is answered through its manifest "routes" (addon.json), and the launch hook in
+  // helper/apps.js asks for handles() and open()
+  return { handle, handles, open };
 }
 
 module.exports = { create, clean, suggest };

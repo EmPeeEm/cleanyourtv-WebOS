@@ -67,7 +67,10 @@ function check(m, serviceVersion) {
   if (bad.length) return { error: 'unknown permission: ' + String(bad[0]).slice(0, 40) };
   if (m.minService && serviceVersion && version.cmp(serviceVersion, m.minService) < 0)
     return { error: 'needs service ' + m.minService + ' or newer (this is ' + serviceVersion + ')' };
-  const routes = (Array.isArray(m.routes) ? m.routes : []).filter(r => /^\/api\/[a-z][a-z0-9-]*\/$/.test(r) && r !== '/api/addons/');
+  // old API paths: "/api/live/" (everything below it) or "/api/androidbox" (that path and everything below it)
+  const routes = (Array.isArray(m.routes) ? m.routes : []).filter(
+    r => /^\/api\/[a-z][a-z0-9-]*\/?$/.test(r) && !/^\/api\/addons\/?$/.test(r)
+  );
   const t = m.tile && typeof m.tile === 'object' ? m.tile : null;
   return {
     manifest: {
@@ -190,6 +193,7 @@ function create(ctx) {
           }),
       },
     };
+    if (a.bundled) return Object.assign({}, ctx, c); // a bundled add-on is part of the package: it gets the service's own ctx too
     if (perms.indexOf('net.fetch') >= 0) c.fetch = fetch;
     if (perms.indexOf('notify') >= 0 && ctx.feature('notify')) c.notify = body => ctx.feature('notify').show(body);
     return c;
@@ -436,10 +440,10 @@ function create(ctx) {
   }
 
   // the old API paths a bundled add-on still answers (manifest "routes"); only while it runs
-  const legacy = u => list.filter(a => a.bundled && a.status === 'running' && a.mod && a.manifest.routes.some(r => u.indexOf(r) === 0))[0];
+  const under = (r, u) => (r.charAt(r.length - 1) === '/' ? u.indexOf(r) === 0 : u === r || u.indexOf(r + '/') === 0);
+  const legacy = u => list.filter(a => a.bundled && a.status === 'running' && a.mod && a.manifest.routes.some(r => under(r, u)))[0];
   // may the page of add-on `id` call this path? Its bundled add-on's old API paths (Live TV's page calls /api/live/)
-  const pageMay = (id, u) =>
-    list.some(a => a.id === id && a.bundled && a.status === 'running' && a.manifest.routes.some(r => u.indexOf(r) === 0));
+  const pageMay = (id, u) => list.some(a => a.id === id && a.bundled && a.status === 'running' && a.manifest.routes.some(r => under(r, u)));
   const match = u => u.indexOf('/api/addons') === 0 || u.indexOf('/addon/') === 0 || !!legacy(u);
 
   async function viaAddon(a, req, res, sub, body) {
@@ -526,7 +530,13 @@ function create(ctx) {
     list.forEach(startOne);
   }
 
-  return { name: 'addons', prefix: '/api/addons', match, pageMay, handle, start, load, list: () => list.map(info) };
+  // the service part of a running add-on (the launch hook in apps.js asks the Android box for it)
+  const module = id => {
+    const a = find(id);
+    return a && a.status === 'running' && a.mod ? a.mod : null;
+  };
+
+  return { name: 'addons', prefix: '/api/addons', match, pageMay, module, handle, start, load, list: () => list.map(info) };
 }
 
 module.exports = { create, check, cleanIndex, KINDS, PERMISSIONS };

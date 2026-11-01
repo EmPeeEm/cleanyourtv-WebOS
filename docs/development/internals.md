@@ -29,7 +29,7 @@
 | `addons.js`, `addons-bundled/` | Add-ons: loads the folders that have an `addon.json` (those that ship in `addons-bundled/`, Live TV among them, and those installed from the catalog), isolates the ones that fail, serves their pages and installs from the catalog (`docs/development/addons.md`). |
 | `zram.js` | Compressed memory: switches the kernel's zram swap on with the size in `options.zram` at every start of the service, and on or off from the launcher (`/api/zram`). |
 | `wallpapers.js` | Wallpapers: the photo library (uploads and Immich, apart on disk, with an index), the phone page on port 8791 and the Immich sync. |
-| `androidbox.js`, `adbclient.js`, `androidboxpage.js` | Apps that open on an Android box: the settings and the launch hook, our own ADB client (packets, key, sign-in, one shell command; no `adb` program), and the phone page on port 8793. |
+| `addons-bundled/androidbox/` (`service.js`, `adbclient.js`, `page.js`) | The bundled add-on androidbox (answers `/api/androidbox`): Apps that open on an Android box: the settings and the launch hook, our own ADB client (packets, key, sign-in, one shell command; no `adb` program), and the phone page on port 8793. |
 | `cards.js`, `weather.js` | Cards: the shape check of the cards the launcher saves, the phone page on port 8792 where their options are typed, and the weather card's Open-Meteo requests (kept 30 minutes). |
 | `theme.js`, `themeschema.js` | Themes: `themeschema.js` holds every setting a theme can make, the checks and how a theme becomes CSS variables; `theme.js` reads themes from GitHub and keeps them on the TV. |
 | `voice.js`, `answers.js` | Voice: the microphone, the recogniser, the phone setup page; `answers.js` asks Home Assistant, a language model or your server. |

@@ -358,7 +358,8 @@ function create(ctx) {
       const b = await body(req);
       if (!/^[\w.\-]+$/.test(b.id || '')) return web.json(res, { error: 'bad id' }, 400);
       // an app set up to open on an Android box (androidbox.js) switches the input instead of opening on the TV
-      const box = ctx.feature && ctx.feature('androidbox');
+      const addons = ctx.feature && ctx.feature('addons');
+      const box = addons && addons.module && addons.module('androidbox');
       const moved = box && box.handles(b.id) ? await box.open(b.id) : null;
       if (moved) return web.json(res, moved);
       return web.json(res, await luna('luna://com.webos.applicationManager/launch', { id: b.id, params: b.params || {} }));

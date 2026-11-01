@@ -10,7 +10,7 @@ const fs = require('fs'),
   net = require('net'),
   path = require('path'),
   crypto = require('crypto');
-const exec = require('./exec');
+const exec = require('../../exec');
 
 const VERSION = 0x01000000, // protocol version 1: every packet carries a checksum of its data
   MAXDATA = 4096,
