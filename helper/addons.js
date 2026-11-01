@@ -1,28 +1,57 @@
-// Add-ons (concept: docs/development/addons.md): a folder in P.ADDONS with an addon.json, loaded by the service at start.
-//   GET  /api/addons                    {addons: [{id, name, version, kind, enabled, status, error, tile}]}
-//   GET  /api/addons/<id>               the same for one add-on
-//   POST /api/addons/<id>/enable {enabled}   stored in config.json (addons.<id>.enabled); takes effect at the next start
-//   ANY  /api/addons/<id>/<path>        answered by the add-on's own service.js
-// An add-on of kind "service" is Node code that runs as root in this process, so it gets a small ctx of its own (its folder, its data
-// folder, its settings, fetch, a log line) and nothing else, and an add-on that fails to load or throws is switched off for this run
-// without touching the rest of the service. DISABLE-ADDONS in the CleanYourTV folder (or the file ADDONS/DISABLE) loads none.
-// Installing from a catalog is not here yet; today an add-on is a folder put into P.ADDONS.
+// Add-ons (docs/development/addons.md): a folder with an addon.json, loaded by the service at start. Two places hold them:
+//   addons-bundled/<id>   ships with the package (Live TV is one); cannot be removed; may answer old API paths (manifest "routes")
+//   P.ADDONS/<id>         installed from the catalog (or put there by hand)
+// Requests:
+//   GET  /api/addons                       {addons: [{id, name, version, kind, enabled, status, error, bundled, tile, page, ...}]}
+//   GET  /api/addons/catalog               what the project's catalog offers: {addons: [...], error}
+//   POST /api/addons/install {id}          download from the catalog, check every file against its hash, install
+//   POST /api/addons/remove {id}           delete an installed add-on (its data stays)
+//   GET  /api/addons/<id>                  one add-on
+//   POST /api/addons/<id>/enable {enabled} stored in config.json; takes effect at the next start (a page add-on at once)
+//   ANY  /api/addons/<id>/<path>           answered by the add-on's own service.js (path = what follows the id)
+//   GET  /addon/<id>/<file>                a file of the add-on's page (only while it runs); GET /addon/sdk.js is the helper for pages
+// An add-on of kind "service" is Node code that runs as root in this process; it gets a small ctx (its folders, its settings, fetch,
+// a log line) and a failing one is switched off without touching the rest. Installed add-ons come only from the catalog, file by
+// file against the SHA-256 in its index. DISABLE-ADDONS in the CleanYourTV folder (or ADDONS/DISABLE) loads none.
 const fs = require('fs'),
-  path = require('path');
+  path = require('path'),
+  crypto = require('crypto');
 const P = require('./paths'),
   nc = require('./netcompat'),
   web = require('./web'),
+  fetch = require('./fetch'),
   version = require('./version');
 
 const KINDS = ['page', 'service'];
 const PERMISSIONS = ['net.fetch', 'config.own', 'notify', 'key.guide'];
 const ID = /^[a-z][a-z0-9-]{1,31}$/;
+const RESERVED = ['catalog', 'install', 'remove', 'sdk'];
+const MAX_FILE = 2 << 20,
+  MAX_FILES = 60;
 const safeRel = f => typeof f === 'string' && f.length > 0 && f.length < 120 && !/^[\\/]|\.\.|[\0\\]/.test(f);
+const TYPES = {
+  html: 'text/html; charset=utf-8',
+  js: 'application/javascript; charset=utf-8',
+  css: 'text/css; charset=utf-8',
+  json: 'application/json; charset=utf-8',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+  gif: 'image/gif',
+  ico: 'image/x-icon',
+  woff2: 'font/woff2',
+  txt: 'text/plain; charset=utf-8',
+};
+// pages run from the service's own address and can reach only themselves and their own API (and media from anywhere)
+const PAGE_CSP =
+  "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src * data: blob:; media-src * blob:; connect-src 'self'";
 
 // The manifest as the loader will use it, or {error}. serviceVersion: the running service's version, for minService.
 function check(m, serviceVersion) {
   if (!m || typeof m !== 'object' || Array.isArray(m)) return { error: 'addon.json is not an object' };
-  if (!ID.test(m.id || '')) return { error: 'id must be lower-case letters, digits and hyphens (2 to 32), starting with a letter' };
+  if (!ID.test(m.id || '') || RESERVED.indexOf(m.id) >= 0) return { error: 'id must be lower-case letters, digits and hyphens (2 to 32), starting with a letter' };
   if (typeof m.name !== 'string' || !m.name || m.name.length > 60) return { error: 'name is missing or too long' };
   if (!/^\d+\.\d+\.\d+$/.test(m.version || '')) return { error: 'version must look like 1.0.0' };
   if (KINDS.indexOf(m.kind) < 0) return { error: 'kind must be "page" or "service"' };
@@ -34,6 +63,7 @@ function check(m, serviceVersion) {
   if (bad.length) return { error: 'unknown permission: ' + String(bad[0]).slice(0, 40) };
   if (m.minService && serviceVersion && version.cmp(serviceVersion, m.minService) < 0)
     return { error: 'needs service ' + m.minService + ' or newer (this is ' + serviceVersion + ')' };
+  const routes = (Array.isArray(m.routes) ? m.routes : []).filter(r => /^\/api\/[a-z][a-z0-9-]*\/$/.test(r) && r !== '/api/addons/');
   const t = entry.tile && typeof entry.tile === 'object' ? entry.tile : null;
   return {
     manifest: {
@@ -41,16 +71,75 @@ function check(m, serviceVersion) {
       name: m.name,
       version: m.version,
       kind: m.kind,
+      description: typeof m.description === 'string' ? m.description.slice(0, 200) : '',
       entry: { service: entry.service, page: entry.page },
       permissions: perms,
+      routes,
+      enabledOption: /^[A-Za-z]{2,24}$/.test(m.enabledOption || '') ? m.enabledOption : '',
       tile: t ? { label: String(t.label || m.name).slice(0, 40), icon: String(t.icon || '').slice(0, 30), placement: t.placement === 'topbar' ? 'topbar' : 'home' } : null,
     },
   };
 }
 
+// the catalog index: entries with a clean id, version and a hash for every file; anything else is dropped
+function cleanIndex(raw) {
+  const out = [];
+  for (const e of raw && Array.isArray(raw.addons) ? raw.addons : []) {
+    if (!e || !ID.test(e.id || '') || RESERVED.indexOf(e.id) >= 0 || !/^\d+\.\d+\.\d+$/.test(e.version || '')) continue;
+    const files = {};
+    let n = 0,
+      good = e.files && typeof e.files === 'object';
+    for (const f of good ? Object.keys(e.files) : []) {
+      if (!safeRel(f) || !/^[0-9a-f]{64}$/.test(e.files[f]) || ++n > MAX_FILES) good = false;
+      else files[f] = e.files[f];
+    }
+    if (!good || !files['addon.json']) continue;
+    out.push({
+      id: e.id,
+      name: String(e.name || e.id).slice(0, 60),
+      version: e.version,
+      description: String(e.description || '').slice(0, 200),
+      kind: KINDS.indexOf(e.kind) >= 0 ? e.kind : 'page',
+      permissions: (Array.isArray(e.permissions) ? e.permissions : []).filter(p => PERMISSIONS.indexOf(p) >= 0),
+      files,
+    });
+  }
+  return out;
+}
+
+const rmrf = d => {
+  try {
+    for (const f of fs.readdirSync(d)) {
+      const p = path.join(d, f);
+      if (fs.lstatSync(p).isDirectory()) rmrf(p);
+      else fs.unlinkSync(p);
+    }
+    fs.rmdirSync(d);
+  } catch (_) {}
+};
+const sha256 = buf => crypto.createHash('sha256').update(buf).digest('hex');
+
+// the helper page: Back closes the add-on's page (the launcher listens), and CYTV.api() talks to the add-on's own service part
+const SDK = `(function () {
+  var m = /^\\/addon\\/([a-z][a-z0-9-]*)\\//.exec(location.pathname), id = m ? m[1] : '';
+  function close() { try { parent.postMessage({ cytvAddon: 'close', id: id }, '*'); } catch (e) {} }
+  document.addEventListener('keydown', function (e) {
+    var t = e.target && e.target.tagName, typing = t === 'INPUT' || t === 'TEXTAREA';
+    if (e.keyCode === 461 || e.keyCode === 27 || (e.keyCode === 8 && !typing)) { e.preventDefault(); close(); }
+  }, true);
+  window.CYTV = {
+    id: id,
+    close: close,
+    api: function (p, body) {
+      return fetch('/api/addons/' + id + p, body ? { method: 'POST', body: JSON.stringify(body) } : {}).then(function (r) { return r.json(); });
+    }
+  };
+})();
+`;
+
 function create(ctx) {
   const { config } = ctx;
-  const list = []; // {id, dir, manifest, enabled, status, error, mod}
+  const list = []; // {id, dir, bundled, manifest, enabled, status, error, mod}
   const readJson = f => {
     try {
       return JSON.parse(fs.readFileSync(f, 'utf8'));
@@ -58,8 +147,11 @@ function create(ctx) {
       return null;
     }
   };
-  const settingsOf = id => ((config.get().addons || {})[id] || {}).settings || {};
-  const enabledOf = id => ((config.get().addons || {})[id] || {}).enabled !== false;
+  const addonsCfg = id => (config.get().addons || {})[id] || {};
+  const settingsOf = id => addonsCfg(id).settings || {};
+  const enabledOf = a => (a.manifest.enabledOption ? config.options()[a.manifest.enabledOption] !== false : addonsCfg(a.id).enabled !== false);
+  const find = id => list.filter(x => x.id === id)[0];
+  const paused = () => fs.existsSync(path.join(path.dirname(P.ADDONS), 'DISABLE-ADDONS')) || fs.existsSync(path.join(P.ADDONS, 'DISABLE'));
 
   // the ctx an add-on gets: its folders, its settings, fetch and a log line; not exec, luna or the other parts of the service
   function addonCtx(a) {
@@ -80,60 +172,74 @@ function create(ctx) {
           }),
       },
     };
-    if (perms.indexOf('net.fetch') >= 0) c.fetch = require('./fetch');
+    if (perms.indexOf('net.fetch') >= 0) c.fetch = fetch;
     if (perms.indexOf('notify') >= 0 && ctx.feature('notify')) c.notify = body => ctx.feature('notify').show(body);
     return c;
   }
 
+  // read one folder into the list (not started); a bundled add-on wins over an installed one with the same id
+  function scanOne(dir, name, bundled) {
+    const a = { id: name, dir, bundled, manifest: null, enabled: false, status: 'failed', error: '', mod: null };
+    const r = check(readJson(path.join(dir, 'addon.json')), ctx.version);
+    if (r.error) a.error = r.error;
+    else if (r.manifest.id !== name) a.error = 'the folder name must be the id (' + r.manifest.id + ')';
+    else if (find(name)) return null;
+    else {
+      a.manifest = r.manifest;
+      a.enabled = enabledOf(a);
+      // an add-on whose switch is an old option (Live TV) stays loaded: the launcher reads the option and the manager's screen needs the service
+      a.status = paused() ? 'paused' : a.enabled || a.manifest.enabledOption ? 'ready' : 'off';
+      if (a.status === 'paused') a.error = 'DISABLE-ADDONS is present';
+    }
+    list.push(a);
+    return a;
+  }
+
+  // create the service part of a ready add-on; a page add-on has none
+  function activate(a) {
+    if (a.status !== 'ready') return;
+    if (a.manifest.kind === 'page') {
+      a.status = 'running';
+      return;
+    }
+    try {
+      a.mod = require(path.join(a.dir, a.manifest.entry.service)).create(addonCtx(a));
+      a.status = 'running';
+    } catch (e) {
+      a.status = 'failed';
+      a.error = String((e && e.message) || e).slice(0, 200);
+      console.error('addon ' + a.id + ' failed to load: ' + ((e && e.stack) || e));
+    }
+  }
+  function startOne(a) {
+    if (a.status !== 'running' || !a.mod || typeof a.mod.start !== 'function') return;
+    try {
+      a.mod.start();
+    } catch (e) {
+      a.status = 'failed';
+      a.error = String((e && e.message) || e).slice(0, 200);
+      console.error('addon ' + a.id + ' failed to start: ' + ((e && e.stack) || e));
+    }
+  }
+
   function load() {
     list.length = 0;
-    let names = [];
-    try {
-      names = fs.readdirSync(P.ADDONS).sort();
-    } catch (_) {
-      return; // no add-ons folder: nothing installed
-    }
-    const off = fs.existsSync(path.join(path.dirname(P.ADDONS), 'DISABLE-ADDONS')) || fs.existsSync(path.join(P.ADDONS, 'DISABLE'));
-    const seen = {};
-    for (const n of names) {
-      const dir = path.join(P.ADDONS, n);
-      let isDir = false;
+    for (const [root, bundled] of [[P.ADDONS_BUNDLED, true], [P.ADDONS, false]]) {
+      let names = [];
       try {
-        isDir = fs.statSync(dir).isDirectory();
+        names = fs.readdirSync(root).sort();
       } catch (_) {}
-      if (!isDir) continue;
-      const a = { id: n, dir, manifest: null, enabled: false, status: 'failed', error: '', mod: null };
-      list.push(a);
-      const r = check(readJson(path.join(dir, 'addon.json')), ctx.version);
-      if (r.error) {
-        a.error = r.error;
-        continue;
-      }
-      a.manifest = r.manifest;
-      if (a.manifest.id !== n) {
-        a.error = 'the folder name must be the id (' + a.manifest.id + ')';
-        a.manifest = null;
-        continue;
-      }
-      if (seen[a.id]) continue;
-      seen[a.id] = true;
-      a.enabled = enabledOf(a.id);
-      if (off) {
-        a.status = 'paused';
-        a.error = 'DISABLE-ADDONS is present';
-      } else if (!a.enabled) a.status = 'off';
-      else if (a.manifest.kind === 'page') a.status = 'running';
-      else {
+      for (const n of names) {
+        if (n.charAt(0) === '.') continue; // staging folders
+        const dir = path.join(root, n);
+        let isDir = false;
         try {
-          a.mod = require(path.join(dir, a.manifest.entry.service)).create(addonCtx(a));
-          a.status = 'running';
-        } catch (e) {
-          a.status = 'failed';
-          a.error = String((e && e.message) || e).slice(0, 200);
-          console.error('addon ' + a.id + ' failed to load: ' + ((e && e.stack) || e));
-        }
+          isDir = fs.statSync(dir).isDirectory();
+        } catch (_) {}
+        if (isDir) scanOne(dir, n, bundled);
       }
     }
+    list.forEach(activate);
   }
 
   const info = a => ({
@@ -141,52 +247,225 @@ function create(ctx) {
     name: a.manifest ? a.manifest.name : a.id,
     version: a.manifest ? a.manifest.version : '',
     kind: a.manifest ? a.manifest.kind : '',
+    description: a.manifest ? a.manifest.description : '',
+    permissions: a.manifest ? a.manifest.permissions : [],
     enabled: a.enabled,
     status: a.status,
     error: a.error,
+    bundled: a.bundled,
     tile: a.manifest ? a.manifest.tile : null,
+    page: a.manifest && a.manifest.entry.page && a.status === 'running' ? '/addon/' + a.id + '/' + a.manifest.entry.page : '',
   });
 
-  async function handle(req, res, u, body) {
-    if (u === '/api/addons') return web.json(res, { addons: list.map(info) });
-    const m = /^\/api\/addons\/([a-z][a-z0-9-]*)(\/.*)?$/.exec(u);
-    const a = m && list.filter(x => x.id === m[1])[0];
-    if (!a) return web.notFound(res);
-    if (!m[2]) return web.json(res, info(a));
-    if (m[2] === '/enable' && req.method === 'POST') {
-      const b = await body(req);
-      if (typeof b.enabled !== 'boolean') return web.json(res, { error: 'enabled must be true or false' }, 400);
-      config.update('addon:' + a.id, cfg => {
-        cfg.addons = cfg.addons || {};
-        cfg.addons[a.id] = Object.assign({}, cfg.addons[a.id], { enabled: b.enabled });
-      });
-      return web.json(res, { id: a.id, enabled: b.enabled, restartNeeded: b.enabled !== a.enabled });
-    }
-    if (a.status !== 'running' || !a.mod || typeof a.mod.handle !== 'function') return web.notFound(res);
+  // ---- the catalog ----
+  const catalogBase = () => {
+    if (process.env.CYTV_ADDONS_URL) return process.env.CYTV_ADDONS_URL;
+    const updates = require('./updates');
+    let ref = 'main';
     try {
-      return await a.mod.handle(req, res, m[2], body);
+      const x = fs.readFileSync(P.SOURCE, 'utf8').trim().split(/\s+/)[1];
+      if (/^[\w.\/-]{1,60}$/.test(x || '')) ref = x;
+    } catch (_) {}
+    return 'https://raw.githubusercontent.com/' + updates.repo() + '/' + ref + '/addons';
+  };
+  const get = (url, max) =>
+    fetch
+      .read(url, {
+        headers: { 'User-Agent': 'cleanyourtv-addons' },
+        maxBytes: max,
+        totalMs: 30000,
+        idleMs: 10000,
+        redirects: 3,
+        allowHttp: () => !!process.env.CYTV_ADDONS_URL,
+        statusText: st => (st === 404 ? 'not found on GitHub' : 'GitHub answered ' + st),
+      })
+      .then(r => r.body);
+  async function index() {
+    return cleanIndex(JSON.parse((await get(catalogBase() + '/index.json', 256 * 1024)).toString('utf8')));
+  }
+  async function catalog() {
+    let entries;
+    try {
+      entries = await index();
     } catch (e) {
-      console.error('addon ' + a.id + ': ' + u + ': ' + ((e && e.stack) || e));
+      return { addons: [], error: String((e && e.message) || e).slice(0, 160) };
+    }
+    return {
+      addons: entries.map(e => {
+        const a = find(e.id);
+        return {
+          id: e.id,
+          name: e.name,
+          version: e.version,
+          description: e.description,
+          kind: e.kind,
+          permissions: e.permissions,
+          installed: a && a.manifest ? a.manifest.version : '',
+          bundled: !!(a && a.bundled),
+          update: !!(a && a.manifest && !a.bundled && version.cmp(e.version, a.manifest.version) > 0),
+        };
+      }),
+    };
+  }
+
+  async function install(id) {
+    const a0 = find(id);
+    if (a0 && a0.bundled) return { error: 'this add-on ships with CleanYourTV' };
+    const e = (await index()).filter(x => x.id === id)[0];
+    if (!e) return { error: 'not in the catalog' };
+    const stage = path.join(P.ADDONS, '.staging-' + id),
+      old = path.join(P.ADDONS, '.old-' + id),
+      dest = path.join(P.ADDONS, id);
+    rmrf(stage);
+    rmrf(old);
+    try {
+      for (const f of Object.keys(e.files)) {
+        const buf = await get(catalogBase() + '/catalog/' + id + '/' + f, MAX_FILE);
+        if (sha256(buf) !== e.files[f]) throw new Error(f + ' does not match the catalog (nothing was installed)');
+        nc.mkdirp(path.dirname(path.join(stage, f)));
+        fs.writeFileSync(path.join(stage, f), buf);
+      }
+      const r = check(readJson(path.join(stage, 'addon.json')), ctx.version);
+      if (r.error) throw new Error(r.error);
+      if (r.manifest.id !== id || r.manifest.version !== e.version) throw new Error('addon.json does not match the catalog entry');
+      if (r.manifest.kind === 'service' && !fs.existsSync(path.join(stage, r.manifest.entry.service))) throw new Error('the service file is missing');
+    } catch (err) {
+      rmrf(stage);
+      return { error: String((err && err.message) || err).slice(0, 200) };
+    }
+    nc.mkdirp(P.ADDONS);
+    const had = fs.existsSync(dest);
+    if (had) fs.renameSync(dest, old);
+    fs.renameSync(stage, dest);
+    rmrf(old);
+    // a new add-on starts now; one that was loaded before keeps its old code until the service restarts
+    if (had) {
+      const a = find(id);
+      if (a && a.manifest && a.manifest.kind === 'page') {
+        list.splice(list.indexOf(a), 1);
+        const n = scanOne(dest, id, false);
+        if (n) activate(n);
+        return { id, version: e.version, restartNeeded: false };
+      }
+      return { id, version: e.version, restartNeeded: true };
+    }
+    const n = scanOne(dest, id, false);
+    if (n) {
+      activate(n);
+      startOne(n);
+    }
+    return { id, version: e.version, restartNeeded: false };
+  }
+
+  function remove(id) {
+    const a = find(id);
+    if (!a) return { error: 'not installed' };
+    if (a.bundled) return { error: 'this add-on ships with CleanYourTV; switch it off instead' };
+    rmrf(a.dir);
+    const wasService = !!a.mod;
+    list.splice(list.indexOf(a), 1);
+    return { id, restartNeeded: wasService };
+  }
+
+  // ---- the add-on's page ----
+  function sendFile(res, a, rel) {
+    const root = a.dir,
+      file = path.normalize(path.join(root, rel || ''));
+    const isService = a.manifest.entry.service && path.normalize(path.join(root, a.manifest.entry.service)) === file;
+    if (file.indexOf(root + path.sep) !== 0 || isService || path.basename(file) === 'addon.json') return web.notFound(res);
+    let st;
+    try {
+      st = fs.statSync(file);
+    } catch (_) {
+      return web.notFound(res);
+    }
+    if (!st.isFile()) return web.notFound(res);
+    const ext = path.extname(file).slice(1).toLowerCase();
+    res.writeHead(200, {
+      'content-type': TYPES[ext] || 'application/octet-stream',
+      'content-length': st.size,
+      'cache-control': 'no-cache',
+      'x-content-type-options': 'nosniff',
+      'content-security-policy': PAGE_CSP,
+    });
+    fs.createReadStream(file).pipe(res);
+  }
+
+  // the old API paths a bundled add-on still answers (manifest "routes"); only while it runs
+  const legacy = u => list.filter(a => a.bundled && a.status === 'running' && a.mod && a.manifest.routes.some(r => u.indexOf(r) === 0))[0];
+  const match = u => u.indexOf('/api/addons') === 0 || u.indexOf('/addon/') === 0 || !!legacy(u);
+
+  async function viaAddon(a, req, res, sub, body) {
+    try {
+      return await a.mod.handle(req, res, sub, body);
+    } catch (e) {
+      console.error('addon ' + a.id + ': ' + sub + ': ' + ((e && e.stack) || e));
       if (!res.headersSent) web.json(res, { error: 'the add-on failed: ' + String((e && e.message) || e).slice(0, 200) }, 500);
       else res.end();
     }
   }
 
-  function start() {
-    load();
-    for (const a of list)
-      if (a.status === 'running' && a.mod && typeof a.mod.start === 'function') {
-        try {
-          a.mod.start();
-        } catch (e) {
-          a.status = 'failed';
-          a.error = String((e && e.message) || e).slice(0, 200);
-          console.error('addon ' + a.id + ' failed to start: ' + ((e && e.stack) || e));
-        }
+  async function handle(req, res, u, body) {
+    const old = legacy(u);
+    if (old) return viaAddon(old, req, res, u, body); // an old path: the add-on sees the whole path
+    if (u === '/addon/sdk.js') {
+      res.writeHead(200, { 'content-type': TYPES.js, 'cache-control': 'no-cache' });
+      return res.end(SDK);
+    }
+    const pg = /^\/addon\/([a-z][a-z0-9-]*)\/(.*)$/.exec(u);
+    if (pg) {
+      const a = find(pg[1]);
+      if (!a || a.status !== 'running' || !a.manifest.entry.page || req.method !== 'GET') return web.notFound(res);
+      let rel = '';
+      try {
+        rel = decodeURIComponent(pg[2]);
+      } catch (_) {
+        return web.notFound(res);
       }
+      return sendFile(res, a, rel || a.manifest.entry.page);
+    }
+    if (u === '/api/addons' && req.method === 'GET') return web.json(res, { addons: list.map(info), paused: paused() });
+    if (u === '/api/addons/catalog' && req.method === 'GET') return web.json(res, await catalog());
+    if ((u === '/api/addons/install' || u === '/api/addons/remove') && req.method === 'POST') {
+      const b = await body(req);
+      if (!ID.test(b.id || '')) return web.json(res, { error: 'bad id' }, 400);
+      const r = u === '/api/addons/install' ? await install(b.id) : remove(b.id);
+      return web.json(res, r, r.error ? 400 : 200);
+    }
+    const m = /^\/api\/addons\/([a-z][a-z0-9-]*)(\/.*)?$/.exec(u);
+    const a = m && find(m[1]);
+    if (!a) return web.notFound(res);
+    if (!m[2]) return web.json(res, info(a));
+    if (m[2] === '/enable' && req.method === 'POST') {
+      const b = await body(req);
+      if (typeof b.enabled !== 'boolean') return web.json(res, { error: 'enabled must be true or false' }, 400);
+      if (!a.manifest) return web.json(res, { error: 'this add-on cannot be switched on: ' + a.error }, 400);
+      const opt = a.manifest.enabledOption;
+      config.update('addon:' + a.id, cfg => {
+        if (opt) cfg.options = Object.assign({}, cfg.options, { [opt]: b.enabled });
+        else {
+          cfg.addons = cfg.addons || {};
+          cfg.addons[a.id] = Object.assign({}, cfg.addons[a.id], { enabled: b.enabled });
+        }
+      });
+      const changed = b.enabled !== a.enabled;
+      a.enabled = b.enabled;
+      if (a.manifest.kind === 'page' && a.status !== 'paused') {
+        a.status = b.enabled ? 'running' : 'off';
+        return web.json(res, { id: a.id, enabled: b.enabled, restartNeeded: false });
+      }
+      return web.json(res, { id: a.id, enabled: b.enabled, restartNeeded: changed });
+    }
+    if (a.status !== 'running' || !a.mod || typeof a.mod.handle !== 'function') return web.notFound(res);
+    return viaAddon(a, req, res, m[2], body);
   }
 
-  return { name: 'addons', prefix: '/api/addons', handle, start, load, list: () => list.map(info) };
+  function start() {
+    load();
+    list.forEach(startOne);
+  }
+
+  return { name: 'addons', prefix: '/api/addons', match, handle, start, load, list: () => list.map(info) };
 }
 
-module.exports = { create, check, KINDS, PERMISSIONS };
+module.exports = { create, check, cleanIndex, KINDS, PERMISSIONS };

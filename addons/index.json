@@ -1,0 +1,16 @@
+{
+  "addons": [
+    {
+      "id": "bigclock",
+      "name": "Big clock",
+      "version": "1.0.0",
+      "description": "A full-screen clock. A small example of a page add-on.",
+      "kind": "page",
+      "permissions": [],
+      "files": {
+        "addon.json": "af85eaf48165249b27abd75b69b4bf14e0b5414c199697be8a0dff3d8fc89acb",
+        "index.html": "0d4d30b786bd23de831f43113c0ffb778f44a2f92f35e4102fb6ac8005d38984"
+      }
+    }
+  ]
+}

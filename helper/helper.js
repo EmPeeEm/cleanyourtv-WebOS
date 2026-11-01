@@ -50,10 +50,10 @@ const core = {
 };
 loaded.push(core);
 
+// Live TV is a bundled add-on now (addons-bundled/iptv, loaded by addons.js below, still answering /api/live/)
 // the order matters where one part uses another: voice and the notification port show cards through notify
 const notify = load('notify', () => require('./notify').create(ctx));
 if (notify) load('voice', () => require('./voice').create(ctx));
-load('live', () => require('./live').create(ctx));
 load('theme', () => require('./theme').create(ctx));
 load('wallpapers', () => require('./wallpapers').create(ctx));
 load('cards', () => require('./cards').create(ctx));

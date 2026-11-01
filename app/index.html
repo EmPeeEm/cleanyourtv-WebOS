@@ -1956,6 +1956,23 @@ svg.st {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* the frame that shows a page add-on over Home */
+#addonhost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  z-index: 80;
+}
+#addonhost iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
 /* right-to-left languages (_dir "rtl" in i18n/<language>.json, set on <html dir>): the home screen, its menus and the shelf are
    mirrored. Flex rows and the app grid follow the direction by themselves; what is placed by left/right is swapped here. Live TV keeps
    its own left-to-right layout for now. */
@@ -2225,6 +2242,7 @@ var ICONS = {
   edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
   tv: '<rect x="2" y="7" width="20" height="15" rx="2"/><path d="M17 2l-5 5-5-5"/>',
   power: '<path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/>',
+  addon: '<path d="M10 3h4v4a2 2 0 1 0 4 0V3h3v7h-3a2 2 0 1 0 0 4h3v7h-7v-3a2 2 0 1 0-4 0v3H3v-7h4a2 2 0 1 0 0-4H3V3z"/>',
   grid: '<path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/>',
   hdmi: '<path d="M4 8h16v7l-3 3H7l-3-3z"/><path d="M9 11v3M12 11v3M15 11v3"/>',
   restore: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
@@ -3939,11 +3957,12 @@ function liveOn() {
   return !(cfg.options && cfg.options.liveTv === false);
 }
 function shownBar() {
-  return liveOn()
+  var tb = liveOn()
     ? topbar()
     : topbar().filter(function (o) {
         return o.action !== 'live';
       });
+  return tb.concat(addonBar); /* the add-ons' entries (addons.js) come last and are not part of the saved layout */
 }
 function byOrder(a, b) {
   if (cfg.sort === 'custom') {
@@ -3982,6 +4001,7 @@ function act(e) {
   if (o.action === 'card') return cardAct(e);
   if (o.action === 'customize') return customizeMenu();
   if (o.action === 'live') return LIVE.enter();
+  if (o.action === 'addon') return ADDON.open(o);
   if (o.action === 'inputs') return inputsMenu();
   if (o.action === 'poweroff') return confirmPowerOff();
   if (o.app) launch(o.app, o.params);
@@ -5842,7 +5862,7 @@ function options(e) {
 /* Pointer focus follows real pointer movement only: a tile sliding under a still cursor, a cursor jitter when
    the remote is picked up, or a pointer move right after a button press must not steal the focus. */
 document.addEventListener('mousemove', function (ev) {
-  if (stack.length || LIVE.on || Date.now() - lastKey < 1500) return;
+  if (stack.length || LIVE.on || ADDON.on || Date.now() - lastKey < 1500) return;
   if (lastMX < 0) {
     lastMX = ev.clientX;
     lastMY = ev.clientY;
@@ -5861,6 +5881,10 @@ document.addEventListener('keydown', function (e) {
   /* a right-to-left layout: Left moves to what is on the left, which is the next tile in the row (Live TV keeps left-to-right) */
   if (rtl() && !LIVE.on && (k === 37 || k === 39)) k = 76 - k;
   lastKey = Date.now();
+  if (ADDON.on) {
+    ADDON.key(e);
+    return;
+  }
   if (LIVE.on) {
     LIVE.key(e);
     return;
@@ -6015,6 +6039,7 @@ document.addEventListener('webOSRelaunch', function () {
   if (LIVE.on) LIVE.exit();
   load();
   refreshSoon();
+  ADDON.load();
   wantInputs();
 });
 document.addEventListener('visibilitychange', function () {
@@ -7402,6 +7427,67 @@ var LIVE = (function () {
   );
   return o;
 })();
+/* ---------- add-ons (helper/addons.js): topbar entries and the page host ----------
+   A page add-on is a web page the service serves (/addon/<id>/...). It opens full screen in a frame over Home; Back (also pressed
+   inside the frame: the helper script /addon/sdk.js reports it) closes it. The entries come from GET /api/addons and are not part of
+   the saved layout. */
+var addonBar = [];
+var ADDON = {
+  on: false,
+  id: '',
+  load: function () {
+    api('/api/addons').then(
+      function (x) {
+        var bar = [];
+        ((x && x.addons) || []).forEach(function (a) {
+          if (a.status === 'running' && a.page && a.tile && a.tile.placement === 'topbar')
+            bar.push({ label: a.tile.label || a.name, icon: a.tile.icon || 'addon', action: 'addon', addon: a.id, page: a.page, fixed: true });
+        });
+        var sig = JSON.stringify(bar);
+        if (sig === JSON.stringify(addonBar)) return;
+        addonBar = bar;
+        rebuild();
+      },
+      function () {}
+    );
+  },
+  open: function (o) {
+    if (ADDON.on || !o || !o.page) return;
+    var host = document.createElement('div');
+    host.id = 'addonhost';
+    var f = document.createElement('iframe');
+    f.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+    f.setAttribute('allow', 'autoplay');
+    f.src = API + o.page;
+    f.onload = function () {
+      try {
+        f.contentWindow.focus();
+      } catch (e) {}
+    };
+    host.appendChild(f);
+    document.body.appendChild(host);
+    ADDON.on = true;
+    ADDON.id = o.addon;
+    logLine('addon open ' + o.addon);
+  },
+  close: function () {
+    var h = $('addonhost');
+    if (h && h.parentNode) h.parentNode.removeChild(h);
+    ADDON.on = false;
+    ADDON.id = '';
+  },
+  key: function (e) {
+    if (e.keyCode === 461 || e.keyCode === 27 || e.keyCode === 8) {
+      e.preventDefault();
+      ADDON.close();
+    }
+  },
+};
+/* a page reports Back through the helper script */
+window.addEventListener('message', function (ev) {
+  var d = ev.data;
+  if (ADDON.on && d && d.cytvAddon === 'close' && d.id === ADDON.id) ADDON.close();
+});
 /* first paint straight from the last known layout, then refresh from the helper */
 try {
   var cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
@@ -7417,6 +7503,7 @@ try {
   }
 } catch (e) {}
 load();
+ADDON.load();
 refreshSoon();
 wantInputs();
 api('/api/frontend-ok', { version: VERSION }).catch(function () {}); // lets the manager know an updated launcher started

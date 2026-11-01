@@ -1,11 +1,11 @@
-// Live TV (live.js): pairing from a phone, reading and parsing a playlist, what the viewer did, why a stream does not play, and a
+// Live TV (helper/addons-bundled/iptv/service.js, the bundled add-on iptv): pairing from a phone, reading and parsing a playlist, what the viewer did, why a stream does not play, and a
 // playlist read on a connection that drops.
 const fs = require('fs'),
   path = require('path'),
   http = require('http');
 const { root, ok, fake, serve, sleep, req, run } = require('./lib');
 const nc = req('netcompat');
-const live = req('live');
+const live = require(path.join(root, 'helper', 'addons-bundled', 'iptv', 'service.js'));
 
 // POST a form to a local address
 const post = (url, body) =>

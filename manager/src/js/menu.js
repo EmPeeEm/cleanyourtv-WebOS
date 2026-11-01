@@ -424,6 +424,62 @@ function build() {
     });
     return;
   }
+  if (view === 'addons') {
+    if (ad.paused)
+      rows.push({ label: 'Add-ons are paused', sub: 'the file DISABLE-ADDONS is present; remove it and restart', dim: true, fn: function () {} });
+    ad.installed.forEach(function (a) {
+      rows.push({
+        label: a.name,
+        sub:
+          (a.status === 'running' ? 'on' : a.status === 'off' ? 'off' : a.status === 'failed' ? 'failed' : a.status) +
+          (a.version ? ' \u00B7 ' + a.version : '') +
+          (a.bundled ? ' \u00B7 ships with CleanYourTV' : ''),
+        fn: function () {
+          ad.sel = a.id;
+          push('addon');
+        },
+      });
+    });
+    var offer = ad.catalog.filter(function (e) {
+      return !e.installed || e.update;
+    });
+    if (offer.length) rows.push({ sep: true });
+    offer.forEach(function (e) {
+      rows.push({
+        label: e.name,
+        sub: (e.update ? 'Update to ' : 'Install \u00B7 ') + e.version + (e.description ? ' \u00B7 ' + e.description : ''),
+        fn: function () {
+          addonDo('/api/addons/install', { id: e.id }, e.name + ' installed');
+        },
+      });
+    });
+    if (ad.error) rows.push({ label: 'The catalog could not be read', sub: ad.error, dim: true, fn: function () {} });
+    rows.push({ sep: true });
+    rows.push({ label: 'Back', fn: pop });
+    return;
+  }
+  if (view === 'addon') {
+    var a1 = addonSel() || {};
+    rows.push({ label: a1.name || '', sub: (a1.description || '') + (a1.error ? ' \u00B7 ' + a1.error : ''), fn: function () {} });
+    rows.push({
+      label: a1.enabled ? 'Switch off' : 'Switch on',
+      sub: a1.enabled ? 'on' : 'off',
+      fn: function () {
+        addonDo('/api/addons/' + a1.id + '/enable', { enabled: !a1.enabled }, a1.name + (a1.enabled ? ' off' : ' on'));
+      },
+    });
+    if (!a1.bundled)
+      rows.push({
+        label: 'Remove',
+        sub: 'deletes the add-on, keeps its data',
+        fn: function () {
+          addonDo('/api/addons/remove', { id: a1.id }, a1.name + ' removed');
+        },
+      });
+    rows.push({ sep: true });
+    rows.push({ label: 'Back', fn: pop });
+    return;
+  }
   if (view === 'livetv') {
     var lo = st.options.liveTv !== false,
       l2 = lv || {},
@@ -1118,6 +1174,7 @@ function build() {
     },
   });
   rows.push({ label: 'Live TV', sub: onoff(st.options.liveTv !== false), fn: openLiveTv });
+  rows.push({ label: 'Add-ons', sub: 'install, switch off or remove', fn: openAddons });
   rows.push({
     label: 'Wallpapers',
     sub: st.wallpapers ? st.wallpapers.total + ' photos' : '',

@@ -23,7 +23,8 @@ disk, and a reboot without the boot scripts brings LG's Home back.
 | The manager app and its API (updates, options, keys) | `manager/src/` (built into `manager/app/index.html`), `helper/manager.js`, `helper/updates.js`, `helper/selfupdate.js` |
 | The Input key, the Inputs list over the running app | `helper/inputkey.js`, `helper/inputhook.js`, `helper/picker.js`, `picker/app/`, `scripts/inputkey.sh` |
 | Home takeover at boot, rollback, undo | `scripts/10-cleanyourtv-home`, `scripts/stage-home.sh`, `scripts/undo-home.sh`, `scripts/bootstrap.sh` |
-| Live TV: playlist, guide, favourites | `helper/live.js` and `app/src/js/live.js` |
+| Live TV: playlist, guide, favourites | `helper/addons-bundled/iptv/service.js` (the bundled add-on iptv) and `app/src/js/live.js` |
+| Add-ons (loader, page serving, catalog install, the launcher's frame and the manager's Add-ons screen) | `helper/addons.js`, `helper/addons-bundled/`, `addons/` (catalog), `app/src/js/addons.js`, `docs/development/addons.md` |
 | An app that opens on an Android box over ADB (input switch, ADB start) | `helper/androidbox.js`, `helper/adbclient.js` (the ADB protocol), `helper/androidboxpage.js` (phone page), the hook in `/api/launch` in `helper/apps.js`, `docs/android-box.md` |
 | Picture notifications | `notify/app/`, `helper/notify.js`, `helper/notifyapi.js` |
 | Voice (Moonshine, OpenRouter, Home Assistant) | `helper/voice.js` (microphone, recogniser), `helper/answers.js` (Assist, OpenRouter, your server), `voice/` |
