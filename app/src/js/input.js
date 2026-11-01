@@ -217,7 +217,7 @@ document.addEventListener('webOSRelaunch', function () {
     LIVE.resume();
     return;
   }
-  if (LIVE.on) LIVE.exit();
+  if (ADDON.on) ADDON.close(); /* Home pressed: a page add-on (Live TV too) closes */
   load();
   refreshSoon();
   ADDON.load();

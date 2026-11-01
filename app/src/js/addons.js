@@ -34,6 +34,7 @@ var ADDON = {
       try {
         f.contentWindow.focus();
       } catch (e) {}
+      ADDON.send({ cytv: 'init', vars: ADDON.vars() });
     };
     host.appendChild(f);
     document.body.appendChild(host);
@@ -41,13 +42,38 @@ var ADDON = {
     ADDON.id = o.addon;
     logLine('addon open ' + o.addon);
   },
+  /* a message to the page in the frame */
+  send: function (m) {
+    var f = document.querySelector('#addonhost iframe');
+    if (f && f.contentWindow) f.contentWindow.postMessage(m, '*');
+  },
+  /* the theme's colours, for pages that draw like the launcher (Live TV) */
+  vars: function () {
+    var cs = getComputedStyle(document.documentElement),
+      out = {};
+    ['ink', 'ink2', 'night', 'night-rgb', 'panel', 'panel2', 'acc', 'acc-ink', 'focus', 'font', 'fs', 'spd', 'pill-bg', 'pill-ring', 'row-r', 'menu-bg'].forEach(function (n) {
+      out[n] = cs.getPropertyValue('--' + n).trim();
+    });
+    return out;
+  },
   close: function () {
     var h = $('addonhost');
     if (h && h.parentNode) h.parentNode.removeChild(h);
     ADDON.on = false;
     ADDON.id = '';
   },
+  /* a key that reached the launcher while a page is open (the frame did not have the focus) */
   key: function (e) {
+    var f = document.querySelector('#addonhost iframe');
+    if (ADDON.id === 'iptv') {
+      /* Live TV decides what Back does (it closes its own menus first) */
+      e.preventDefault();
+      ADDON.send({ cytv: 'key', keyCode: e.keyCode });
+      try {
+        f.contentWindow.focus();
+      } catch (x) {}
+      return;
+    }
     if (e.keyCode === 461 || e.keyCode === 27 || e.keyCode === 8) {
       e.preventDefault();
       ADDON.close();

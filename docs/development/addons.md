@@ -7,12 +7,10 @@ change for it. Other add-ons come from a catalog in this repository and are inst
 What is done, and what is not:
 
 - Done: the loader, pages served by the service and shown over Home, installing and removing from the catalog (every file checked
-  against its SHA-256), the manager's Add-ons screen, Live TV's service part as a bundled add-on.
-- Not done: Live TV's player and guide still run inside the launcher page (`app/src/js/live.js`); they are not a page add-on yet.
-  Moving them needs a test of the page frame on a webOS 5 TV (Chromium 68), which has not been done. Voice, wallpapers and the
-  Android box are still parts of the service.
-- Not tried on a TV: the frame, the Back key inside it, and installing. The tests cover the service and a browser test of the page
-  and its Back key was run in a desktop Chromium.
+  against its SHA-256), the manager's Add-ons screen, and Live TV, both its service part and its player and guide.
+- Not done: voice, wallpapers and the Android box are still parts of the service.
+- Not tried on a TV: the frame, the Back key and the Guide key with Live TV inside it, video playing in the frame, and installing.
+  The tests cover the service; the Live TV page and its Back key were run in a desktop Chromium, not in Chromium 68 or 79.
 
 ## Where they are
 
@@ -47,6 +45,18 @@ What is done, and what is not:
   It has no `exec` or `luna`. This is a convention, not a sandbox: the code runs in the service, which is why a service add-on is
   only installed from the catalog, where every file is pinned by hash and reviewed. The service must run on Node.js 8.12.
 - `routes` and `enabledOption` are for bundled add-ons only.
+
+## Live TV (the iptv add-on)
+
+- The service part is `helper/addons-bundled/iptv/service.js`; it answers `/api/live/...` as before (`routes`).
+- The player and guide are the page `helper/addons-bundled/iptv/page/index.html`, built by `node tools/build-pages.js` from
+  `helper/addons-bundled/iptv/src/` (the same way as the launcher). `js/live.js` there is the player; `js/shim.js` gives it what the
+  launcher's script used to (language, clock format, the theme variables); `js/start.js` handles the launcher's messages.
+- The launcher's `app/src/js/live.js` is a small object (`LIVE.enter`, `exit`, `key`, `resume`, `toggleGuide`) that opens that page in
+  the frame of `addons.js` and passes calls on, so the Live TV button, the Inputs list and the Guide key work as before. The
+  launcher sends the page its language, clock format and theme colours; the page tells the launcher when to close it.
+- **A launcher with Live TV in a frame needs a service that serves add-on pages.** At release, `app/version.json` must name that
+  service version as `minService`.
 
 ## Pages
 

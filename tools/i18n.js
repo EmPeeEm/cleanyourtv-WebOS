@@ -91,7 +91,7 @@ if (require.main === module) {
       en = JSON.parse(fs.readFileSync(enFile, 'utf8')),
       found = {};
     const src = B.plain(
-      ['app/src/js', 'manager/src/js']
+      ['app/src/js', 'manager/src/js', 'helper/addons-bundled/iptv/src/js']
         .map(d =>
           fs
             .readdirSync(path.join(root, d))

@@ -334,7 +334,7 @@ run(async () => {
   }
   // the launcher plays an Xtream .ts link as a plain src first; the typed HLS tries are fallbacks (issues 9 and 13)
   {
-    const src = fs.readFileSync(path.join(root, 'app', 'src', 'js', 'live.js'), 'utf8');
+    const src = fs.readFileSync(path.join(root, 'helper', 'addons-bundled', 'iptv', 'src', 'js', 'live.js'), 'utf8');
     const at = src.indexOf('function variantsFor(url) {');
     let i = src.indexOf('{', at),
       depth = 0,

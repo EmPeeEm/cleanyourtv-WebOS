@@ -100,6 +100,16 @@ run(async () => {
   const live = req('addons').check(JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'helper', 'addons-bundled', 'iptv', 'addon.json'), 'utf8')), '1.6.11');
   ok(live.manifest && live.manifest.routes[0] === '/api/live/' && live.manifest.enabledOption === 'liveTv', 'Live TV ships as the bundled add-on iptv, answering /api/live/');
 
+  const server = req('server');
+  // a bundled add-on's page may call its old API paths (Live TV's page calls /api/live/), nobody else's page may
+  const may = (id, u) => a.pageMay(id, u);
+  const ref = 'http://127.0.0.1:8765/addon/old/page/index.html';
+  ok(server.addonPageCall({ headers: { host: '127.0.0.1:8765', referer: ref } }, 'http://127.0.0.1:8765', '/api/oldpath/x', may), 'the page of a bundled add-on calls its old API path');
+  ok(!server.addonPageCall({ headers: { host: '127.0.0.1:8765', referer: 'http://127.0.0.1:8765/addon/pg/index.html' } }, 'http://127.0.0.1:8765', '/api/oldpath/x', may), 'another add-on\'s page does not');
+  ok(!server.addonPageCall({ headers: { host: '127.0.0.1:8765' } }, 'http://127.0.0.1:8765', '/api/oldpath/x', may), 'a call without a page as Referer does not');
+  const iptvDir = path.join(__dirname, '..', '..', 'helper', 'addons-bundled', 'iptv');
+  ok(fs.existsSync(path.join(iptvDir, 'page', 'index.html')) && JSON.parse(fs.readFileSync(path.join(iptvDir, 'addon.json'), 'utf8')).entry.page === 'page/index.html', 'the iptv add-on has its built page (node tools/build-pages.js)');
+
   // the catalog in the repository: addons/index.json is current, and its add-ons pass the same checks as an install
   const idx = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'addons', 'index.json'), 'utf8'));
   ok(require('../addon-index').build() === JSON.stringify(idx, null, 2) + '\n', 'addons/index.json matches addons/catalog (run node tools/addon-index.js)');
@@ -147,7 +157,6 @@ run(async () => {
   web.server.close();
 
   // origin rule for the pages' own calls
-  const server = req('server');
   const pc = (host, origin, u, ref) => server.addonPageCall({ headers: { host, referer: ref } }, origin, u);
   ok(pc('127.0.0.1:8765', 'http://127.0.0.1:8765', '/api/addons/pg/x', 'http://127.0.0.1:8765/addon/pg/index.html'), 'a page may call its own API');
   ok(!pc('127.0.0.1:8765', 'http://127.0.0.1:8765', '/api/addons/other/x', 'http://127.0.0.1:8765/addon/pg/index.html'), 'but not another add-on\'s');

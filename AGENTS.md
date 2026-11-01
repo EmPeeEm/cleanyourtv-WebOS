@@ -14,7 +14,7 @@ disk, and a reboot without the boot scripts brings LG's Home back.
 
 | Symptom or feature | Look at |
 |---|---|
-| The launcher page (home screen, menus, Live TV player) | `app/src/` (CSS and ES5 script per area), built into `app/index.html` by `tools/build-pages.js` |
+| The launcher page (home screen, menus) | `app/src/` (CSS and ES5 script per area), built into `app/index.html` by `tools/build-pages.js` |
 | The root service: how the parts are wired | `helper/helper.js` (port 8765, loopback only), `helper/server.js`; one module per part (`docs/development/internals.md`) |
 | Settings (`config.json`) and who changed them | `helper/config.js`: change settings only with `config.update(source, fn)`; changes are logged |
 | Anything that differs between TVs (webOS version, firmware) | `helper/tvprofile.js`, also asked by `scripts/bootstrap.sh` |
@@ -23,7 +23,7 @@ disk, and a reboot without the boot scripts brings LG's Home back.
 | The manager app and its API (updates, options, keys) | `manager/src/` (built into `manager/app/index.html`), `helper/manager.js`, `helper/updates.js`, `helper/selfupdate.js` |
 | The Input key, the Inputs list over the running app | `helper/inputkey.js`, `helper/inputhook.js`, `helper/picker.js`, `picker/app/`, `scripts/inputkey.sh` |
 | Home takeover at boot, rollback, undo | `scripts/10-cleanyourtv-home`, `scripts/stage-home.sh`, `scripts/undo-home.sh`, `scripts/bootstrap.sh` |
-| Live TV: playlist, guide, favourites | `helper/addons-bundled/iptv/service.js` (the bundled add-on iptv) and `app/src/js/live.js` |
+| Live TV: playlist, guide, favourites | the bundled add-on iptv: `helper/addons-bundled/iptv/service.js` (service), `helper/addons-bundled/iptv/src/` (the player page, built into `page/index.html`); `app/src/js/live.js` only opens it in a frame |
 | Add-ons (loader, page serving, catalog install, the launcher's frame and the manager's Add-ons screen) | `helper/addons.js`, `helper/addons-bundled/`, `addons/` (catalog), `app/src/js/addons.js`, `docs/development/addons.md` |
 | An app that opens on an Android box over ADB (input switch, ADB start) | `helper/androidbox.js`, `helper/adbclient.js` (the ADB protocol), `helper/androidboxpage.js` (phone page), the hook in `/api/launch` in `helper/apps.js`, `docs/android-box.md` |
 | Picture notifications | `notify/app/`, `helper/notify.js`, `helper/notifyapi.js` |
@@ -103,5 +103,5 @@ sh tools/perf-tv.sh <tv-ip>        # read-only timings from a TV: launcher, Inpu
 - Settings were lost when two parts read and rewrote `config.json` around each other (issues 6, 7): use `config.update`, which logs
   every change of an option or key with its source.
 - A per-TV rule written in a module or a script drifts from the others: put it in `helper/tvprofile.js`.
-- Edit the pages in `app/src` and `manager/src`, then `node tools/build-pages.js`; the built files are what the TV loads.
+- Edit the pages in `app/src`, `manager/src` and `helper/addons-bundled/iptv/src`, then `node tools/build-pages.js`; the built files are what the TV loads.
 - Themes are data; a theme must never contain CSS or script. The schema in `helper/themeschema.js` is the only source of what a theme can set.

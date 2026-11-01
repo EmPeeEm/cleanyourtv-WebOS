@@ -80,7 +80,7 @@ for app_id, src in (('com.cleanyourtv.manager', 'manager/app'), ('com.cleanyourt
 add(data, './usr/palm/applications/com.cleanyourtv.manager/qrcode.js', open(P('third-party', 'qrcode-generator', 'qrcode.js'), 'rb').read())   # QR code for sharing the log
 s = '.' + '/usr/palm/services/' + SERVICE
 add(data, s + '/bootstrap.sh', open(P('scripts', 'bootstrap.sh'), 'rb').read(), 0o755)
-add_dir(data, s + '/helper', P('helper'))
+add_dir(data, s + '/helper', P('helper'), skip_dirs=('src',))   # helper/addons-bundled/<id>/src: the sources of an add-on's page
 add_dir(data, s + '/i18n', P('i18n'), skip=('README.md',))   # the translations, for the phone pages the service serves (helper/i18n.js)
 add_dir(data, s + '/scripts', P('scripts'), skip=('bootstrap.sh',))
 add(data, s + '/scripts/uninstall.sh', open(P('uninstall.sh'), 'rb').read(), 0o755)

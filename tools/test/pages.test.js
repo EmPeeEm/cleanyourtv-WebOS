@@ -5,7 +5,7 @@ const fs = require('fs'),
 const { root, ok, run } = require('./lib');
 
 run(async () => {
-  const pages = ['app', 'manager/app', 'picker/app', 'notify/app'].map(d => path.join(root, d, 'index.html'));
+  const pages = ['app', 'manager/app', 'picker/app', 'notify/app', 'helper/addons-bundled/iptv/page'].map(d => path.join(root, d, 'index.html'));
   const rules = [
     [/\?\?|\?\.[A-Za-z_\[(]/, 'optional chaining or ??'],
     [/\|\|=|&&=/, 'logical assignment'],
@@ -104,7 +104,10 @@ run(async () => {
     'a long input name stays inside its card in the Inputs picker, on two lines'
   );
   // the favourite star and the menus' right-hand text both had the class st: the star's width squeezed the menu text into a column
-  const launcher = fs.readFileSync(path.join(root, 'app', 'index.html'), 'utf8');
+  // the Live TV page is a page of its own now (the iptv add-on); the star styles are in it
+  const launcher =
+    fs.readFileSync(path.join(root, 'app', 'index.html'), 'utf8') +
+    fs.readFileSync(path.join(root, 'helper', 'addons-bundled', 'iptv', 'page', 'index.html'), 'utf8');
   ok(
     !/(^|\n)\s*\.st\s*\{/.test(launcher) && /svg\.st\s*\{\s*width:\s*26px/.test(launcher),
     "the favourite star is styled as svg.st, so the menu's .st text keeps its natural width"

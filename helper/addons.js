@@ -393,6 +393,8 @@ function create(ctx) {
 
   // the old API paths a bundled add-on still answers (manifest "routes"); only while it runs
   const legacy = u => list.filter(a => a.bundled && a.status === 'running' && a.mod && a.manifest.routes.some(r => u.indexOf(r) === 0))[0];
+  // may the page of add-on `id` call this path? Its bundled add-on's old API paths (Live TV's page calls /api/live/)
+  const pageMay = (id, u) => list.some(a => a.id === id && a.bundled && a.status === 'running' && a.manifest.routes.some(r => u.indexOf(r) === 0));
   const match = u => u.indexOf('/api/addons') === 0 || u.indexOf('/addon/') === 0 || !!legacy(u);
 
   async function viaAddon(a, req, res, sub, body) {
@@ -465,7 +467,7 @@ function create(ctx) {
     list.forEach(startOne);
   }
 
-  return { name: 'addons', prefix: '/api/addons', match, handle, start, load, list: () => list.map(info) };
+  return { name: 'addons', prefix: '/api/addons', match, pageMay, handle, start, load, list: () => list.map(info) };
 }
 
 module.exports = { create, check, cleanIndex, KINDS, PERMISSIONS };
