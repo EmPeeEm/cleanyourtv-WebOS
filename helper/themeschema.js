@@ -100,6 +100,33 @@ const SCHEMA = [
   ['bar.y', 'int', [0, 900], 54, 'Distance from the top or bottom edge, in px.'],
   ['bar.size', 'int', [40, 100], 64, 'Height of a button, in px.'],
   ['bar.gap', 'int', [4, 40], 16, 'Space between buttons, in px.'],
+  [
+    'strip.show',
+    'bool',
+    null,
+    true,
+    'Show the page strip: the row that tells which button turns to which page (Home, Live TV and other add-on pages). It only shows when there is a page besides Home.',
+  ],
+  [
+    'strip.style',
+    'enum',
+    ['pills', 'tabs', 'dots'],
+    'pills',
+    '`pills`: a rounded button for each page; `tabs`: book tabs, each with a coloured edge; `dots`: only the dots, the page you are on is opened with its name.',
+  ],
+  ['strip.labels', 'enum', ['all', 'current', 'none'], 'all', 'Page names: on `all` pages, only on the `current` page, or `none`.'],
+  [
+    'strip.colors',
+    'enum',
+    ['colour', 'numbers'],
+    'colour',
+    '`colour`: the first four pages carry the colour of their remote button (red, green, yellow, blue); `numbers`: every page carries its number, which also works as a button.',
+  ],
+  ['strip.anchor', 'enum', TOPBOT, 'bottom', 'Which screen edge `strip.y` counts from.'],
+  ['strip.align', 'enum', POS, 'center', 'Which side `strip.x` counts from; `center` centres the strip.'],
+  ['strip.x', 'int', [0, 900], 96, 'Distance from that side, in px. Not used when centred.'],
+  ['strip.y', 'int', [0, 900], 22, 'Distance from the top or bottom edge, in px.'],
+  ['strip.size', 'num', [0.7, 1.6], 1, 'Scale of the strip.'],
   ['shelf.show', 'bool', null, true, 'Show the large name of the focused app.'],
   ['shelf.align', 'enum', POS, 'left', 'Text alignment of the name.'],
   ['shelf.x', 'int', [0, 900], 96, 'Margin on both sides, in px.'],
@@ -477,6 +504,19 @@ function resolve(t, accent) {
     nightRgb: night.join(','),
     wallpaper: w ? { id: t.id, file: w, dim: v['effects.wallpaperDim'] } : null,
   };
+  // only a theme that changes the page strip carries this key, so the replies for the other themes stay as they were
+  if (SCHEMA.some(r => String(r[0]).indexOf('strip.') === 0 && v[/** @type {string} */ (r[0])] !== r[3]))
+    out.strip = {
+      show: v['strip.show'],
+      style: v['strip.style'],
+      labels: v['strip.labels'],
+      colors: v['strip.colors'],
+      anchor: v['strip.anchor'],
+      align: v['strip.align'],
+      x: v['strip.x'],
+      y: v['strip.y'],
+      size: v['strip.size'],
+    };
   if (v['effects.scenes'] !== 'off') out.scenes = { set: v['effects.scenes'], secs: v['effects.sceneSecs'] };
   // only a theme with slots has this key (the same reason)
   if (v.slots && v.slots.length)

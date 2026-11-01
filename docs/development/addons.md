@@ -74,7 +74,10 @@ only its own files (and pictures and media from anywhere) and talk only to the s
 
 In the launcher, **Home is the first page and the add-ons that have `tile.placement` `page` (or `topbar`, which also adds a button
 to the top bar) are the pages after it.** Turning a page moves Home and the page sideways, like a book (a transform only; nothing is
-drawn on top of Home). A strip at the bottom of Home shows what each page is called and which button turns to it.
+drawn on top of Home). A strip on Home shows what each page is called and which button turns to it. Its look and place are the theme's (`strip.*`, see
+[themes](../themes.md)): rounded `pills`, book `tabs` or small `dots`, with the names on all pages, only on the current one or none, and
+the first four pages in the colour of their button or every page with its number. Classic keeps it at the bottom centre; Bloom lowers
+it a little to sit under its glass dock.
 
 | Button | Page |
 |---|---|
@@ -99,8 +102,9 @@ and for `/api/addons/<id>/...` with that add-on's own page as the Referer. Insta
 ### Choosing the pages
 
 In the manager (**Add-ons**), each page add-on has **Page of the book** (on or off), **Move earlier** and **Move later**, and the
-Add-ons screen has **Page strip on Home**. The buttons follow the order: the first page after Home is green and 2, and so on. The
-choice is stored in `config.json` (`book`: `order`, `hidden`, `strip`) and written with `POST /api/addons/book`. A page that is
+Add-ons screen has **Page strip on Home** (on or off) and **Page strip position**: the theme's own place, or one of six places (bottom or
+top, left, centre or right) that you choose, which wins over the theme. The buttons follow the order: the first page after Home is green and 2, and so on. The
+choice is stored in `config.json` (`book`: `order`, `hidden`, `strip`, `position`) and written with `POST /api/addons/book`. A page that is
 left out stays installed and running but has no button.
 
 ## API
@@ -109,7 +113,7 @@ left out stays installed and running but has no button.
 |---|---|
 | `GET /api/addons` | `{addons: [{id, name, version, kind, description, permissions, enabled, status, error, bundled, tile, page}], paused}`; `status` is `running`, `off`, `paused` or `failed` |
 | `GET /api/addons/catalog` | `{addons: [{id, name, version, description, kind, permissions, installed, bundled, update}], error}` |
-| `POST /api/addons/book {order, hidden, strip}` | The pages of the launcher's book: ids in order, ids left out, and whether the strip shows. Unknown ids are dropped. `{book}` |
+| `POST /api/addons/book {order, hidden, strip, position}` | The pages of the launcher's book: ids in order, ids left out, whether the strip shows and where (`''`, `top-left`, `top-center`, `top-right`, `bottom-left`, `bottom-center`, `bottom-right`). Unknown ids and places are dropped. `{book}` |
 | `POST /api/addons/install {id}` | Downloads each file named in the index, refuses the whole install if one does not match its hash, then moves the folder in. `{id, version, restartNeeded}` |
 | `POST /api/addons/remove {id}` | Deletes an installed add-on. `restartNeeded` when its service part was loaded. |
 | `POST /api/addons/<id>/enable {enabled}` | Stored in `config.json` (or, for an add-on with `enabledOption`, in that option). A page add-on follows at once, a service add-on at the next start. |

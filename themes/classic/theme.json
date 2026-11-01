@@ -1,2 +1,3 @@
 { "name": "Classic", "author": "CleanYourTV", "description": "The original look: near-black, white focus, ten columns.",
-  "colors": { "night": "#07080b", "panel": "#14161b", "ink": "#f5f6f8", "accent": "#f5f6f8" } }
+  "colors": { "night": "#07080b", "panel": "#14161b", "ink": "#f5f6f8", "accent": "#f5f6f8" },
+  "strip": { "style": "pills", "labels": "all", "colors": "colour", "anchor": "bottom", "align": "center", "y": 22 } }

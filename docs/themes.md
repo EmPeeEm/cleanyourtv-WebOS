@@ -179,6 +179,16 @@ when the focus moves down into it (Back or Up closes it); a dock at the top leav
 | `bar.y` | 0 to 900 | `54` | Distance from the top or bottom edge, in px. |
 | `bar.size` | 40 to 100 | `64` | Height of a button, in px. |
 | `bar.gap` | 4 to 40 | `16` | Space between buttons, in px. |
+| **strip** | | | |
+| `strip.show` | `true` or `false` | `true` | Show the page strip: the row that tells which button turns to which page (Home, Live TV and other add-on pages). It only shows when there is a page besides Home. |
+| `strip.style` | `pills`, `tabs`, `dots` | `pills` | `pills`: a rounded button for each page; `tabs`: book tabs, each with a coloured edge; `dots`: only the dots, the page you are on is opened with its name. |
+| `strip.labels` | `all`, `current`, `none` | `all` | Page names: on `all` pages, only on the `current` page, or `none`. |
+| `strip.colors` | `colour`, `numbers` | `colour` | `colour`: the first four pages carry the colour of their remote button (red, green, yellow, blue); `numbers`: every page carries its number, which also works as a button. |
+| `strip.anchor` | `top`, `bottom` | `bottom` | Which screen edge `strip.y` counts from. |
+| `strip.align` | `left`, `center`, `right` | `center` | Which side `strip.x` counts from; `center` centres the strip. |
+| `strip.x` | 0 to 900 | `96` | Distance from that side, in px. Not used when centred. |
+| `strip.y` | 0 to 900 | `22` | Distance from the top or bottom edge, in px. |
+| `strip.size` | 0.7 to 1.6 | `1` | Scale of the strip. |
 | **shelf** | | | |
 | `shelf.show` | `true` or `false` | `true` | Show the large name of the focused app. |
 | `shelf.align` | `left`, `center`, `right` | `left` | Text alignment of the name. |

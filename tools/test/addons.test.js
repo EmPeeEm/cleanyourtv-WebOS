@@ -346,6 +346,17 @@ run(async () => {
   );
   ok(sysi.stats(() => '').memTotalMB === 0, 'sysinfo: an unreadable /proc gives zeros, not an error');
 
+  // where the strip is: the user's choice, known places only
+  r = await call(a, '/api/addons/book', 'POST', { position: 'top-right' });
+  ok(r.j.book.position === 'top-right' && cfg.get().book.position === 'top-right', 'the user can put the page strip in one of six places');
+  r = await call(a, '/api/addons/book', 'POST', { position: 'middle-left' });
+  ok(r.j.book.position === 'top-right', 'a place that does not exist changes nothing: ' + r.out);
+  r = await call(a, '/api/addons/book', 'POST', { strip: false });
+  ok(r.j.book.position === 'top-right' && r.j.book.strip === false, 'other settings leave the place alone');
+  r = await call(a, '/api/addons/book', 'POST', { position: '', strip: true });
+  r = await call(a, '/api/addons');
+  ok(r.j.book.position === '' && r.j.book.strip === true, 'an empty place leaves it to the theme');
+
   // the catalog: a stand-in for GitHub
   const files = {
     'addon.json': JSON.stringify({ id: 'hello', name: 'Hello', version: '1.2.0', kind: 'page', entry: { page: 'index.html' } }),
