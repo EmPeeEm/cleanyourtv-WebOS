@@ -5,6 +5,7 @@
    (Live TV: digits tune channels) says so in its manifest ("claims"); then only its own keys work there and Back/Home leave it.
    The pages come from GET /api/addons; each page is loaded when you open it and unloaded when you leave it. */
 var addonBar = []; /* topbar entries: add-ons with placement "topbar", they open their page */
+var stripOn = true; /* the strip at the bottom of Home (manager > Add-ons) */
 var PAGES = []; /* the add-on pages after Home: {id, label, icon, page, claims} */
 var PAGER = {
   on: false /* true while a page other than Home shows */,
@@ -14,18 +15,25 @@ var PAGER = {
     api('/api/addons').then(
       function (x) {
         var pages = [],
-          bar = [];
-        ((x && x.addons) || []).forEach(function (a) {
-          if (a.status !== 'running' || !a.enabled || !a.page || !a.tile) return;
-          if (a.tile.placement === 'page' || a.tile.placement === 'topbar')
+          bar = [],
+          strip = true;
+        ((x && x.addons) || [])
+          .slice()
+          .sort(function (a, b) {
+            return a.order - b.order;
+          })
+          .forEach(function (a) {
+            if (a.status !== 'running' || !a.enabled || !a.page || !a.tile || !a.inBook) return;
             pages.push({ id: a.id, label: a.tile.label || a.name, icon: a.tile.icon || 'addon', page: a.page, claims: a.claims || [] });
-          if (a.tile.placement === 'topbar')
-            bar.push({ label: a.tile.label || a.name, icon: a.tile.icon || 'addon', action: 'addon', addon: a.id, fixed: true });
-        });
-        var sig = JSON.stringify([pages, bar]);
-        if (sig === JSON.stringify([PAGES, addonBar])) return;
+            if (a.tile.placement === 'topbar')
+              bar.push({ label: a.tile.label || a.name, icon: a.tile.icon || 'addon', action: 'addon', addon: a.id, fixed: true });
+          });
+        strip = !(x && x.book && x.book.strip === false);
+        var sig = JSON.stringify([pages, bar, strip]);
+        if (sig === JSON.stringify([PAGES, addonBar, stripOn])) return;
         PAGES = pages;
         addonBar = bar;
+        stripOn = strip;
         PAGER.draw();
         rebuild();
       },
@@ -38,7 +46,7 @@ var PAGER = {
     if (!s) return;
     var items = [{ id: '', label: t('Home') }].concat(PAGES);
     s.textContent = '';
-    s.style.display = PAGES.length ? 'flex' : 'none';
+    s.style.display = PAGES.length && stripOn ? 'flex' : 'none';
     items.forEach(function (p, i) {
       var e = document.createElement('div');
       e.className = 'pg' + (p.id === PAGER.id ? ' cur' : '');

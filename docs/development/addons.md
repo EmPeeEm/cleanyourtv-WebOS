@@ -88,17 +88,39 @@ theme colours as query parameters and a message.
 The service accepts a page's requests (their origin is the service itself) only from the loopback address, only for `/addon/...`
 and for `/api/addons/<id>/...` with that add-on's own page as the Referer. Install and remove are not open to pages.
 
+### Choosing the pages
+
+In the manager (**Add-ons**), each page add-on has **Page of the book** (on or off), **Move earlier** and **Move later**, and the
+Add-ons screen has **Page strip on Home**. The buttons follow the order: the first page after Home is green and 2, and so on. The
+choice is stored in `config.json` (`book`: `order`, `hidden`, `strip`) and written with `POST /api/addons/book`. A page that is
+left out stays installed and running but has no button.
+
 ## API
 
 | Request | Reply |
 |---|---|
 | `GET /api/addons` | `{addons: [{id, name, version, kind, description, permissions, enabled, status, error, bundled, tile, page}], paused}`; `status` is `running`, `off`, `paused` or `failed` |
 | `GET /api/addons/catalog` | `{addons: [{id, name, version, description, kind, permissions, installed, bundled, update}], error}` |
+| `POST /api/addons/book {order, hidden, strip}` | The pages of the launcher's book: ids in order, ids left out, and whether the strip shows. Unknown ids are dropped. `{book}` |
 | `POST /api/addons/install {id}` | Downloads each file named in the index, refuses the whole install if one does not match its hash, then moves the folder in. `{id, version, restartNeeded}` |
 | `POST /api/addons/remove {id}` | Deletes an installed add-on. `restartNeeded` when its service part was loaded. |
 | `POST /api/addons/<id>/enable {enabled}` | Stored in `config.json` (or, for an add-on with `enabledOption`, in that option). A page add-on follows at once, a service add-on at the next start. |
 | `/api/addons/<id>/...` | Answered by the add-on's `service.js`. |
 | `GET /addon/<id>/<file>`, `GET /addon/sdk.js` | The page and the helper script. |
+
+## What the catalog has
+
+| Add-on | What it is |
+|---|---|
+| `bigclock` | A full-screen clock (a page add-on, the smallest example). |
+| `dnscheck` | Asks the TV's own resolver for the hosts the debloat blocks and shows each as Blocked or Reachable (issue 92). A host that does not exist, or resolves to 0.0.0.0, 127.x or ::, counts as blocked; a control host (example.com) tells whether DNS works at all, and when it does not, no host is called blocked. Add your own hosts with `curl -X POST localhost:8765/api/addons/dnscheck/hosts -d '{"hosts":["ads.example.net"]}'` on the TV. |
+| `sysinfo` | Memory, swap, load and uptime of the TV, live, from `/proc`. |
+
+## Not released yet
+
+The repository root has a file `RELEASE-HOLD`. While it is on `dev`, `tools/release.sh` releases nothing and does not move `main`
+(the first line of the file says why); dev builds still go out. It also stops a release started by hand, which the workflow's
+`RELEASE_HOLD` variable does not. Delete the file when add-ons should go out in a release.
 
 ## Adding a catalog add-on
 

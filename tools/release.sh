@@ -16,6 +16,16 @@ NOTES="${RUNNER_TEMP:-/tmp}/release-notes.md"
 PKG="app manager notify picker helper i18n scripts voice third-party ipk themes assets compat.json config.example.json uninstall.sh THIRD-PARTY.md LICENSE"
 say() { echo "[release] $*" >&2; }
 
+# RELEASE-HOLD in the repository root: nothing is released, and main stays where it is, for as long as the file is on dev (its
+# first line says why). Dev builds are not affected. Delete the file to release again. Unlike the RELEASE_HOLD variable of the
+# workflow, it also stops a run started by hand.
+if [ -f RELEASE-HOLD ]; then
+  say "RELEASE-HOLD is present, no release: $(head -1 RELEASE-HOLD)"
+  echo "tag=" >> "$OUT"
+  echo "docs=0" >> "$OUT"
+  exit 0
+fi
+
 last=$(git tag -l 'v*' --sort=-v:refname | head -1)
 [ -n "$last" ] || { say "no earlier release tag (v*) found"; exit 1; }
 git merge-base --is-ancestor "$last" HEAD || { say "$last is not on this branch"; exit 1; }

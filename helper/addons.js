@@ -2,7 +2,8 @@
 //   addons-bundled/<id>   ships with the package (Live TV is one); cannot be removed; may answer old API paths (manifest "routes")
 //   P.ADDONS/<id>         installed from the catalog (or put there by hand)
 // Requests:
-//   GET  /api/addons                       {addons: [{id, name, version, kind, enabled, status, error, bundled, tile, page, ...}]}
+//   GET  /api/addons                       {addons: [{id, name, version, kind, enabled, status, error, bundled, tile, page, ...}], book}
+//   POST /api/addons/book {order, hidden, strip}  which pages the launcher's book has, in which order (config.json: book)
 //   GET  /api/addons/catalog               what the project's catalog offers: {addons: [...], error}
 //   POST /api/addons/install {id}          download from the catalog, check every file against its hash, install
 //   POST /api/addons/remove {id}           delete an installed add-on (its data stays)
@@ -27,7 +28,7 @@ const PERMISSIONS = ['net.fetch', 'config.own', 'notify', 'key.guide'];
 // keys a page keeps for itself; every other key (the number and colour buttons, Back) switches pages or goes back to Home
 const CLAIMS = ['digits', 'colors', 'back'];
 const ID = /^[a-z][a-z0-9-]{1,31}$/;
-const RESERVED = ['catalog', 'install', 'remove', 'sdk'];
+const RESERVED = ['catalog', 'install', 'remove', 'sdk', 'book'];
 const MAX_FILE = 2 << 20,
   MAX_FILES = 60;
 const safeRel = f => typeof f === 'string' && f.length > 0 && f.length < 120 && !/^[\\/]|\.\.|[\0\\]/.test(f);
@@ -170,6 +171,7 @@ function create(ctx) {
       id: a.id,
       dir: a.dir,
       dataDir,
+      proc: P.PROC, // the TV's /proc, for add-ons that read system counters (the tests move it)
       log: m => console.log('addon ' + a.id + ': ' + String(m).slice(0, 300)),
       settings: {
         get: () => Object.assign({}, settingsOf(a.id)),
@@ -250,6 +252,22 @@ function create(ctx) {
     list.forEach(activate);
   }
 
+  // the book (the launcher's pages): the order the user chose, the pages left out, and whether the strip at the bottom shows
+  const bookOf = () => {
+    const b = config.get().book || {};
+    const ids = v => (Array.isArray(v) ? v : []).filter((x, i, all) => typeof x === 'string' && ID.test(x) && all.indexOf(x) === i);
+    return { order: ids(b.order), hidden: ids(b.hidden), strip: b.strip !== false };
+  };
+  const bookable = a => !!(a.manifest && a.manifest.entry.page && a.manifest.tile && a.manifest.tile.placement !== 'home');
+  // the pages in book order: the ones named in order first, then the rest as they were loaded
+  const pagesInOrder = () => {
+    const b = bookOf(),
+      all = list.filter(bookable);
+    return b.order
+      .map(id => all.filter(a => a.id === id)[0])
+      .filter(Boolean)
+      .concat(all.filter(a => b.order.indexOf(a.id) < 0));
+  };
   const info = a => ({
     id: a.id,
     name: a.manifest ? a.manifest.name : a.id,
@@ -264,6 +282,9 @@ function create(ctx) {
     tile: a.manifest ? a.manifest.tile : null,
     claims: a.manifest ? a.manifest.claims : [],
     page: a.manifest && a.manifest.entry.page && a.status === 'running' ? '/addon/' + a.id + '/' + a.manifest.entry.page : '',
+    bookable: bookable(a),
+    inBook: bookable(a) && bookOf().hidden.indexOf(a.id) < 0,
+    order: pagesInOrder().indexOf(a), // its place among the pages that can be in the book (-1: not a page)
   });
 
   // ---- the catalog ----
@@ -435,7 +456,21 @@ function create(ctx) {
       }
       return sendFile(res, a, rel || a.manifest.entry.page);
     }
-    if (u === '/api/addons' && req.method === 'GET') return web.json(res, { addons: list.map(info), paused: paused() });
+    if (u === '/api/addons' && req.method === 'GET') return web.json(res, { addons: list.map(info), paused: paused(), book: bookOf() });
+    if (u === '/api/addons/book' && req.method === 'POST') {
+      const b = await body(req),
+        known = list.filter(bookable).map(a => a.id),
+        pick = v => (Array.isArray(v) ? v : []).filter((x, i, all) => known.indexOf(x) >= 0 && all.indexOf(x) === i);
+      config.update('addons', cfg => {
+        const cur = Object.assign({ order: [], hidden: [], strip: true }, cfg.book);
+        cfg.book = {
+          order: Array.isArray(b.order) ? pick(b.order) : cur.order,
+          hidden: Array.isArray(b.hidden) ? pick(b.hidden) : cur.hidden,
+          strip: typeof b.strip === 'boolean' ? b.strip : cur.strip !== false,
+        };
+      });
+      return web.json(res, { book: bookOf() });
+    }
     if (u === '/api/addons/catalog' && req.method === 'GET') return web.json(res, await catalog());
     if ((u === '/api/addons/install' || u === '/api/addons/remove') && req.method === 'POST') {
       const b = await body(req);

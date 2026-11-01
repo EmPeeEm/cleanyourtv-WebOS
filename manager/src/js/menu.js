@@ -453,6 +453,16 @@ function build() {
         },
       });
     });
+    if (bookPages().length) {
+      rows.push({ sep: true });
+      rows.push({
+        label: 'Page strip on Home',
+        sub: onoff(ad.book.strip !== false) + ' \u00B7 shows which button turns to which page',
+        fn: function () {
+          bookSet({ strip: ad.book.strip === false }, 'Saved');
+        },
+      });
+    }
     if (ad.error) rows.push({ label: 'The catalog could not be read', sub: ad.error, dim: true, fn: function () {} });
     rows.push({ sep: true });
     rows.push({ label: 'Back', fn: pop });
@@ -461,6 +471,37 @@ function build() {
   if (view === 'addon') {
     var a1 = addonSel() || {};
     rows.push({ label: a1.name || '', sub: (a1.description || '') + (a1.error ? ' \u00B7 ' + a1.error : ''), fn: function () {} });
+    if (a1.bookable) {
+      var bp = bookPages().filter(function (p) {
+          return p.inBook;
+        }),
+        bi = bp.map(function (p) {
+          return p.id;
+        }).indexOf(a1.id);
+      rows.push({
+        label: 'Page of the book',
+        sub: onoff(a1.inBook) + (a1.inBook && bi >= 0 ? ' \u00B7 page ' + (bi + 2) : '') + ' \u00B7 Home is page 1',
+        fn: function () {
+          bookShow(a1.id, !a1.inBook);
+        },
+      });
+      if (a1.inBook) {
+        rows.push({
+          label: 'Move earlier',
+          dim: bi <= 0,
+          fn: function () {
+            bookMove(a1.id, -1);
+          },
+        });
+        rows.push({
+          label: 'Move later',
+          dim: bi < 0 || bi >= bp.length - 1,
+          fn: function () {
+            bookMove(a1.id, 1);
+          },
+        });
+      }
+    }
     rows.push({
       label: a1.enabled ? 'Switch off' : 'Switch on',
       sub: a1.enabled ? 'on' : 'off',

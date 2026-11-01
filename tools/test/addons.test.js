@@ -166,6 +166,36 @@ run(async () => {
   ok(!pc('evil.example:8765', 'http://evil.example:8765', '/addon/pg/index.html'), 'a page from another host name is refused (DNS rebinding)');
   ok(!pc('127.0.0.1:8765', 'http://evil.example', '/api/addons/pg/x', 'http://127.0.0.1:8765/addon/pg/'), 'an origin that is not the service is refused');
 
+
+  // the book: order, pages left out, the strip
+  a.load();
+  r = await call(a, '/api/addons');
+  const bookable = r.j.addons.filter(x => x.bookable).map(x => x.id);
+  ok(bookable.indexOf('pg') >= 0 && r.j.book.strip === true && r.j.book.order.length === 0, 'GET /api/addons has the book, and pages that can be in it');
+  r = await call(a, '/api/addons/book', 'POST', { order: ['pg', 'nope', 'pg'], hidden: ['x'], strip: false });
+  ok(
+    JSON.stringify(r.j.book.order) === '["pg"]' && r.j.book.hidden.length === 0 && r.j.book.strip === false && cfg.get().book.strip === false,
+    'the book keeps known pages, once each, and the strip setting: ' + r.out
+  );
+  r = await call(a, '/api/addons');
+  ok(r.j.addons.filter(x => x.id === 'pg')[0].order === 0 && r.j.addons.filter(x => x.id === 'pg')[0].inBook, 'a page in the order has its place');
+  r = await call(a, '/api/addons/book', 'POST', { hidden: ['pg'] });
+  r = await call(a, '/api/addons');
+  ok(!r.j.addons.filter(x => x.id === 'pg')[0].inBook && r.j.book.order[0] === 'pg', 'a hidden page is out of the book and keeps its order');
+
+
+  // the catalog's own add-ons
+  const dnsc = require(path.join(__dirname, '..', '..', 'addons', 'catalog', 'dnscheck', 'service.js'));
+  ok(dnsc.classify(null, [{ address: '0.0.0.0' }]).state === 'blocked' && dnsc.classify(null, [{ address: '127.0.0.1' }, { address: '::' }]).state === 'blocked', 'dnscheck: 0.0.0.0, 127.x and :: count as blocked');
+  ok(dnsc.classify({ code: 'ENOTFOUND' }).state === 'blocked' && dnsc.classify(null, []).state === 'blocked', 'dnscheck: a name that does not exist is blocked');
+  ok(dnsc.classify(null, [{ address: '93.184.216.34' }]).state === 'reachable' && dnsc.classify(null, [{ address: '0.0.0.0' }, { address: '1.2.3.4' }]).state === 'reachable', 'dnscheck: a real address means reachable');
+  ok(JSON.stringify(dnsc.cleanHosts(['Ads.Example.net', 'ads.example.net', 'bad host', 'nl.ad.lgsmartad.com', 'x', 5])) === '["ads.example.net"]', 'dnscheck: your hosts are valid names, once, not the built-in ones');
+  const sysi = require(path.join(__dirname, '..', '..', 'addons', 'catalog', 'sysinfo', 'service.js'));
+  const procFiles = { meminfo: 'MemTotal:  1000000 kB\nMemFree: 100000 kB\nMemAvailable: 400000 kB\nSwapTotal: 700000 kB\nSwapFree: 500000 kB\n', loadavg: '0.50 0.40 0.30 1/200 999\n', uptime: '4333.08 100.00\n' };
+  const sx = sysi.stats(f => procFiles[f]);
+  ok(sx.memTotalMB === 977 && sx.memUsedMB === 586 && sx.swapUsedMB === 195 && sx.load[0] === 0.5 && sx.uptimeS === 4333, 'sysinfo: memory, swap, load and uptime from /proc text: ' + JSON.stringify(sx));
+  ok(sysi.stats(() => '').memTotalMB === 0, 'sysinfo: an unreadable /proc gives zeros, not an error');
+
   // the catalog: a stand-in for GitHub
   const files = { 'addon.json': JSON.stringify({ id: 'hello', name: 'Hello', version: '1.2.0', kind: 'page', entry: { page: 'index.html' } }), 'index.html': '<b>hello</b>' };
   const sha = s => crypto.createHash('sha256').update(s).digest('hex');
