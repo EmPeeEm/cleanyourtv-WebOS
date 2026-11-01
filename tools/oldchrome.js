@@ -181,9 +181,11 @@ function run(bin, url, extra, budget) {
       for (const p of PAGES) {
         const url = 'http://127.0.0.1:8765/' + p[0] + '.html';
         // headless Chromium on Linux now and then fails to hand over the page ("Failed to serialize document"), hangs or hands it over
-        // before the page drew its content: try again
+        // before the page drew its content: try again. Chromium 79 fails on the manager page about every second time (also with the
+        // manager of release 1.6.12, so it is the browser, not the page); a failed try takes 0.2 s, so 15 tries make a failed run
+        // of this check (chance about 0.5^15) a real finding.
         let r = null;
-        for (let tries = 0; tries < 5; tries++) {
+        for (let tries = 0; tries < 15; tries++) {
           r = await run(bin, url, ['--dump-dom'], p[4]);
           if (r.status === 0 && (r.stdout || '').indexOf('<body') >= 0 && ((r.stdout || '').match(p[2]) || []).length >= p[3]) break;
         }
