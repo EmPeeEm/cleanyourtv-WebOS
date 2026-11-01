@@ -64,6 +64,7 @@ load('androidbox', () => require('./androidbox').create(ctx));
 load('apps', () => require('./apps').create(ctx));
 load('running', () => require('./running').create(ctx));
 load('zram', () => require('./zram').create(ctx));
+load('addons', () => require('./addons').create(ctx));
 
 require('./server')
   .create({ features: () => loaded })

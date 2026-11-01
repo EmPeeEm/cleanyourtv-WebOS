@@ -26,6 +26,7 @@
 | `inputkey.js`, `inputhook.js`, `picker.js` | The Input key: the hook in LG's input processes, the key binds, the Inputs picker. |
 | `manager.js`, `updates.js`, `debloat.js` | The manager's API, updates from GitHub releases with rollback, switching the debloat. |
 | `live.js`, `notify.js`, `notifyapi.js` | One feature each. |
+| `addons.js` | Add-ons: loads the folders in `addons/` that have an `addon.json`, isolates the ones that fail and routes `/api/addons/<id>/...` to them (`docs/development/addons.md`). |
 | `zram.js` | Compressed memory: switches the kernel's zram swap on with the size in `options.zram` at every start of the service, and on or off from the launcher (`/api/zram`). |
 | `wallpapers.js` | Wallpapers: the photo library (uploads and Immich, apart on disk, with an index), the phone page on port 8791 and the Immich sync. |
 | `androidbox.js`, `adbclient.js`, `androidboxpage.js` | Apps that open on an Android box: the settings and the launch hook, our own ADB client (packets, key, sign-in, one shell command; no `adb` program), and the phone page on port 8793. |
