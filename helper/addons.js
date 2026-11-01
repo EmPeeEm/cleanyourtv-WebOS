@@ -3,7 +3,8 @@
 //   P.ADDONS/<id>         installed from the catalog (or put there by hand)
 // Requests:
 //   GET  /api/addons                       {addons: [{id, name, version, kind, enabled, status, error, bundled, tile, page, ...}], book}
-//   POST /api/addons/book {order, hidden, strip}  which pages the launcher's book has, in which order (config.json: book)
+//   POST /api/addons/book {order, hidden, strip, position}  which pages the launcher's book has, in which order, whether the strip
+//                                          shows and where (config.json: book)
 //   GET  /api/addons/catalog               what the project's catalog offers: {addons: [...], error}
 //   POST /api/addons/install {id}          download from the catalog, check every file against its hash, install
 //   POST /api/addons/remove {id}           delete an installed add-on (its data stays)
@@ -27,6 +28,8 @@ const KINDS = ['page', 'service'];
 const PERMISSIONS = ['net.fetch', 'config.own', 'notify', 'key.guide'];
 // keys a page keeps for itself; every other key (the number and colour buttons, Back) switches pages or goes back to Home
 const CLAIMS = ['digits', 'colors', 'back'];
+// where the user may put the page strip ('' leaves it to the theme)
+const POSITIONS = ['', 'top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'];
 const ID = /^[a-z][a-z0-9-]{1,31}$/;
 const RESERVED = ['catalog', 'install', 'remove', 'sdk', 'book'];
 const MAX_FILE = 2 << 20,
@@ -273,7 +276,12 @@ function create(ctx) {
   const bookOf = () => {
     const b = config.get().book || {};
     const ids = v => (Array.isArray(v) ? v : []).filter((x, i, all) => typeof x === 'string' && ID.test(x) && all.indexOf(x) === i);
-    return { order: ids(b.order), hidden: ids(b.hidden), strip: b.strip !== false };
+    return {
+      order: ids(b.order),
+      hidden: ids(b.hidden),
+      strip: b.strip !== false,
+      position: POSITIONS.indexOf(b.position) > 0 ? b.position : '',
+    };
   };
   const bookable = a => !!(a.manifest && a.manifest.entry.page && a.manifest.tile && a.manifest.tile.placement !== 'home');
   // the pages in book order: the ones named in order first, then the rest as they were loaded
@@ -481,11 +489,12 @@ function create(ctx) {
         known = list.filter(bookable).map(a => a.id),
         pick = v => (Array.isArray(v) ? v : []).filter((x, i, all) => known.indexOf(x) >= 0 && all.indexOf(x) === i);
       config.update('addons', cfg => {
-        const cur = Object.assign({ order: [], hidden: [], strip: true }, cfg.book);
+        const cur = Object.assign({ order: [], hidden: [], strip: true, position: '' }, cfg.book);
         cfg.book = {
           order: Array.isArray(b.order) ? pick(b.order) : cur.order,
           hidden: Array.isArray(b.hidden) ? pick(b.hidden) : cur.hidden,
           strip: typeof b.strip === 'boolean' ? b.strip : cur.strip !== false,
+          position: POSITIONS.indexOf(b.position) >= 0 ? b.position : POSITIONS.indexOf(cur.position) > 0 ? cur.position : '',
         };
       });
       return web.json(res, { book: bookOf() });

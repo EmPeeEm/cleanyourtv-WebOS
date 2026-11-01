@@ -27,53 +27,174 @@
   pointer-events: auto;
   transition: transform 0.32s ease;
 }
-/* which button turns to which page */
+/* The page strip: which button turns to which page. Its look, edge and size come from the theme (strip.* in a theme) through the data
+   attributes and --st-* set by addons.js; sizes are in --u so that the theme's strip.size scales everything. */
 #pagestrip {
+  --u: calc(var(--st-s, 1) * 1px);
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 22px;
+  top: auto;
+  bottom: var(--st-y, 22px);
+  padding: 0 var(--st-x, 96px);
   display: none;
   justify-content: center;
+  align-items: flex-end;
   pointer-events: none;
+  font-size: calc(20 * var(--u));
+}
+#pagestrip[data-anchor="top"] {
+  top: var(--st-y, 22px);
+  bottom: auto;
+  align-items: flex-start;
+}
+#pagestrip[data-align="left"] {
+  justify-content: flex-start;
+}
+#pagestrip[data-align="right"] {
+  justify-content: flex-end;
+}
+#pagestrip[data-align="center"] {
+  padding: 0;
 }
 #pagestrip .pg {
   display: flex;
   align-items: center;
-  margin: 0 8px;
-  padding: 8px 18px 8px 12px;
-  border-radius: 24px;
-  background: var(--pill-bg);
-  box-shadow: inset 0 0 0 1px var(--pill-ring);
-  font-size: 20px;
+  margin: 0 calc(5 * var(--u));
   color: var(--ink2);
-}
-#pagestrip .pg.cur {
-  background: var(--acc);
-  color: var(--acc-ink);
+  white-space: nowrap;
 }
 #pagestrip .pg i {
   display: block;
-  width: 22px;
-  height: 22px;
-  margin-right: 10px;
-  border-radius: 11px;
+  flex: none;
+  width: calc(26 * var(--u));
+  height: calc(26 * var(--u));
+  border-radius: 50%;
   font-style: normal;
-  font-size: 14px;
-  line-height: 22px;
+  font-size: calc(15 * var(--u));
+  font-weight: 700;
+  line-height: calc(26 * var(--u));
   text-align: center;
-  background: rgba(128, 128, 128, 0.5);
   color: #fff;
+  /* a soft highlight on the top left and a thin ring: the dot reads as a button, not as a flat disc */
+  background: radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 58%),
+    var(--dot, rgba(128, 128, 128, 0.55));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
 }
 #pagestrip .pg i.c0 {
-  background: #e5484d;
+  --dot: #e5484d;
 }
 #pagestrip .pg i.c1 {
-  background: #30a46c;
+  --dot: #30a46c;
 }
 #pagestrip .pg i.c2 {
-  background: #f5b800;
+  --dot: #f5b800;
 }
 #pagestrip .pg i.c3 {
-  background: #3e63dd;
+  --dot: #3e63dd;
+}
+#pagestrip .pg span {
+  margin-left: calc(10 * var(--u));
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+#pagestrip[data-labels="none"] .pg span,
+#pagestrip[data-labels="current"] .pg:not(.cur) span {
+  display: none;
+}
+/* pills: a rounded button for each page; the page you are on is filled with the accent */
+#pagestrip[data-style="pills"] .pg {
+  padding: calc(7 * var(--u)) calc(18 * var(--u)) calc(7 * var(--u)) calc(8 * var(--u));
+  border-radius: calc(999 * var(--u));
+  background: var(--pill-bg);
+  box-shadow: inset 0 0 0 1px var(--pill-ring);
+}
+#pagestrip[data-style="pills"][data-labels="none"] .pg,
+#pagestrip[data-style="pills"][data-labels="current"] .pg:not(.cur) {
+  padding-right: calc(8 * var(--u));
+}
+#pagestrip[data-style="pills"] .pg.cur {
+  background: var(--acc);
+  color: var(--acc-ink);
+  box-shadow: 0 calc(4 * var(--u)) calc(14 * var(--u)) rgba(0, 0, 0, 0.35);
+}
+#pagestrip[data-style="pills"] .pg.cur i {
+  box-shadow:
+    0 0 0 calc(2 * var(--u)) var(--acc-ink),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+/* tabs: book tabs standing on the edge of the screen, each with a coloured edge */
+#pagestrip[data-style="tabs"] .pg {
+  margin: 0 calc(3 * var(--u));
+  padding: calc(9 * var(--u)) calc(20 * var(--u));
+  background: var(--pill-bg);
+  box-shadow: inset 0 0 0 1px var(--pill-ring);
+  border-radius: calc(14 * var(--u)) calc(14 * var(--u)) 0 0;
+  border-top: calc(5 * var(--u)) solid var(--dot-edge, rgba(128, 128, 128, 0.55));
+}
+#pagestrip[data-style="tabs"][data-anchor="top"] .pg {
+  border-radius: 0 0 calc(14 * var(--u)) calc(14 * var(--u));
+  border-top: 0;
+  border-bottom: calc(5 * var(--u)) solid var(--dot-edge, rgba(128, 128, 128, 0.55));
+}
+#pagestrip[data-style="tabs"] .pg:nth-child(1) {
+  --dot-edge: #e5484d;
+}
+#pagestrip[data-style="tabs"] .pg:nth-child(2) {
+  --dot-edge: #30a46c;
+}
+#pagestrip[data-style="tabs"] .pg:nth-child(3) {
+  --dot-edge: #f5b800;
+}
+#pagestrip[data-style="tabs"] .pg:nth-child(4) {
+  --dot-edge: #3e63dd;
+}
+#pagestrip[data-style="tabs"] .pg i {
+  width: calc(22 * var(--u));
+  height: calc(22 * var(--u));
+  line-height: calc(22 * var(--u));
+  font-size: calc(13 * var(--u));
+}
+#pagestrip[data-style="tabs"] .pg i.c0,
+#pagestrip[data-style="tabs"] .pg i.c1,
+#pagestrip[data-style="tabs"] .pg i.c2,
+#pagestrip[data-style="tabs"] .pg i.c3 {
+  display: none; /* the colour is the edge of the tab */
+}
+#pagestrip[data-style="tabs"] .pg i.c0 + span,
+#pagestrip[data-style="tabs"] .pg i.c1 + span,
+#pagestrip[data-style="tabs"] .pg i.c2 + span,
+#pagestrip[data-style="tabs"] .pg i.c3 + span {
+  margin-left: 0; /* the dot is not shown, so the name has no gap before it */
+}
+#pagestrip[data-style="tabs"] .pg.cur {
+  background: var(--acc);
+  color: var(--acc-ink);
+  padding-top: calc(13 * var(--u));
+  padding-bottom: calc(13 * var(--u));
+}
+/* dots: only the dots; the page you are on opens into a pill with its name */
+#pagestrip[data-style="dots"] .pg {
+  margin: 0 calc(6 * var(--u));
+}
+#pagestrip[data-style="dots"] .pg:not(.cur) {
+  opacity: 0.8;
+}
+#pagestrip[data-style="dots"] .pg.cur {
+  padding: calc(6 * var(--u)) calc(18 * var(--u)) calc(6 * var(--u)) calc(6 * var(--u));
+  border-radius: calc(999 * var(--u));
+  background: var(--acc);
+  color: var(--acc-ink);
+  box-shadow: 0 calc(3 * var(--u)) calc(12 * var(--u)) rgba(0, 0, 0, 0.35);
+}
+#pagestrip[data-style="dots"][data-labels="none"] .pg.cur {
+  padding: calc(6 * var(--u));
+}
+#pagestrip[data-style="dots"] .pg:not(.cur) span {
+  display: none;
+}
+#pagestrip[data-style="dots"] .pg.cur i {
+  box-shadow:
+    0 0 0 calc(2 * var(--u)) var(--acc-ink),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
 }

@@ -382,6 +382,49 @@ run(async () => {
   );
   gh.server.close();
 
+  // the page strip (addons.js in the launcher): a theme sets its look and place; the reply carries `strip` only for a theme that changes it
+  {
+    const ts = req('themeschema');
+    const res = raw => ts.resolve(ts.normalize(raw, 'x', null));
+    ok(
+      res({ name: 'Plain' }).strip === undefined,
+      'a theme without strip settings has no strip in its reply (the replies of the other themes stay as they were)'
+    );
+    const sd = res({
+      name: 'S',
+      strip: { style: 'dots', labels: 'current', colors: 'numbers', anchor: 'top', align: 'right', x: 400, y: 60, size: 1.2 },
+    }).strip;
+    ok(
+      sd &&
+        sd.style === 'dots' &&
+        sd.labels === 'current' &&
+        sd.colors === 'numbers' &&
+        sd.anchor === 'top' &&
+        sd.align === 'right' &&
+        sd.x === 400 &&
+        sd.y === 60 &&
+        sd.size === 1.2,
+      'a theme can set the strip style, names, colours, edge, side, distances and size'
+    );
+    const sc = res({ name: 'S', strip: { style: 'ribbon', labels: 'x', colors: 7, anchor: 'middle', show: 'yes' } }).strip;
+    ok(sc === undefined, 'wrong values are ignored, and a theme that only has those is the default one');
+    const sc2 = res({ name: 'S', strip: { size: 9, x: -5, y: 5000, show: false } }).strip;
+    ok(
+      sc2 && sc2.size === 1.6 && sc2.x === 0 && sc2.y === 900 && sc2.show === false,
+      'sizes and distances are clamped to their range, and the strip can be hidden'
+    );
+    ok(res({ name: 'S', extends: 'x', strip: { show: true } }).strip === undefined, 'writing a default down is not a change');
+    const bl = ts.resolve(
+      ts.normalize(JSON.parse(fs.readFileSync(path.join(tdir, 'bloom', 'theme.json'), 'utf8')), 'bloom', null, path.join(tdir, 'bloom'))
+    );
+    ok(
+      bl.strip && bl.strip.y === 14 && bl.strip.size === 0.92 && bl.strip.style === 'pills',
+      'Bloom sets the strip lower and a little smaller, to sit under its glass dock'
+    );
+    const cl = ts.resolve(ts.normalize(JSON.parse(fs.readFileSync(path.join(tdir, 'classic', 'theme.json'), 'utf8')), 'classic', null));
+    ok(cl.strip === undefined, 'Classic writes down the default look, so it adds nothing to its reply');
+  }
+
   // the documentation table is generated from the schema; the service ships no themes
   const gen = require(path.join(root, 'tools', 'theme-docs.js')),
     docs = fs.readFileSync(path.join(root, 'docs', 'themes.md'), 'utf8');

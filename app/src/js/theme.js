@@ -14,6 +14,7 @@ var TH0 = {
     shelfDock: null,
   },
   TH = TH0,
+  themeStrip = null /* the page strip's look and place in this theme (addons.js); null: the defaults */,
   themeKeys = [],
   themeAttrs = ['data-bar', 'data-labels', 'data-clock', 'data-grid', 'data-galign', 'data-cstyle', 'data-cards'];
 function applyTheme(t) {
@@ -24,6 +25,8 @@ function applyTheme(t) {
   themeKeys = [];
   for (k = 0; k < themeAttrs.length; k++) b.removeAttribute(themeAttrs[k]);
   b.classList.remove('grid-open');
+  themeStrip = (t && t.strip) || null;
+  if (typeof PAGER !== 'undefined') PAGER.draw();
   if (!t || !t.vars) {
     TH = TH0;
     if (window.SCENES) SCENES.apply(null);

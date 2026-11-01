@@ -461,6 +461,14 @@ function build() {
     if (bookPages().length) {
       rows.push({ sep: true });
       rows.push({
+        label: 'Page strip position',
+        sub: stripPosLabel(ad.book.position) + ' \u00B7 the theme sets its look and the default place',
+        fn: function () {
+          var i = STRIP_POS.indexOf(ad.book.position || '');
+          bookSet({ position: STRIP_POS[(i + 1) % STRIP_POS.length] }, 'Saved');
+        },
+      });
+      rows.push({
         label: 'Page strip on Home',
         sub: onoff(ad.book.strip !== false) + ' \u00B7 shows which button turns to which page',
         fn: function () {

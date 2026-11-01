@@ -88,6 +88,11 @@ function addonDo(path, body, done) {
   );
 }
 /* the book: which add-ons are pages of the launcher, in which order, and whether the strip at the bottom of Home shows */
+/* where the page strip can be put by the user ('' leaves it to the theme); the order is the order of the row when it is chosen again */
+var STRIP_POS = ['', 'bottom-center', 'bottom-left', 'bottom-right', 'top-left', 'top-center', 'top-right'];
+function stripPosLabel(p) {
+  return p ? p.replace('-', ' ') : 'theme default';
+}
 function bookPages() {
   return ad.installed
     .filter(function (a) {

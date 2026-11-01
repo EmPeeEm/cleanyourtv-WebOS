@@ -5,7 +5,8 @@
    (Live TV: digits tune channels) says so in its manifest ("claims"); then only its own keys work there and Back/Home leave it.
    The pages come from GET /api/addons; each page is loaded when you open it and unloaded when you leave it. */
 var addonBar = []; /* topbar entries: add-ons with placement "topbar", they open their page */
-var stripOn = true; /* the strip at the bottom of Home (manager > Add-ons) */
+var stripOn = true; /* the strip that shows the pages on Home (manager > Add-ons) */
+var stripPos = ''; /* where the user put it ('' leaves that to the theme) */
 var PAGES = []; /* the add-on pages after Home: {id, label, icon, page, claims} */
 var PAGER = {
   on: false /* true while a page other than Home shows */,
@@ -29,30 +30,59 @@ var PAGER = {
               bar.push({ label: a.tile.label || a.name, icon: a.tile.icon || 'addon', action: 'addon', addon: a.id, fixed: true });
           });
         strip = !(x && x.book && x.book.strip === false);
-        var sig = JSON.stringify([pages, bar, strip]);
-        if (sig === JSON.stringify([PAGES, addonBar, stripOn])) return;
+        var pos = (x && x.book && x.book.position) || '';
+        var sig = JSON.stringify([pages, bar, strip, pos]);
+        if (sig === JSON.stringify([PAGES, addonBar, stripOn, stripPos])) return;
         PAGES = pages;
         addonBar = bar;
         stripOn = strip;
+        stripPos = pos;
         PAGER.draw();
         rebuild();
       },
       function () {}
     );
   },
-  /* the page strip at the bottom of Home: a coloured dot or a number for each page, so you see what the buttons do */
+  /* The page strip: a coloured dot or a number for each page, so you see what the buttons do. Its look and place come from the theme
+     (themeStrip: style, labels, colours, edge, size); the user can put it in one of six places (manager > Add-ons), which wins. */
   draw: function () {
     var s = $('pagestrip');
     if (!s) return;
+    var th = themeStrip || {},
+      c = {
+        show: th.show !== false,
+        style: th.style || 'pills',
+        labels: th.labels || 'all',
+        colors: th.colors || 'colour',
+        anchor: th.anchor || 'bottom',
+        align: th.align || 'center',
+        x: th.x === undefined ? 96 : th.x,
+        y: th.y === undefined ? 22 : th.y,
+        size: th.size || 1,
+      };
+    if (stripPos) {
+      var m = stripPos.split('-');
+      c.anchor = m[0];
+      c.align = m[1];
+      c.x = 96;
+      c.y = c.anchor === 'top' ? 8 : 22; /* the top row of Home starts at 54 px */
+    }
     var items = [{ id: '', label: t('Home') }].concat(PAGES);
     s.textContent = '';
-    s.style.display = PAGES.length && stripOn ? 'flex' : 'none';
+    s.style.display = PAGES.length && stripOn && c.show ? 'flex' : 'none';
+    s.setAttribute('data-style', c.style);
+    s.setAttribute('data-labels', c.labels);
+    s.setAttribute('data-anchor', c.anchor);
+    s.setAttribute('data-align', c.align);
+    s.style.setProperty('--st-s', String(c.size));
+    s.style.setProperty('--st-x', c.x + 'px');
+    s.style.setProperty('--st-y', c.y + 'px');
     items.forEach(function (p, i) {
       var e = document.createElement('div');
       e.className = 'pg' + (p.id === PAGER.id ? ' cur' : '');
       var d = document.createElement('i');
-      if (i < 4) d.className = 'c' + i;
-      else d.textContent = i + 1;
+      if (i < 4 && c.colors === 'colour') d.className = 'c' + i;
+      else d.textContent = String(i + 1);
       var l = document.createElement('span');
       l.textContent = p.label;
       e.appendChild(d);
