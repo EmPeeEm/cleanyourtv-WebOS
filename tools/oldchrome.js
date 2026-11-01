@@ -94,10 +94,10 @@ const PROBE =
   '<script>window.onerror=function(m,s,l){var h=document.documentElement;h.setAttribute("data-errors",(h.getAttribute("data-errors")||"")+m+" (line "+l+"); ")};' +
   'window.webOSSystem={launchParams:"{}",locale:"en-GB",hide:function(){},activate:function(){},platformBack:function(){},setInputRegion:function(){},setKeyMask:function(){}};</script>';
 const page = f => fs.readFileSync(path.join(ROOT, f), 'utf8').replace('<script>', PROBE + '<script>');
-// [name, file, what it draws, how many at least, milliseconds of page time to wait]
+// [name, file, what it draws, how many at least, milliseconds to wait for the page (real time)]
 const PAGES = [
-  ['launcher', 'app/index.html', /class="tile[ "]/g, 8, 8000],
-  ['manager', 'manager/app/index.html', /class="row[ "]/g, 5, 8000],
+  ['launcher', 'app/index.html', /class="tile[ "]/g, 8, 3000],
+  ['manager', 'manager/app/index.html', /class="row[ "]/g, 5, 3000],
   ['picker', 'picker/app/index.html', /class="chip[ "]/g, 2, 3000],
 ];
 const marks = []; // what the pages log (perf lines: tools/perf-tv.sh reads the same on a TV)
@@ -155,7 +155,9 @@ function run(bin, url, extra, budget) {
     '--hide-scrollbars',
     '--user-data-dir=' + dir,
     '--window-size=1920,1080',
-    '--virtual-time-budget=' + (budget || 8000),
+    // real time, not --virtual-time-budget: with the virtual budget Chromium 79 often fails to hand over even an empty page ("Failed to
+    // serialize document: Uncaught"), apparently because the budget runs out before the page has loaded (see the retries below)
+    '--timeout=' + (budget || 3000),
   ];
   return new Promise(resolve => {
     cp.execFile(bin, argv.concat(extra, [url]), { encoding: 'utf8', timeout: 45000, maxBuffer: 32 << 20 }, (e, stdout, stderr) => {
@@ -181,11 +183,9 @@ function run(bin, url, extra, budget) {
       for (const p of PAGES) {
         const url = 'http://127.0.0.1:8765/' + p[0] + '.html';
         // headless Chromium on Linux now and then fails to hand over the page ("Failed to serialize document"), hangs or hands it over
-        // before the page drew its content: try again. Chromium 79 fails on the manager page about every second time (also with the
-        // manager of release 1.6.12, so it is the browser, not the page); a failed try takes 0.2 s, so 15 tries make a failed run
-        // of this check (chance about 0.5^15) a real finding.
+        // before the page drew its content: try again
         let r = null;
-        for (let tries = 0; tries < 15; tries++) {
+        for (let tries = 0; tries < 8; tries++) {
           r = await run(bin, url, ['--dump-dom'], p[4]);
           if (r.status === 0 && (r.stdout || '').indexOf('<body') >= 0 && ((r.stdout || '').match(p[2]) || []).length >= p[3]) break;
         }
