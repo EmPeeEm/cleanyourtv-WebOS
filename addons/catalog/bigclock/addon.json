@@ -1,0 +1,10 @@
+{
+  "id": "bigclock",
+  "name": "Big clock",
+  "version": "1.0.0",
+  "kind": "page",
+  "description": "A full-screen clock. A small example of a page add-on.",
+  "entry": { "page": "index.html" },
+  "permissions": [],
+  "tile": { "label": "Clock", "icon": "addon", "placement": "page" }
+}

@@ -48,6 +48,94 @@ function openNotifyQr() {
     }
   );
 }
+/* Add-ons (helper/addons.js): the ones on the TV and the project's catalog */
+function openAddons(stay) {
+  Promise.all([api('/api/addons'), api('/api/addons/catalog')]).then(
+    function (r) {
+      ad.installed = (r[0] && r[0].addons) || [];
+      ad.catalog = (r[1] && r[1].addons) || [];
+      ad.error = (r[1] && r[1].error) || '';
+      ad.paused = !!(r[0] && r[0].paused);
+      ad.book = (r[0] && r[0].book) || ad.book;
+      if (view !== 'addons' && view !== 'addon') push('addons');
+      else {
+        if (view === 'addon' && !addonSel()) pop();
+        build();
+        if (idx >= rows.length) idx = 0;
+        draw();
+      }
+    },
+    function () {
+      banner('The service did not answer', 'err');
+    }
+  );
+}
+function addonSel() {
+  for (var i = 0; i < ad.installed.length; i++) if (ad.installed[i].id === ad.sel) return ad.installed[i];
+  return null;
+}
+function addonDo(path, body, done) {
+  banner('Working\u2026', 'work');
+  api(path, body).then(
+    function (r) {
+      if (r.error) return banner(r.error, 'err');
+      banner(r.restartNeeded ? done + ' \u00B7 restart the TV to apply it' : done, 'ok');
+      openAddons(true);
+    },
+    function () {
+      banner('The service did not answer', 'err');
+    }
+  );
+}
+/* the book: which add-ons are pages of the launcher, in which order, and whether the strip at the bottom of Home shows */
+function bookPages() {
+  return ad.installed
+    .filter(function (a) {
+      return a.bookable;
+    })
+    .sort(function (a, b) {
+      return a.order - b.order;
+    });
+}
+function bookSet(body, done) {
+  banner('Working\u2026', 'work');
+  api('/api/addons/book', body).then(
+    function (r) {
+      if (r.error) return banner(r.error, 'err');
+      banner(done, 'ok');
+      openAddons(true);
+    },
+    function () {
+      banner('The service did not answer', 'err');
+    }
+  );
+}
+function bookMove(id, d) {
+  var all = bookPages(),
+    ids = all
+      .filter(function (a) {
+        return a.inBook;
+      })
+      .map(function (a) {
+        return a.id;
+      }),
+    i = ids.indexOf(id),
+    j = i + d;
+  if (i < 0 || j < 0 || j >= ids.length) return;
+  ids.splice(j, 0, ids.splice(i, 1)[0]);
+  /* the pages that are left out keep their place after the others */
+  all.forEach(function (a) {
+    if (ids.indexOf(a.id) < 0) ids.push(a.id);
+  });
+  bookSet({ order: ids }, 'Page moved');
+}
+function bookShow(id, on) {
+  var hidden = ad.book.hidden.filter(function (h) {
+    return h !== id;
+  });
+  if (!on) hidden.push(id);
+  bookSet({ hidden: hidden }, on ? 'Page shown' : 'Page hidden');
+}
 function openLiveTv() {
   api('/api/live/status').then(
     function (r) {

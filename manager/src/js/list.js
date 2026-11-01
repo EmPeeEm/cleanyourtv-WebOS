@@ -72,6 +72,14 @@ function draw() {
     $('sub').textContent = tr('Where updates come from');
     return;
   }
+  if (view === 'addons') {
+    $('sub').textContent = tr('Add-ons: features you can install');
+    return;
+  }
+  if (view === 'addon') {
+    $('sub').textContent = tr('Add-on');
+    return;
+  }
   if (view === 'livetv') {
     $('sub').textContent = tr('Live TV: your own playlist');
     return;

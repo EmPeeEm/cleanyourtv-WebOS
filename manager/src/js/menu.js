@@ -424,6 +424,110 @@ function build() {
     });
     return;
   }
+  if (view === 'addons') {
+    if (ad.paused)
+      rows.push({
+        label: 'Add-ons are paused',
+        sub: 'the file DISABLE-ADDONS is present; remove it and restart',
+        dim: true,
+        fn: function () {},
+      });
+    ad.installed.forEach(function (a) {
+      rows.push({
+        label: a.name,
+        sub:
+          (a.status === 'running' ? 'on' : a.status === 'off' ? 'off' : a.status === 'failed' ? 'failed' : a.status) +
+          (a.version ? ' \u00B7 ' + a.version : '') +
+          (a.bundled ? ' \u00B7 ships with CleanYourTV' : ''),
+        fn: function () {
+          ad.sel = a.id;
+          push('addon');
+        },
+      });
+    });
+    var offer = ad.catalog.filter(function (e) {
+      return !e.installed || e.update;
+    });
+    if (offer.length) rows.push({ sep: true });
+    offer.forEach(function (e) {
+      rows.push({
+        label: e.name,
+        sub: (e.update ? 'Update to ' : 'Install \u00B7 ') + e.version + (e.description ? ' \u00B7 ' + e.description : ''),
+        fn: function () {
+          addonDo('/api/addons/install', { id: e.id }, e.name + ' installed');
+        },
+      });
+    });
+    if (bookPages().length) {
+      rows.push({ sep: true });
+      rows.push({
+        label: 'Page strip on Home',
+        sub: onoff(ad.book.strip !== false) + ' \u00B7 shows which button turns to which page',
+        fn: function () {
+          bookSet({ strip: ad.book.strip === false }, 'Saved');
+        },
+      });
+    }
+    if (ad.error) rows.push({ label: 'The catalog could not be read', sub: ad.error, dim: true, fn: function () {} });
+    rows.push({ sep: true });
+    rows.push({ label: 'Back', fn: pop });
+    return;
+  }
+  if (view === 'addon') {
+    var a1 = addonSel() || {};
+    rows.push({ label: a1.name || '', sub: (a1.description || '') + (a1.error ? ' \u00B7 ' + a1.error : ''), fn: function () {} });
+    if (a1.bookable) {
+      var bp = bookPages().filter(function (p) {
+          return p.inBook;
+        }),
+        bi = bp
+          .map(function (p) {
+            return p.id;
+          })
+          .indexOf(a1.id);
+      rows.push({
+        label: 'Page of the book',
+        sub: onoff(a1.inBook) + (a1.inBook && bi >= 0 ? ' \u00B7 page ' + (bi + 2) : '') + ' \u00B7 Home is page 1',
+        fn: function () {
+          bookShow(a1.id, !a1.inBook);
+        },
+      });
+      if (a1.inBook) {
+        rows.push({
+          label: 'Move earlier',
+          dim: bi <= 0,
+          fn: function () {
+            bookMove(a1.id, -1);
+          },
+        });
+        rows.push({
+          label: 'Move later',
+          dim: bi < 0 || bi >= bp.length - 1,
+          fn: function () {
+            bookMove(a1.id, 1);
+          },
+        });
+      }
+    }
+    rows.push({
+      label: a1.enabled ? 'Switch off' : 'Switch on',
+      sub: a1.enabled ? 'on' : 'off',
+      fn: function () {
+        addonDo('/api/addons/' + a1.id + '/enable', { enabled: !a1.enabled }, a1.name + (a1.enabled ? ' off' : ' on'));
+      },
+    });
+    if (!a1.bundled)
+      rows.push({
+        label: 'Remove',
+        sub: 'deletes the add-on, keeps its data',
+        fn: function () {
+          addonDo('/api/addons/remove', { id: a1.id }, a1.name + ' removed');
+        },
+      });
+    rows.push({ sep: true });
+    rows.push({ label: 'Back', fn: pop });
+    return;
+  }
   if (view === 'livetv') {
     var lo = st.options.liveTv !== false,
       l2 = lv || {},
@@ -614,6 +718,16 @@ function build() {
         sub: onoff(debloatOn(g.id)) + ' \u00B7 ' + g.what,
         fn: function () {
           debloatToggle(g.id);
+        },
+      });
+    });
+    rows.push({ sep: true });
+    PRELOAD.forEach(function (a) {
+      rows.push({
+        label: 'Close ' + a.label + ' preloaded at boot',
+        sub: onoff(preloadClosed(a.id)) + ' \u00B7 closes it in the background about 90 s after boot (not when it is in front)',
+        fn: function () {
+          preloadToggle(a.id);
         },
       });
     });
@@ -1108,6 +1222,7 @@ function build() {
     },
   });
   rows.push({ label: 'Live TV', sub: onoff(st.options.liveTv !== false), fn: openLiveTv });
+  rows.push({ label: 'Add-ons', sub: 'install, switch off or remove', fn: openAddons });
   rows.push({
     label: 'Wallpapers',
     sub: st.wallpapers ? st.wallpapers.total + ' photos' : '',
@@ -1169,6 +1284,22 @@ var DEBLOAT = [
   { id: 'logs', label: 'Telemetry logs', what: 'remotelogger, service-logger' },
   { id: 'suggestions', label: 'Suggestions and nudges', what: 'contentminer, nudge, sportsalarm' },
 ];
+/* apps LG preloads at boot (helper/preload.js); options.closePreloaded lists the ones to close */
+var PRELOAD = [
+  { id: 'youtube.leanback.v4', label: 'YouTube' },
+  { id: 'netflix', label: 'Netflix' },
+  { id: 'com.webos.app.browser', label: 'Web Browser' },
+];
+function preloadClosed(id) {
+  return ((st.options || {}).closePreloaded || []).indexOf(id) >= 0;
+}
+function preloadToggle(id) {
+  var list = ((st.options || {}).closePreloaded || []).filter(function (x) {
+    return x !== id;
+  });
+  if (!preloadClosed(id)) list.push(id);
+  opt({ closePreloaded: list });
+}
 /* Experimental: compressed memory (zram, helper/zram.js). The service answers with what the TV has now. */
 var zr = null,
   zrSize = 512;

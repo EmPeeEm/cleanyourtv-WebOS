@@ -335,4 +335,42 @@ run(async () => {
   fs.unlinkSync(path.join(B, 'helper.js'));
   await waitFor(() => wb.gone, 10000);
   if (!wb.gone) wb.kill();
+
+  // tools/release.sh: RELEASE-HOLD stops a release (and the move of main) even when the package changed since the last tag
+  {
+    const rd = path.join(tmp, 'releasetest'),
+      g = (...a) => cp.spawnSync('git', ['-C', rd].concat(a), { encoding: 'utf8' });
+    cp.spawnSync('mkdir', ['-p', path.join(rd, 'tools'), path.join(rd, 'helper'), path.join(rd, 'app')]);
+    fs.copyFileSync(path.join(root, 'tools', 'release.sh'), path.join(rd, 'tools', 'release.sh'));
+    fs.writeFileSync(path.join(rd, 'helper', 'helper.js'), "const VERSION = '1.0.0';\n");
+    fs.writeFileSync(path.join(rd, 'app', 'version.json'), '{"version":"1.0.0"}');
+    g('init', '-q');
+    g('config', 'user.email', 'a@b.c');
+    g('config', 'user.name', 'T');
+    g('add', '-A');
+    g('commit', '-q', '-m', 'first');
+    g('tag', 'v1.0.0');
+    fs.appendFileSync(path.join(rd, 'helper', 'helper.js'), '// changed\n');
+    g('commit', '-q', '-am', 'a change in the package');
+    fs.writeFileSync(path.join(rd, 'RELEASE-HOLD'), 'trying something\n');
+    const outFile = path.join(rd, 'out.txt');
+    const run1 = () =>
+      cp.spawnSync('sh', ['tools/release.sh'], {
+        cwd: rd,
+        encoding: 'utf8',
+        env: Object.assign({}, process.env, { GITHUB_OUTPUT: outFile, CYTV_DRY: '1' }),
+      });
+    let r1 = run1();
+    ok(
+      r1.status === 0 && /RELEASE-HOLD is present/.test(r1.stderr) && /^tag=$/m.test(fs.readFileSync(outFile, 'utf8')),
+      'release.sh: with RELEASE-HOLD there is no release, tag is empty: ' + r1.stderr.trim().split('\n').pop()
+    );
+    fs.unlinkSync(path.join(rd, 'RELEASE-HOLD'));
+    fs.writeFileSync(outFile, '');
+    r1 = run1();
+    ok(
+      r1.status === 0 && /^tag=v1\.0\.1$/m.test(fs.readFileSync(outFile, 'utf8')),
+      'release.sh: without it the same change is released (dry run: v1.0.1)'
+    );
+  }
 });

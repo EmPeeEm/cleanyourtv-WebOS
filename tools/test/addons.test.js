@@ -1,0 +1,401 @@
+// Add-ons (addons.js): the manifest check, the loader (a good one, a broken one, one that is off, DISABLE-ADDONS) and the routes.
+const fs = require('fs'),
+  path = require('path');
+const crypto = require('crypto');
+const { ok, call, req, run, tmp, serve } = require('./lib');
+
+run(async () => {
+  // paths.js reads these when it first loads (with the loader below)
+  process.env.CYTV_ADDONS = path.join(tmp, 'addons');
+  process.env.CYTV_ADDON_DATA = path.join(tmp, 'addon-data');
+  process.env.CYTV_ADDONS_BUNDLED = path.join(tmp, 'bundled');
+  const addons = req('addons');
+  const good = {
+    id: 'demo',
+    name: 'Demo',
+    version: '1.0.0',
+    kind: 'service',
+    entry: { service: 'service.js' },
+    permissions: ['net.fetch'],
+  };
+  ok(addons.check(good, '1.6.11').manifest.id === 'demo', 'a good manifest is accepted');
+  const bad = (patch, re, name) => {
+    const r = addons.check(Object.assign({}, good, patch), '1.6.11');
+    ok(r.error && re.test(r.error), name + ': ' + (r.error || 'accepted'));
+  };
+  bad({ id: 'Bad Id' }, /id must/, 'an id with capitals or spaces is refused');
+  bad({ kind: 'root' }, /kind/, 'an unknown kind is refused');
+  bad({ entry: { service: '../x.js' } }, /entry\.service/, 'a service file outside the folder is refused');
+  bad({ entry: { service: 'a.js', page: '/etc/passwd' } }, /entry\.page/, 'an absolute page path is refused');
+  bad({ permissions: ['exec'] }, /unknown permission/, 'a permission that does not exist is refused');
+  bad({ minService: '9.0.0' }, /needs service 9\.0\.0/, 'a newer service is asked for');
+  ok(addons.check(null).error && addons.check([]).error, 'a manifest that is not an object is refused');
+
+  // folders: demo (works), broken (throws at load), later (off), wrongname (id differs from the folder), plain file
+  const dir = path.join(tmp, 'addons');
+  fs.mkdirSync(dir);
+  const put = (name, manifest, code) => {
+    const d = path.join(dir, name);
+    fs.mkdirSync(d);
+    fs.writeFileSync(path.join(d, 'addon.json'), JSON.stringify(manifest));
+    if (code) fs.writeFileSync(path.join(d, 'service.js'), code);
+  };
+  const svc = id => ({ id, name: id, version: '1.0.0', kind: 'service', entry: { service: 'service.js' }, permissions: [] });
+  put(
+    'demo',
+    svc('demo'),
+    'exports.create = c => ({ handle: (req, res, p) => { res.writeHead(200); res.end(JSON.stringify({ p, id: c.id, hasExec: !!c.exec, hasFetch: !!c.fetch })); } });'
+  );
+  put('broken', svc('broken'), "exports.create = () => { throw new Error('boom'); };");
+  put('later', svc('later'), "exports.create = () => ({ handle: (q, r) => r.end('{}') });");
+  put('wrongname', svc('other'), '');
+  fs.writeFileSync(path.join(dir, 'notes.txt'), 'x');
+  // a bundled add-on that still answers an old API path, enabled by an option
+  const bdir = path.join(tmp, 'bundled', 'old');
+  req('netcompat').mkdirp(bdir);
+  fs.writeFileSync(
+    path.join(bdir, 'addon.json'),
+    JSON.stringify({
+      id: 'old',
+      name: 'Old',
+      version: '1.0.0',
+      kind: 'service',
+      entry: { service: 's.js' },
+      routes: ['/api/oldpath/', '/api/addons/'],
+      enabledOption: 'tuner',
+    })
+  );
+  fs.writeFileSync(
+    path.join(bdir, 's.js'),
+    'exports.create = () => ({ handle: (q, r, p) => { r.writeHead(200); r.end(JSON.stringify({ full: p })); } });'
+  );
+
+  const cfg = req('config').memory({ addons: { later: { enabled: false } } });
+  const a = addons.create({ config: cfg, version: '1.6.11', feature: () => null });
+  a.start();
+  const by = id => a.list().filter(x => x.id === id)[0];
+  ok(by('demo').status === 'running' && by('demo').enabled, 'a good add-on runs');
+  ok(
+    by('broken').status === 'failed' && /boom/.test(by('broken').error),
+    'an add-on that throws is failed, the others still load: ' + by('broken').error
+  );
+  ok(by('later').status === 'off', 'an add-on switched off in config.json is not loaded');
+  ok(by('wrongname').status === 'failed' && /folder name/.test(by('wrongname').error), 'the folder name must be the id');
+  ok(!by('notes.txt'), 'a plain file in the folder is ignored');
+
+  let r = await call(a, '/api/addons');
+  ok(r.code === 200 && r.j.addons.length === 5, 'GET /api/addons lists them');
+  r = await call(a, '/api/addons/demo/hello');
+  const j = r.j;
+  ok(
+    j.p === '/hello' && j.id === 'demo' && j.hasExec === false && j.hasFetch === false,
+    'a request reaches the add-on; it gets no exec, and no fetch without the permission'
+  );
+  r = await call(a, '/api/addons/broken/x');
+  ok(r.code === 404, 'a failed add-on answers nothing');
+  r = await call(a, '/api/addons/nope');
+  ok(r.code === 404, 'an unknown add-on is not found');
+  r = await call(a, '/api/addons/later/enable', 'POST', { enabled: true });
+  ok(r.j.restartNeeded === true && cfg.get().addons.later.enabled === true, 'switching on is stored and asks for a restart of the service');
+  r = await call(a, '/api/addons/later/enable', 'POST', { enabled: 'yes' });
+  ok(r.code === 400, 'enabled must be a boolean');
+
+  fs.writeFileSync(path.join(path.dirname(dir), 'DISABLE-ADDONS'), '');
+  a.load();
+  ok(a.list().every(x => x.status === 'paused' || x.status === 'failed') && by('demo').status === 'paused', 'DISABLE-ADDONS loads none');
+  // ---- the old path of a bundled add-on, page serving, the catalog ----
+  fs.unlinkSync(path.join(path.dirname(dir), 'DISABLE-ADDONS'));
+  cfg.update('test', c => {
+    c.options = { tuner: true };
+  });
+  a.load();
+  ok(by('old') && by('old').bundled && by('old').status === 'running', 'a bundled add-on runs (enabled by its option)');
+  r = await call(a, '/api/oldpath/status');
+  ok(r.j && r.j.full === '/api/oldpath/status', 'an old API path reaches the bundled add-on with the whole path');
+  r = await call(a, '/api/addons/old/enable', 'POST', { enabled: false });
+  ok(cfg.options().tuner === false, 'switching an add-on with an option writes the option');
+  a.load();
+  r = await call(a, '/api/oldpath/status');
+  ok(
+    r.code === 200 && !by('old').enabled,
+    'switched off by its option, it stays loaded (the launcher reads the option) and shows as not enabled'
+  );
+  ok(
+    !a.list().filter(x => x.id === 'old')[0].page && a.match('/api/addons') && a.match('/addon/x/y') && !a.match('/api/live/x'),
+    'match: the add-on paths only'
+  );
+  const live = req('addons').check(
+    JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'helper', 'addons-bundled', 'iptv', 'addon.json'), 'utf8')),
+    '1.6.11'
+  );
+  ok(
+    live.manifest && live.manifest.routes[0] === '/api/live/' && live.manifest.enabledOption === 'liveTv',
+    'Live TV ships as the bundled add-on iptv, answering /api/live/'
+  );
+
+  const server = req('server');
+  // a bundled add-on's page may call its old API paths (Live TV's page calls /api/live/), nobody else's page may
+  const may = (id, u) => a.pageMay(id, u);
+  const ref = 'http://127.0.0.1:8765/addon/old/page/index.html';
+  ok(
+    server.addonPageCall({ headers: { host: '127.0.0.1:8765', referer: ref } }, 'http://127.0.0.1:8765', '/api/oldpath/x', may),
+    'the page of a bundled add-on calls its old API path'
+  );
+  ok(
+    !server.addonPageCall(
+      { headers: { host: '127.0.0.1:8765', referer: 'http://127.0.0.1:8765/addon/pg/index.html' } },
+      'http://127.0.0.1:8765',
+      '/api/oldpath/x',
+      may
+    ),
+    "another add-on's page does not"
+  );
+  ok(
+    !server.addonPageCall({ headers: { host: '127.0.0.1:8765' } }, 'http://127.0.0.1:8765', '/api/oldpath/x', may),
+    'a call without a page as Referer does not'
+  );
+  const iptvDir = path.join(__dirname, '..', '..', 'helper', 'addons-bundled', 'iptv');
+  ok(
+    fs.existsSync(path.join(iptvDir, 'page', 'index.html')) &&
+      JSON.parse(fs.readFileSync(path.join(iptvDir, 'addon.json'), 'utf8')).entry.page === 'page/index.html',
+    'the iptv add-on has its built page (node tools/build-pages.js)'
+  );
+
+  // the catalog in the repository: addons/index.json is current, and its add-ons pass the same checks as an install
+  const idx = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'addons', 'index.json'), 'utf8'));
+  ok(
+    require('../addon-index').build() === JSON.stringify(idx, null, 2) + '\n',
+    'addons/index.json matches addons/catalog (run node tools/addon-index.js)'
+  );
+  ok(
+    req('addons').cleanIndex(idx).length === idx.addons.length && idx.addons.length >= 1,
+    'every catalog entry is clean: id, version and a hash per file'
+  );
+  idx.addons.forEach(e => {
+    const m = req('addons').check(
+      JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'addons', 'catalog', e.id, 'addon.json'), 'utf8')),
+      '1.6.11'
+    );
+    ok(m.manifest && m.manifest.version === e.version, 'catalog add-on ' + e.id + ' has a valid manifest');
+  });
+
+  // page serving
+  const pdir = path.join(dir, 'pg');
+  req('netcompat').mkdirp(path.join(pdir, 'sub'));
+  fs.writeFileSync(
+    path.join(pdir, 'addon.json'),
+    JSON.stringify({
+      id: 'pg',
+      name: 'Pg',
+      version: '1.0.0',
+      kind: 'page',
+      entry: { page: 'index.html' },
+      tile: { label: 'Pg', placement: 'topbar' },
+    })
+  );
+  fs.writeFileSync(path.join(pdir, 'index.html'), '<p>hi</p>');
+  fs.writeFileSync(path.join(pdir, 'sub', 'a.css'), 'a{}');
+  a.load();
+  const http = require('http');
+  const web = await serve((rq, rs) => a.handle(rq, rs, rq.url.split('?')[0], async () => ({})));
+  const fetchPage = p =>
+    new Promise(rs =>
+      http.get(web.url + p, res => {
+        let b = '';
+        res.on('data', d => (b += d));
+        res.on('end', () =>
+          rs({ code: res.statusCode, type: res.headers['content-type'], csp: res.headers['content-security-policy'], body: b })
+        );
+      })
+    );
+  let g = await fetchPage('/addon/pg/index.html');
+  ok(
+    g.code === 200 && /text\/html/.test(g.type) && g.body === '<p>hi</p>' && /connect-src 'self'/.test(g.csp),
+    'the page is served with its type and a policy that keeps it to itself'
+  );
+  g = await fetchPage('/addon/pg/');
+  ok(g.code === 200 && g.body === '<p>hi</p>', 'the folder address gives the entry page');
+  g = await fetchPage('/addon/pg/sub/a.css');
+  ok(g.code === 200 && /text\/css/.test(g.type), 'files in folders are served');
+  g = await fetchPage('/addon/pg/..%2Fdemo%2Fservice.js');
+  ok(g.code === 404, 'a path out of the folder is refused');
+  g = await fetchPage('/addon/demo/service.js');
+  ok(g.code === 404, 'a service add-on has no page and its code is not served');
+  g = await fetchPage('/addon/pg/addon.json');
+  ok(g.code === 404, 'addon.json is not served');
+  g = await fetchPage('/addon/sdk.js');
+  ok(g.code === 200 && /cytvAddon/.test(g.body), 'the helper script for pages is served');
+  ok(
+    a.list().filter(x => x.id === 'pg')[0].page === '/addon/pg/index.html' &&
+      a.list().filter(x => x.id === 'pg')[0].tile.placement === 'topbar',
+    'the list gives the page address and the tile'
+  );
+  ok(
+    addons
+      .check(Object.assign({}, good, { claims: ['digits', 'x', 'digits'], tile: { label: 'T', placement: 'page' } }))
+      .manifest.claims.join() === 'digits' && addons.check(good).manifest.tile === null,
+    'claims are the known ones, once each; the tile placement page is kept'
+  );
+  r = await call(a, '/api/addons/pg/enable', 'POST', { enabled: false });
+  g = await fetchPage('/addon/pg/index.html');
+  ok(r.j.restartNeeded === false && g.code === 404, 'a page add-on switched off stops being served at once');
+  web.server.close();
+
+  // origin rule for the pages' own calls
+  const pc = (host, origin, u, ref) => server.addonPageCall({ headers: { host, referer: ref } }, origin, u);
+  ok(
+    pc('127.0.0.1:8765', 'http://127.0.0.1:8765', '/api/addons/pg/x', 'http://127.0.0.1:8765/addon/pg/index.html'),
+    'a page may call its own API'
+  );
+  ok(
+    !pc('127.0.0.1:8765', 'http://127.0.0.1:8765', '/api/addons/other/x', 'http://127.0.0.1:8765/addon/pg/index.html'),
+    "but not another add-on's"
+  );
+  ok(
+    !pc('127.0.0.1:8765', 'http://127.0.0.1:8765', '/api/addons/install', 'http://127.0.0.1:8765/addon/pg/index.html'),
+    'not install or remove'
+  );
+  ok(
+    !pc('127.0.0.1:8765', 'http://127.0.0.1:8765', '/api/live/status', 'http://127.0.0.1:8765/addon/pg/index.html'),
+    'not the rest of the API'
+  );
+  ok(
+    !pc('evil.example:8765', 'http://evil.example:8765', '/addon/pg/index.html'),
+    'a page from another host name is refused (DNS rebinding)'
+  );
+  ok(
+    !pc('127.0.0.1:8765', 'http://evil.example', '/api/addons/pg/x', 'http://127.0.0.1:8765/addon/pg/'),
+    'an origin that is not the service is refused'
+  );
+
+  // the book: order, pages left out, the strip
+  a.load();
+  r = await call(a, '/api/addons');
+  const bookable = r.j.addons.filter(x => x.bookable).map(x => x.id);
+  ok(
+    bookable.indexOf('pg') >= 0 && r.j.book.strip === true && r.j.book.order.length === 0,
+    'GET /api/addons has the book, and pages that can be in it'
+  );
+  r = await call(a, '/api/addons/book', 'POST', { order: ['pg', 'nope', 'pg'], hidden: ['x'], strip: false });
+  ok(
+    JSON.stringify(r.j.book.order) === '["pg"]' &&
+      r.j.book.hidden.length === 0 &&
+      r.j.book.strip === false &&
+      cfg.get().book.strip === false,
+    'the book keeps known pages, once each, and the strip setting: ' + r.out
+  );
+  r = await call(a, '/api/addons');
+  ok(
+    r.j.addons.filter(x => x.id === 'pg')[0].order === 0 && r.j.addons.filter(x => x.id === 'pg')[0].inBook,
+    'a page in the order has its place'
+  );
+  r = await call(a, '/api/addons/book', 'POST', { hidden: ['pg'] });
+  r = await call(a, '/api/addons');
+  ok(
+    !r.j.addons.filter(x => x.id === 'pg')[0].inBook && r.j.book.order[0] === 'pg',
+    'a hidden page is out of the book and keeps its order'
+  );
+
+  // the catalog's own add-ons
+  const dnsc = require(path.join(__dirname, '..', '..', 'addons', 'catalog', 'dnscheck', 'service.js'));
+  ok(
+    dnsc.classify(null, [{ address: '0.0.0.0' }]).state === 'blocked' &&
+      dnsc.classify(null, [{ address: '127.0.0.1' }, { address: '::' }]).state === 'blocked',
+    'dnscheck: 0.0.0.0, 127.x and :: count as blocked'
+  );
+  ok(
+    dnsc.classify({ code: 'ENOTFOUND' }).state === 'blocked' && dnsc.classify(null, []).state === 'blocked',
+    'dnscheck: a name that does not exist is blocked'
+  );
+  ok(
+    dnsc.classify(null, [{ address: '93.184.216.34' }]).state === 'reachable' &&
+      dnsc.classify(null, [{ address: '0.0.0.0' }, { address: '1.2.3.4' }]).state === 'reachable',
+    'dnscheck: a real address means reachable'
+  );
+  ok(
+    JSON.stringify(dnsc.cleanHosts(['Ads.Example.net', 'ads.example.net', 'bad host', 'nl.ad.lgsmartad.com', 'x', 5])) ===
+      '["ads.example.net"]',
+    'dnscheck: your hosts are valid names, once, not the built-in ones'
+  );
+  const sysi = require(path.join(__dirname, '..', '..', 'addons', 'catalog', 'sysinfo', 'service.js'));
+  const procFiles = {
+    meminfo: 'MemTotal:  1000000 kB\nMemFree: 100000 kB\nMemAvailable: 400000 kB\nSwapTotal: 700000 kB\nSwapFree: 500000 kB\n',
+    loadavg: '0.50 0.40 0.30 1/200 999\n',
+    uptime: '4333.08 100.00\n',
+  };
+  const sx = sysi.stats(f => procFiles[f]);
+  ok(
+    sx.memTotalMB === 977 && sx.memUsedMB === 586 && sx.swapUsedMB === 195 && sx.load[0] === 0.5 && sx.uptimeS === 4333,
+    'sysinfo: memory, swap, load and uptime from /proc text: ' + JSON.stringify(sx)
+  );
+  ok(sysi.stats(() => '').memTotalMB === 0, 'sysinfo: an unreadable /proc gives zeros, not an error');
+
+  // the catalog: a stand-in for GitHub
+  const files = {
+    'addon.json': JSON.stringify({ id: 'hello', name: 'Hello', version: '1.2.0', kind: 'page', entry: { page: 'index.html' } }),
+    'index.html': '<b>hello</b>',
+  };
+  const sha = s => crypto.createHash('sha256').update(s).digest('hex');
+  const hashes = {};
+  Object.keys(files).forEach(f => (hashes[f] = sha(files[f])));
+  const evil = Object.assign({}, files);
+  let serveEvil = false;
+  const gh = await serve((rq2, rs) => {
+    if (rq2.url === '/index.json') {
+      rs.end(
+        JSON.stringify({
+          addons: [
+            { id: 'hello', name: 'Hello', version: '1.2.0', kind: 'page', files: hashes },
+            { id: 'Bad Id', version: '1.0.0', files: hashes },
+            { id: 'nohash', version: '1.0.0', files: { 'addon.json': 'xyz' } },
+            { id: 'esc', version: '1.0.0', files: { 'addon.json': hashes['addon.json'], '../x': hashes['addon.json'] } },
+          ],
+        })
+      );
+      return;
+    }
+    const m = /^\/catalog\/hello\/(.+)$/.exec(rq2.url);
+    if (m && (serveEvil ? evil : files)[m[1]] !== undefined) return rs.end((serveEvil ? evil : files)[m[1]]);
+    rs.writeHead(404);
+    rs.end();
+  });
+  process.env.CYTV_ADDONS_URL = gh.url;
+  r = await call(a, '/api/addons/catalog');
+  ok(
+    r.j.addons.length === 1 && r.j.addons[0].id === 'hello' && r.j.addons[0].installed === '',
+    'the catalog lists only entries with a clean id and hashes: ' + JSON.stringify(r.j)
+  );
+  evil['index.html'] = '<script>steal()</script>';
+  serveEvil = true;
+  r = await call(a, '/api/addons/install', 'POST', { id: 'hello' });
+  ok(
+    r.code === 400 &&
+      /does not match/.test(r.j.error) &&
+      !fs.existsSync(path.join(dir, 'hello')) &&
+      !fs.existsSync(path.join(dir, '.staging-hello')),
+    'a file that does not match its hash installs nothing and leaves no staging folder: ' + r.out
+  );
+  serveEvil = false;
+  r = await call(a, '/api/addons/install', 'POST', { id: 'hello' });
+  ok(
+    r.code === 200 && r.j.restartNeeded === false && fs.readFileSync(path.join(dir, 'hello', 'index.html'), 'utf8') === '<b>hello</b>',
+    'a good add-on installs: ' + r.out
+  );
+  r = await call(a, '/api/addons/hello');
+  ok(r.j.status === 'running' && r.j.page === '/addon/hello/index.html' && !r.j.bundled, 'and runs at once (a page)');
+  r = await call(a, '/api/addons/catalog');
+  ok(r.j.addons[0].installed === '1.2.0' && r.j.addons[0].update === false, 'the catalog shows what is installed');
+  r = await call(a, '/api/addons/install', 'POST', { id: 'old' });
+  ok(r.code === 400 && /ships with/.test(r.j.error), 'a bundled add-on is not installed from the catalog');
+  r = await call(a, '/api/addons/install', 'POST', { id: 'nothere' });
+  ok(r.code === 400 && /not in the catalog/.test(r.j.error), 'an id that is not in the catalog is refused');
+  r = await call(a, '/api/addons/remove', 'POST', { id: 'old' });
+  ok(r.code === 400, 'a bundled add-on cannot be removed');
+  r = await call(a, '/api/addons/remove', 'POST', { id: 'hello' });
+  ok(
+    r.code === 200 && !fs.existsSync(path.join(dir, 'hello')) && !a.list().some(x => x.id === 'hello'),
+    'an installed add-on can be removed'
+  );
+  gh.server.close();
+  delete process.env.CYTV_ADDONS_URL;
+});

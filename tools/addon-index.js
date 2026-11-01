@@ -1,0 +1,52 @@
+// Writes addons/index.json: the catalog the manager reads from GitHub. Every file of every add-on in addons/catalog/<id>/ with its
+// SHA-256, so the service installs nothing that does not match. Run it after changing an add-on (a test fails when the index is old).
+//   node tools/addon-index.js          write addons/index.json
+//   node tools/addon-index.js --check  exit 1 when it is not up to date
+'use strict';
+const fs = require('fs'),
+  path = require('path'),
+  crypto = require('crypto');
+const root = path.join(__dirname, '..', 'addons');
+
+function walk(dir, base, out) {
+  for (const n of fs.readdirSync(dir).sort()) {
+    const p = path.join(dir, n);
+    if (fs.statSync(p).isDirectory()) walk(p, base + n + '/', out);
+    else out[base + n] = crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+  }
+  return out;
+}
+
+function build() {
+  const addons = [];
+  const cat = path.join(root, 'catalog');
+  for (const id of fs.readdirSync(cat).sort()) {
+    const dir = path.join(cat, id);
+    if (!fs.statSync(dir).isDirectory()) continue;
+    const m = JSON.parse(fs.readFileSync(path.join(dir, 'addon.json'), 'utf8'));
+    if (m.id !== id) throw new Error(id + ': the folder name must be the id');
+    addons.push({
+      id,
+      name: m.name,
+      version: m.version,
+      description: m.description || '',
+      kind: m.kind,
+      permissions: m.permissions || [],
+      files: walk(dir, '', {}),
+    });
+  }
+  return JSON.stringify({ addons }, null, 2) + '\n';
+}
+
+if (require.main === module) {
+  const out = path.join(root, 'index.json'),
+    text = build();
+  if (process.argv.indexOf('--check') >= 0) {
+    const same = fs.existsSync(out) && fs.readFileSync(out, 'utf8') === text;
+    if (!same) console.error('addons/index.json is not up to date: run node tools/addon-index.js');
+    process.exit(same ? 0 : 1);
+  }
+  fs.writeFileSync(out, text);
+  console.log('wrote addons/index.json');
+}
+module.exports = { build };

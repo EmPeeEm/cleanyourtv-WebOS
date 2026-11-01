@@ -43,7 +43,7 @@ function options(e) {
 /* Pointer focus follows real pointer movement only: a tile sliding under a still cursor, a cursor jitter when
    the remote is picked up, or a pointer move right after a button press must not steal the focus. */
 document.addEventListener('mousemove', function (ev) {
-  if (stack.length || LIVE.on || Date.now() - lastKey < 1500) return;
+  if (stack.length || LIVE.on || PAGER.on || Date.now() - lastKey < 1500) return;
   if (lastMX < 0) {
     lastMX = ev.clientX;
     lastMY = ev.clientY;
@@ -62,10 +62,15 @@ document.addEventListener('keydown', function (e) {
   /* a right-to-left layout: Left moves to what is on the left, which is the next tile in the row (Live TV keeps left-to-right) */
   if (rtl() && !LIVE.on && (k === 37 || k === 39)) k = 76 - k;
   lastKey = Date.now();
+  if (PAGER.on) {
+    PAGER.key(e);
+    return;
+  }
   if (LIVE.on) {
     LIVE.key(e);
     return;
   }
+  if (!stack.length && !moving && PAGES.length && PAGER.pageKey(e)) return; /* the number and colour buttons turn the page */
   if (moving) {
     if (k === 13 || k === 461 || k === 27 || k === 8) {
       stopMoving();
@@ -213,9 +218,10 @@ document.addEventListener('webOSRelaunch', function () {
     LIVE.resume();
     return;
   }
-  if (LIVE.on) LIVE.exit();
+  if (PAGER.on && !(p && p.live)) PAGER.home(); /* Home pressed: back to the first page */
   load();
   refreshSoon();
+  PAGER.load();
   wantInputs();
 });
 document.addEventListener('visibilitychange', function () {

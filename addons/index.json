@@ -1,0 +1,42 @@
+{
+  "addons": [
+    {
+      "id": "bigclock",
+      "name": "Big clock",
+      "version": "1.0.0",
+      "description": "A full-screen clock. A small example of a page add-on.",
+      "kind": "page",
+      "permissions": [],
+      "files": {
+        "addon.json": "d6d68ebbd3791d939e5bb9a705fc62891e2c415cd2c2ca19a9c21e6386a1d82f",
+        "index.html": "ad47a31114832658c41cbbcb46ef2e4cdb9be8ab7cad4308cdea90a2d9da784f"
+      }
+    },
+    {
+      "id": "dnscheck",
+      "name": "DNS check",
+      "version": "1.0.0",
+      "description": "Shows which ad and tracking hosts your network blocks, as the TV itself sees them.",
+      "kind": "service",
+      "permissions": [],
+      "files": {
+        "addon.json": "1c00e1aef226a11e493ac6f7a863f39d6fb5a416ace840566a0118c8c629bfef",
+        "index.html": "f844a216c574a7bf965ad85e3d13cadae06c9b5f18cd8f9d04d30577e41f25c8",
+        "service.js": "1036e54bd3556779f2f2bafca460793852f98e49833569bb18862e150f641cbc"
+      }
+    },
+    {
+      "id": "sysinfo",
+      "name": "TV status",
+      "version": "1.0.0",
+      "description": "Memory, swap, load and uptime of the TV, live. Useful on a TV with little memory.",
+      "kind": "service",
+      "permissions": [],
+      "files": {
+        "addon.json": "c7c43abe6b509b4c25175e2dcc2f9e29e9f73bf7fc7ee0f7c9318cee87bafce7",
+        "index.html": "cbc683b2bf5aab30023e05284f12a1652a422b7c7dbec2efe4bbcb375756aca6",
+        "service.js": "724692ff559fafed1d4f3318d83101af7988700c281b496492c46405385c5903"
+      }
+    }
+  ]
+}

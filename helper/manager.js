@@ -32,6 +32,7 @@ function create(ctx) {
   const { config } = ctx;
   const updates = require('./updates').create(ctx);
   const inputhook = ctx.inputhook || require('./inputhook');
+  const preload = require('./preload').create(ctx);
   // the Input key part may be missing (failed to load): fall back to plain rules
   const inputkey = () =>
     ctx.feature('inputkey') || {
@@ -79,6 +80,7 @@ function create(ctx) {
     for (const k of ['debloat', 'inputKey', 'liveTv', 'tuner']) if (typeof o[k] === 'boolean') next[k] = o[k];
     if (require('./audio').THEMES.indexOf(o.volumeTheme) >= 0) next.volumeTheme = o.volumeTheme;
     if (Array.isArray(o.debloatOff)) next.debloatOff = debloat.cleanOff(o.debloatOff);
+    if (Array.isArray(o.closePreloaded)) next.closePreloaded = require('./preload').clean(o.closePreloaded);
     config.update('manager', c => {
       // the language of every screen: a two-letter code, or '' to follow the TV
       if (typeof o.lang === 'string' && /^([a-z]{2})?$/.test(o.lang)) {
@@ -106,6 +108,8 @@ function create(ctx) {
     if (next.volumeTheme !== cur.volumeTheme && ctx.audio && ctx.audio.syncStockVolumeOSD) {
       ctx.audio.syncStockVolumeOSD(next.volumeTheme);
     }
+    if (next.closePreloaded && next.closePreloaded.length && String(next.closePreloaded) !== String(cur.closePreloaded))
+      preload.apply().catch(() => {});
     ensureHook();
     return next;
   }
@@ -214,7 +218,10 @@ function create(ctx) {
     prefix: '/api/manager/',
     paths: ['/api/frontend-ok', '/api/undo'],
     handle,
-    start: () => setInterval(updates.watchPackage, 120000),
+    start: () => {
+      preload.start();
+      return setInterval(updates.watchPackage, 120000);
+    },
     check: updates.check,
     status,
     frontendLoaded: updates.frontendLoaded,

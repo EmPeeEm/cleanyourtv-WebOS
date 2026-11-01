@@ -1,0 +1,13 @@
+{
+  "id": "iptv",
+  "name": "Live TV (IPTV)",
+  "version": "1.0.0",
+  "kind": "service",
+  "description": "Live TV from your own M3U playlist and XMLTV guide.",
+  "entry": { "service": "service.js", "page": "page/index.html" },
+  "permissions": [],
+  "tile": { "label": "Live TV", "icon": "tv", "placement": "page" },
+  "claims": ["digits", "colors", "back"],
+  "routes": ["/api/live/"],
+  "enabledOption": "liveTv"
+}

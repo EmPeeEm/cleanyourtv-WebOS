@@ -282,7 +282,6 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
       'core',
       'notify',
       'voice',
-      'live',
       'theme',
       'wallpapers',
       'cards',
@@ -293,6 +292,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
       'apps',
       'running',
       'zram',
+      'addons',
     ];
     const okTv = tv.sdk === '10.2.2' && tv.pickerMode === 'overlay' && tv.notifyWindow === 'topui';
     const okSv = JSON.stringify(sv.features) === JSON.stringify(want) && !Object.keys(sv.failed).length;

@@ -1,4 +1,4 @@
-/* Live TV (inside the launcher). The channel banner, the guide and its menus take the theme's colours (--panel, --acc, ...);
+/* Live TV (the page of the iptv add-on, shown by the launcher in a frame). The channel banner, the guide and its menus take the theme's colours (--panel, --acc, ...);
    the error and setup cards keep their own. */
 #lv {
   --ink2: rgba(245, 246, 248, 0.76);

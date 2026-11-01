@@ -86,6 +86,8 @@ var INFO = {
   'Input key opens our Inputs list': 'On: pressing Input shows our Inputs list. Off: LG\u2019s picker comes back at once.',
   'Learn the Input key':
     'Reads the code of your remote\u2019s Input button from the hook, then tests that our list opens. The default is 241. Clear goes back to it.',
+  'Add-ons':
+    'Features that are installed on their own: Live TV ships with CleanYourTV, others come from the project\u2019s catalog. Each file is checked against the catalog before it is installed. Install, switch off or remove them here.',
   'Live TV': 'Settings for Live TV: switch it on or off, set up or remove your playlist, refresh the guide and learn the Guide key.',
   'Show Live TV':
     'On: the launcher has a Live TV button and tile, the Inputs list has Live TV, and the Guide key can open the channel guide. Off: all of that is hidden and LG\u2019s own player and guide are used. Your playlist is kept.',

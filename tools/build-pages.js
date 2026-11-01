@@ -15,6 +15,7 @@ const root = path.join(__dirname, '..');
 const PAGES = [
   ['app/src', 'app/index.html'],
   ['manager/src', 'manager/app/index.html'],
+  ['helper/addons-bundled/iptv/src', 'helper/addons-bundled/iptv/page/index.html'], // Live TV: the page of the iptv add-on
   ['picker/app/index.html', 'picker/app/index.html'],
 ];
 // the manager shows the service's own messages (update steps, sync errors): it carries the translations of texts in helper/ too
@@ -124,6 +125,7 @@ if (require.main === module) {
       stale++;
       console.log('FAIL ' + p[1] + ' does not match ' + p[0] + ' (run: node tools/build-pages.js)');
     } else {
+      if (!fs.existsSync(path.dirname(file))) fs.mkdirSync(path.dirname(file));
       fs.writeFileSync(file, out);
       console.log('wrote ' + p[1]);
     }

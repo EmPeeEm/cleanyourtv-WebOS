@@ -1,0 +1,10 @@
+{
+  "id": "sysinfo",
+  "name": "TV status",
+  "version": "1.0.0",
+  "kind": "service",
+  "description": "Memory, swap, load and uptime of the TV, live. Useful on a TV with little memory.",
+  "entry": { "service": "service.js", "page": "index.html" },
+  "permissions": [],
+  "tile": { "label": "Status", "icon": "addon", "placement": "page" }
+}
