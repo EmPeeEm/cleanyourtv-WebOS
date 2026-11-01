@@ -1,50 +1,151 @@
-/* ---------- add-ons (helper/addons.js): topbar entries and the page host ----------
-   A page add-on is a web page the service serves (/addon/<id>/...). It opens full screen in a frame over Home; Back (also pressed
-   inside the frame: the helper script /addon/sdk.js reports it) closes it. The entries come from GET /api/addons and are not part of
-   the saved layout. */
-var addonBar = [];
-var ADDON = {
-  on: false,
+/* ---------- pages (helper/addons.js): Home is page 1 of a book, the add-ons are the pages after it ----------
+   A page add-on is a web page the service serves (/addon/<id>/...). It takes Home's place, as the next page of a book: Home slides
+   away and the page slides in (transform only). The number buttons (1 is Home, 2 the next page, ...) and the colour buttons
+   (red Home, green, yellow, blue the next three) switch pages; Back returns to Home. A page that keeps those keys for itself
+   (Live TV: digits tune channels) says so in its manifest ("claims"); then only its own keys work there and Back/Home leave it.
+   The pages come from GET /api/addons; each page is loaded when you open it and unloaded when you leave it. */
+var addonBar = []; /* topbar entries: add-ons with placement "topbar", they open their page */
+var PAGES = []; /* the add-on pages after Home: {id, label, icon, page, claims} */
+var PAGER = {
+  on: false /* true while a page other than Home shows */,
   id: '',
+  busy: 0,
   load: function () {
     api('/api/addons').then(
       function (x) {
-        var bar = [];
+        var pages = [],
+          bar = [];
         ((x && x.addons) || []).forEach(function (a) {
-          if (a.status === 'running' && a.page && a.tile && a.tile.placement === 'topbar')
-            bar.push({ label: a.tile.label || a.name, icon: a.tile.icon || 'addon', action: 'addon', addon: a.id, page: a.page, fixed: true });
+          if (a.status !== 'running' || !a.enabled || !a.page || !a.tile) return;
+          if (a.tile.placement === 'page' || a.tile.placement === 'topbar')
+            pages.push({ id: a.id, label: a.tile.label || a.name, icon: a.tile.icon || 'addon', page: a.page, claims: a.claims || [] });
+          if (a.tile.placement === 'topbar')
+            bar.push({ label: a.tile.label || a.name, icon: a.tile.icon || 'addon', action: 'addon', addon: a.id, fixed: true });
         });
-        var sig = JSON.stringify(bar);
-        if (sig === JSON.stringify(addonBar)) return;
+        var sig = JSON.stringify([pages, bar]);
+        if (sig === JSON.stringify([PAGES, addonBar])) return;
+        PAGES = pages;
         addonBar = bar;
+        PAGER.draw();
         rebuild();
       },
       function () {}
     );
   },
-  open: function (o) {
-    if (ADDON.on || !o || !o.page) return;
-    var host = document.createElement('div');
-    host.id = 'addonhost';
-    var f = document.createElement('iframe');
-    f.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-    f.setAttribute('allow', 'autoplay');
-    f.src = API + o.page;
-    f.onload = function () {
-      try {
-        f.contentWindow.focus();
-      } catch (e) {}
-      ADDON.send({ cytv: 'init', vars: ADDON.vars() });
-    };
-    host.appendChild(f);
-    document.body.appendChild(host);
-    ADDON.on = true;
-    ADDON.id = o.addon;
-    logLine('addon open ' + o.addon);
+  /* the page strip at the bottom of Home: a coloured dot or a number for each page, so you see what the buttons do */
+  draw: function () {
+    var s = $('pagestrip');
+    if (!s) return;
+    var items = [{ id: '', label: t('Home') }].concat(PAGES);
+    s.textContent = '';
+    s.style.display = PAGES.length ? 'flex' : 'none';
+    items.forEach(function (p, i) {
+      var e = document.createElement('div');
+      e.className = 'pg' + (p.id === PAGER.id ? ' cur' : '');
+      var d = document.createElement('i');
+      if (i < 4) d.className = 'c' + i;
+      else d.textContent = i + 1;
+      var l = document.createElement('span');
+      l.textContent = p.label;
+      e.appendChild(d);
+      e.appendChild(l);
+      s.appendChild(e);
+    });
   },
-  /* a message to the page in the frame */
+  index: function (id) {
+    for (var i = 0; i < PAGES.length; i++) if (PAGES[i].id === id) return i + 1;
+    return id ? -1 : 0;
+  },
+  claims: function (what) {
+    for (var i = 0; i < PAGES.length; i++) if (PAGES[i].id === PAGER.id) return PAGES[i].claims.indexOf(what) >= 0;
+    return false;
+  },
+  /* the page for a number or colour button; false for any other key */
+  pageKey: function (e) {
+    var k = e.keyCode,
+      n = k >= 48 && k <= 57 ? k - 48 : k >= 96 && k <= 105 ? k - 96 : k >= 403 && k <= 406 ? k - 403 + 1 : -1,
+      colour = k >= 403 && k <= 406;
+    if (n < 1) return false;
+    if (PAGER.on && PAGER.claims(colour ? 'colors' : 'digits')) return false;
+    var to = n - 1; /* 1 and red: Home; 2 and green: the first page; ... */
+    if (to > PAGES.length) return false;
+    e.preventDefault();
+    PAGER.go(to === 0 ? '' : PAGES[to - 1].id);
+    return true;
+  },
+  /* the page URL: the launcher's language and clock format go with it */
+  url: function (p, extra) {
+    var q = '?lang=' + encodeURIComponent(cfg.lang || '') + '&clock=' + encodeURIComponent(cfg.clock || '') + '&loc=' + encodeURIComponent(LOC || '');
+    for (var k in extra || {}) q += '&' + k + '=' + encodeURIComponent(extra[k]);
+    return API + p.page + q;
+  },
+  frame: function () {
+    return document.querySelector('#pages iframe.pgframe');
+  },
+  /* turn to a page ('' is Home); params are added to its address (Live TV: guide=1) */
+  go: function (id, params) {
+    if (id === PAGER.id) {
+      if (id && params) PAGER.send({ cytv: 'guide' });
+      return;
+    }
+    var to = PAGER.index(id),
+      from = PAGER.index(PAGER.id);
+    if (to < 0) return;
+    var home = $('homepage'),
+      old = PAGER.frame(),
+      fwd = to > from;
+    PAGER.busy++;
+    var token = PAGER.busy;
+    var nf = null;
+    if (id) {
+      nf = document.createElement('iframe');
+      nf.className = 'pgframe';
+      nf.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+      nf.setAttribute('allow', 'autoplay');
+      nf.style.transform = 'translate3d(' + (fwd ? 1920 : -1920) + 'px,0,0)';
+      nf.src = PAGER.url(PAGES[to - 1], params);
+      nf.onload = function () {
+        try {
+          nf.contentWindow.focus();
+        } catch (e) {}
+        try {
+          nf.contentWindow.postMessage({ cytv: 'init', vars: PAGER.vars() }, '*');
+        } catch (e) {}
+      };
+      $('pages').appendChild(nf);
+    } else {
+      home.style.visibility = 'visible';
+    }
+    PAGER.on = !!id;
+    PAGER.id = id;
+    PAGER.draw();
+    /* one frame later the transforms change, and the CSS transition turns the page */
+    setTimeout(function () {
+      if (nf) nf.style.transform = 'none';
+      else home.style.transform = 'none';
+      if (!id) {
+        if (old) old.style.transform = 'translate3d(' + (fwd ? -1920 : 1920) + 'px,0,0)';
+      } else if (from === 0) home.style.transform = 'translate3d(' + (fwd ? -1920 : 1920) + 'px,0,0)';
+      else if (old) old.style.transform = 'translate3d(' + (fwd ? -1920 : 1920) + 'px,0,0)';
+    }, 30);
+    setTimeout(function () {
+      if (token !== PAGER.busy) return; /* turned again meanwhile: that turn cleans up */
+      if (old && old.parentNode) old.parentNode.removeChild(old); /* unloading the page stops its video and timers */
+      if (id) home.style.visibility = 'hidden'; /* nothing to paint behind the page */
+      else {
+        try {
+          window.focus();
+        } catch (e) {}
+      }
+    }, 380);
+    logLine('page ' + (id || 'home'));
+  },
+  home: function () {
+    PAGER.go('');
+  },
+  /* a message to the page that shows */
   send: function (m) {
-    var f = document.querySelector('#addonhost iframe');
+    var f = PAGER.frame();
     if (f && f.contentWindow) f.contentWindow.postMessage(m, '*');
   },
   /* the theme's colours, for pages that draw like the launcher (Live TV) */
@@ -56,32 +157,30 @@ var ADDON = {
     });
     return out;
   },
-  close: function () {
-    var h = $('addonhost');
-    if (h && h.parentNode) h.parentNode.removeChild(h);
-    ADDON.on = false;
-    ADDON.id = '';
-  },
-  /* a key that reached the launcher while a page is open (the frame did not have the focus) */
+  /* a key that reached the launcher while a page shows (the frame did not have the focus) */
   key: function (e) {
-    var f = document.querySelector('#addonhost iframe');
-    if (ADDON.id === 'iptv') {
-      /* Live TV decides what Back does (it closes its own menus first) */
-      e.preventDefault();
-      ADDON.send({ cytv: 'key', keyCode: e.keyCode });
-      try {
-        f.contentWindow.focus();
-      } catch (x) {}
-      return;
-    }
+    if (PAGER.claims('back') && (e.keyCode === 461 || e.keyCode === 27 || e.keyCode === 8)) return PAGER.pass(e);
+    if (PAGER.pageKey(e)) return;
     if (e.keyCode === 461 || e.keyCode === 27 || e.keyCode === 8) {
       e.preventDefault();
-      ADDON.close();
+      PAGER.home();
+      return;
     }
+    if (PAGER.claims('digits') || PAGER.claims('colors') || PAGER.claims('back')) PAGER.pass(e);
+  },
+  /* hand a key to the page (it keeps those keys) and give it the focus again */
+  pass: function (e) {
+    e.preventDefault();
+    PAGER.send({ cytv: 'key', keyCode: e.keyCode });
+    var f = PAGER.frame();
+    try {
+      if (f) f.contentWindow.focus();
+    } catch (x) {}
   },
 };
-/* a page reports Back through the helper script */
 window.addEventListener('message', function (ev) {
   var d = ev.data;
-  if (ADDON.on && d && d.cytvAddon === 'close' && d.id === ADDON.id) ADDON.close();
+  if (!PAGER.on || !d || d.id !== PAGER.id) return;
+  if (d.cytvAddon === 'close') PAGER.home();
+  else if (d.cytvAddon === 'pagekey') PAGER.pageKey({ keyCode: d.keyCode, preventDefault: function () {} });
 });

@@ -1,16 +1,79 @@
-/* the frame that shows a page add-on over Home (Live TV is one) */
-#addonhost {
-  position: fixed;
+/* Home is the first page of a book and the add-ons are the pages after it: turning a page moves Home and the page sideways
+   (transform only; the GPU is weak). #homepage holds everything Home draws. */
+#homepage {
+  position: absolute;
   left: 0;
   top: 0;
-  width: 100%;
-  height: 100%;
-  background: #000;
-  z-index: 80;
+  width: 1920px;
+  height: 1080px;
+  transition: transform 0.32s ease;
 }
-#addonhost iframe {
-  width: 100%;
-  height: 100%;
+#pages {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  pointer-events: none;
+}
+#pages iframe.pgframe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
   border: 0;
+  background: #000;
+  pointer-events: auto;
+  transition: transform 0.32s ease;
+}
+/* which button turns to which page */
+#pagestrip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 22px;
+  display: none;
+  justify-content: center;
+  pointer-events: none;
+}
+#pagestrip .pg {
+  display: flex;
+  align-items: center;
+  margin: 0 8px;
+  padding: 8px 18px 8px 12px;
+  border-radius: 24px;
+  background: var(--pill-bg);
+  box-shadow: inset 0 0 0 1px var(--pill-ring);
+  font-size: 20px;
+  color: var(--ink2);
+}
+#pagestrip .pg.cur {
+  background: var(--acc);
+  color: var(--acc-ink);
+}
+#pagestrip .pg i {
   display: block;
+  width: 22px;
+  height: 22px;
+  margin-right: 10px;
+  border-radius: 11px;
+  font-style: normal;
+  font-size: 14px;
+  line-height: 22px;
+  text-align: center;
+  background: rgba(128, 128, 128, 0.5);
+  color: #fff;
+}
+#pagestrip .pg i.c0 {
+  background: #e5484d;
+}
+#pagestrip .pg i.c1 {
+  background: #30a46c;
+}
+#pagestrip .pg i.c2 {
+  background: #f5b800;
+}
+#pagestrip .pg i.c3 {
+  background: #3e63dd;
 }

@@ -1,6 +1,6 @@
 /* ---------- Live TV ----------
-   Live TV is the page of the bundled iptv add-on (helper/addons-bundled/iptv): it runs in the frame of addons.js, over Home. This
-   object keeps the calls the rest of the launcher makes (enter, exit, key, resume, toggleGuide) and passes them on. */
+   Live TV is a page of the book (addons.js): the page of the bundled iptv add-on (helper/addons-bundled/iptv). This object keeps
+   the calls the rest of the launcher makes (enter, exit, key, resume, toggleGuide) and passes them on. */
 var LIVE_ICON =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(
@@ -8,27 +8,21 @@ var LIVE_ICON =
   );
 var LIVE = {
   get on() {
-    return ADDON.on && ADDON.id === 'iptv';
+    return PAGER.on && PAGER.id === 'iptv';
   },
   enter: function (guide) {
-    if (LIVE.on) {
-      if (guide) LIVE.toggleGuide();
-      return;
-    }
-    var q = '?lang=' + encodeURIComponent(cfg.lang || '') + '&clock=' + encodeURIComponent(cfg.clock || '') + '&loc=' + encodeURIComponent(LOC || '');
-    if (guide) q += '&guide=1';
-    ADDON.open({ addon: 'iptv', page: '/addon/iptv/page/index.html' + q });
+    PAGER.go('iptv', guide ? { guide: 1 } : null);
   },
   exit: function () {
-    if (LIVE.on) ADDON.close();
+    if (LIVE.on) PAGER.home();
   },
   resume: function () {
-    ADDON.send({ cytv: 'resume' });
+    if (LIVE.on) PAGER.send({ cytv: 'resume' });
   },
   toggleGuide: function () {
-    ADDON.send({ cytv: 'guide' });
+    if (LIVE.on) PAGER.send({ cytv: 'guide' });
   },
   key: function (e) {
-    ADDON.key(e);
+    PAGER.key(e);
   },
 };

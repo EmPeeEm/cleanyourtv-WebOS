@@ -104,7 +104,7 @@ function act(e) {
   if (o.action === 'card') return cardAct(e);
   if (o.action === 'customize') return customizeMenu();
   if (o.action === 'live') return LIVE.enter();
-  if (o.action === 'addon') return ADDON.open(o);
+  if (o.action === 'addon') return PAGER.go(o.addon);
   if (o.action === 'inputs') return inputsMenu();
   if (o.action === 'poweroff') return confirmPowerOff();
   if (o.app) launch(o.app, o.params);

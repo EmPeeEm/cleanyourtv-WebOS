@@ -9,8 +9,9 @@ What is done, and what is not:
 - Done: the loader, pages served by the service and shown over Home, installing and removing from the catalog (every file checked
   against its SHA-256), the manager's Add-ons screen, and Live TV, both its service part and its player and guide.
 - Not done: voice, wallpapers and the Android box are still parts of the service.
-- Not tried on a TV: the frame, the Back key and the Guide key with Live TV inside it, video playing in the frame, and installing.
-  The tests cover the service; the Live TV page and its Back key were run in a desktop Chromium, not in Chromium 68 or 79.
+- Not tried on a TV: turning pages with the remote's number and colour buttons, Live TV inside the page, video playing in it, the
+  page turn's smoothness on a weak GPU, and installing. The tests cover the service; the launcher with its page strip and the page
+  turns were run in a desktop Chromium, not in Chromium 68 or 79.
 
 ## Where they are
 
@@ -33,7 +34,7 @@ What is done, and what is not:
   "description": "A full-screen clock.",
   "entry": { "page": "index.html" },
   "permissions": [],
-  "tile": { "label": "Clock", "icon": "addon", "placement": "topbar" }
+  "tile": { "label": "Clock", "icon": "addon", "placement": "page" }
 }
 ```
 
@@ -52,18 +53,37 @@ What is done, and what is not:
 - The player and guide are the page `helper/addons-bundled/iptv/page/index.html`, built by `node tools/build-pages.js` from
   `helper/addons-bundled/iptv/src/` (the same way as the launcher). `js/live.js` there is the player; `js/shim.js` gives it what the
   launcher's script used to (language, clock format, the theme variables); `js/start.js` handles the launcher's messages.
-- The launcher's `app/src/js/live.js` is a small object (`LIVE.enter`, `exit`, `key`, `resume`, `toggleGuide`) that opens that page in
-  the frame of `addons.js` and passes calls on, so the Live TV button, the Inputs list and the Guide key work as before. The
-  launcher sends the page its language, clock format and theme colours; the page tells the launcher when to close it.
-- **A launcher with Live TV in a frame needs a service that serves add-on pages.** At release, `app/version.json` must name that
+- The launcher's `app/src/js/live.js` is a small object (`LIVE.enter`, `exit`, `key`, `resume`, `toggleGuide`) that turns the book to
+  that page (`app/src/js/addons.js`, `PAGER`) and passes calls on, so the Live TV button, the Inputs list and the Guide key work as
+  before. The page tells the launcher when to go back to Home.
+- **A launcher with Live TV as a page needs a service that serves add-on pages.** At release, `app/version.json` must name that
   service version as `minService`.
 
-## Pages
+## Pages: Home is page 1 of a book
 
 A page add-on is served at `http://127.0.0.1:8765/addon/<id>/...` while it runs, with a content security policy that lets it load
-only its own files (and pictures and media from anywhere) and talk only to the service. The launcher shows `entry.page` in a
-full-screen frame when its topbar entry is chosen. Include `/addon/sdk.js` in the page: **Back** (also inside the frame) closes it,
-and `CYTV.api(path, body)` calls `/api/addons/<id>/<path>`. Write the page in ES5 (Chromium 68, webOS 5).
+only its own files (and pictures and media from anywhere) and talk only to the service.
+
+In the launcher, **Home is the first page and the add-ons that have `tile.placement` `page` (or `topbar`, which also adds a button
+to the top bar) are the pages after it.** Turning a page moves Home and the page sideways, like a book (a transform only; nothing is
+drawn on top of Home). A strip at the bottom of Home shows what each page is called and which button turns to it.
+
+| Button | Page |
+|---|---|
+| number 1, or red | Home |
+| number 2, or green | the first add-on page (Live TV) |
+| number 3, or yellow | the second |
+| number 4, or blue | the third |
+| numbers 5 to 9 | the fourth to the eighth page (no colour) |
+| Back (Home key) | back to Home |
+
+A page is loaded when you turn to it and unloaded when you turn away (its video and timers stop). A page that needs some of those
+keys for itself lists them in `claims`: `digits` (the number buttons), `colors` (the colour buttons) and `back` (the page handles
+Back itself, for example to close its own menus first, then asks for Home with `{cytvAddon: 'close'}`). Live TV claims all three:
+digits tune channels and the colour buttons open its menus, so inside Live TV you leave with Back (and then turn to another page).
+Other pages include `/addon/sdk.js`: Back goes to Home, the number and colour buttons switch pages, and `CYTV.api(path, body)` calls
+`/api/addons/<id>/<path>`. Write the page in ES5 (Chromium 68, webOS 5). The launcher sends the page its language, clock format and
+theme colours as query parameters and a message.
 
 The service accepts a page's requests (their origin is the service itself) only from the loopback address, only for `/addon/...`
 and for `/api/addons/<id>/...` with that add-on's own page as the Referer. Install and remove are not open to pages.

@@ -24,6 +24,8 @@ const P = require('./paths'),
 
 const KINDS = ['page', 'service'];
 const PERMISSIONS = ['net.fetch', 'config.own', 'notify', 'key.guide'];
+// keys a page keeps for itself; every other key (the number and colour buttons, Back) switches pages or goes back to Home
+const CLAIMS = ['digits', 'colors', 'back'];
 const ID = /^[a-z][a-z0-9-]{1,31}$/;
 const RESERVED = ['catalog', 'install', 'remove', 'sdk'];
 const MAX_FILE = 2 << 20,
@@ -64,7 +66,7 @@ function check(m, serviceVersion) {
   if (m.minService && serviceVersion && version.cmp(serviceVersion, m.minService) < 0)
     return { error: 'needs service ' + m.minService + ' or newer (this is ' + serviceVersion + ')' };
   const routes = (Array.isArray(m.routes) ? m.routes : []).filter(r => /^\/api\/[a-z][a-z0-9-]*\/$/.test(r) && r !== '/api/addons/');
-  const t = entry.tile && typeof entry.tile === 'object' ? entry.tile : null;
+  const t = m.tile && typeof m.tile === 'object' ? m.tile : null;
   return {
     manifest: {
       id: m.id,
@@ -75,8 +77,9 @@ function check(m, serviceVersion) {
       entry: { service: entry.service, page: entry.page },
       permissions: perms,
       routes,
+      claims: (Array.isArray(m.claims) ? m.claims : []).filter((c, i, a) => CLAIMS.indexOf(c) >= 0 && a.indexOf(c) === i),
       enabledOption: /^[A-Za-z]{2,24}$/.test(m.enabledOption || '') ? m.enabledOption : '',
-      tile: t ? { label: String(t.label || m.name).slice(0, 40), icon: String(t.icon || '').slice(0, 30), placement: t.placement === 'topbar' ? 'topbar' : 'home' } : null,
+      tile: t ? { label: String(t.label || m.name).slice(0, 40), icon: String(t.icon || '').slice(0, 30), placement: t.placement === 'topbar' || t.placement === 'page' ? t.placement : 'home' } : null,
     },
   };
 }
@@ -119,13 +122,18 @@ const rmrf = d => {
 };
 const sha256 = buf => crypto.createHash('sha256').update(buf).digest('hex');
 
-// the helper page: Back closes the add-on's page (the launcher listens), and CYTV.api() talks to the add-on's own service part
+// the helper page: Back goes back to Home, the number and colour buttons switch pages (the launcher listens), and CYTV.api() talks to the add-on's own service part
 const SDK = `(function () {
   var m = /^\\/addon\\/([a-z][a-z0-9-]*)\\//.exec(location.pathname), id = m ? m[1] : '';
   function close() { try { parent.postMessage({ cytvAddon: 'close', id: id }, '*'); } catch (e) {} }
   document.addEventListener('keydown', function (e) {
     var t = e.target && e.target.tagName, typing = t === 'INPUT' || t === 'TEXTAREA';
     if (e.keyCode === 461 || e.keyCode === 27 || (e.keyCode === 8 && !typing)) { e.preventDefault(); close(); }
+    /* the number and colour buttons switch pages (the launcher decides; a page that keeps them does not use this script) */
+    else if (!typing && ((e.keyCode >= 48 && e.keyCode <= 57) || (e.keyCode >= 403 && e.keyCode <= 406))) {
+      e.preventDefault();
+      try { parent.postMessage({ cytvAddon: 'pagekey', id: id, keyCode: e.keyCode }, '*'); } catch (x) {}
+    }
   }, true);
   window.CYTV = {
     id: id,
@@ -254,6 +262,7 @@ function create(ctx) {
     error: a.error,
     bundled: a.bundled,
     tile: a.manifest ? a.manifest.tile : null,
+    claims: a.manifest ? a.manifest.claims : [],
     page: a.manifest && a.manifest.entry.page && a.status === 'running' ? '/addon/' + a.id + '/' + a.manifest.entry.page : '',
   });
 

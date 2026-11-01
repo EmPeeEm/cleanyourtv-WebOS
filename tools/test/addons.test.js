@@ -150,7 +150,8 @@ run(async () => {
   ok(g.code === 404, 'addon.json is not served');
   g = await fetchPage('/addon/sdk.js');
   ok(g.code === 200 && /cytvAddon/.test(g.body), 'the helper script for pages is served');
-  ok(a.list().filter(x => x.id === 'pg')[0].page === '/addon/pg/index.html', 'the list gives the page address');
+  ok(a.list().filter(x => x.id === 'pg')[0].page === '/addon/pg/index.html' && a.list().filter(x => x.id === 'pg')[0].tile.placement === 'topbar', 'the list gives the page address and the tile');
+  ok(addons.check(Object.assign({}, good, { claims: ['digits', 'x', 'digits'], tile: { label: 'T', placement: 'page' } })).manifest.claims.join() === 'digits' && addons.check(good).manifest.tile === null, 'claims are the known ones, once each; the tile placement page is kept');
   r = await call(a, '/api/addons/pg/enable', 'POST', { enabled: false });
   g = await fetchPage('/addon/pg/index.html');
   ok(r.j.restartNeeded === false && g.code === 404, 'a page add-on switched off stops being served at once');
