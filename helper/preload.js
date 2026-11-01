@@ -8,7 +8,9 @@ const SAFE = /^com\.(cleanyourtv\.|webos\.app\.(home|hdmi|livetv|tvhotkey))/; //
 
 // the ids from a request: strings that look like app ids, once each
 const clean = list =>
-  (Array.isArray(list) ? list : []).filter((id, i, a) => typeof id === 'string' && /^[A-Za-z0-9._-]{1,80}$/.test(id) && !SAFE.test(id) && a.indexOf(id) === i);
+  (Array.isArray(list) ? list : []).filter(
+    (id, i, a) => typeof id === 'string' && /^[A-Za-z0-9._-]{1,80}$/.test(id) && !SAFE.test(id) && a.indexOf(id) === i
+  );
 
 function create(ctx) {
   const { luna, config } = ctx;

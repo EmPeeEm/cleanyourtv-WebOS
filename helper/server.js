@@ -38,7 +38,10 @@ function create(opts) {
     let origin = req.headers.origin;
     const rawOrigin = origin;
     if (OUR_APPS.test(origin || '')) origin = 'null';
-    const pageCall = origin !== undefined && origin !== 'null' && addonPageCall(req, origin, req.url.split('?')[0], (id, u) => features().some(f => f.pageMay && f.pageMay(id, u)));
+    const pageCall =
+      origin !== undefined &&
+      origin !== 'null' &&
+      addonPageCall(req, origin, req.url.split('?')[0], (id, u) => features().some(f => f.pageMay && f.pageMay(id, u)));
     if (origin !== undefined && origin !== 'null' && !pageCall) {
       console.log('refused origin ' + origin + ' ' + req.method + ' ' + req.url.slice(0, 60));
       return web.json(res, { error: 'origin not allowed' }, 403);

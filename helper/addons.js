@@ -54,7 +54,8 @@ const PAGE_CSP =
 // The manifest as the loader will use it, or {error}. serviceVersion: the running service's version, for minService.
 function check(m, serviceVersion) {
   if (!m || typeof m !== 'object' || Array.isArray(m)) return { error: 'addon.json is not an object' };
-  if (!ID.test(m.id || '') || RESERVED.indexOf(m.id) >= 0) return { error: 'id must be lower-case letters, digits and hyphens (2 to 32), starting with a letter' };
+  if (!ID.test(m.id || '') || RESERVED.indexOf(m.id) >= 0)
+    return { error: 'id must be lower-case letters, digits and hyphens (2 to 32), starting with a letter' };
   if (typeof m.name !== 'string' || !m.name || m.name.length > 60) return { error: 'name is missing or too long' };
   if (!/^\d+\.\d+\.\d+$/.test(m.version || '')) return { error: 'version must look like 1.0.0' };
   if (KINDS.indexOf(m.kind) < 0) return { error: 'kind must be "page" or "service"' };
@@ -80,7 +81,13 @@ function check(m, serviceVersion) {
       routes,
       claims: (Array.isArray(m.claims) ? m.claims : []).filter((c, i, a) => CLAIMS.indexOf(c) >= 0 && a.indexOf(c) === i),
       enabledOption: /^[A-Za-z]{2,24}$/.test(m.enabledOption || '') ? m.enabledOption : '',
-      tile: t ? { label: String(t.label || m.name).slice(0, 40), icon: String(t.icon || '').slice(0, 30), placement: t.placement === 'topbar' || t.placement === 'page' ? t.placement : 'home' } : null,
+      tile: t
+        ? {
+            label: String(t.label || m.name).slice(0, 40),
+            icon: String(t.icon || '').slice(0, 30),
+            placement: t.placement === 'topbar' || t.placement === 'page' ? t.placement : 'home',
+          }
+        : null,
     },
   };
 }
@@ -158,7 +165,8 @@ function create(ctx) {
   };
   const addonsCfg = id => (config.get().addons || {})[id] || {};
   const settingsOf = id => addonsCfg(id).settings || {};
-  const enabledOf = a => (a.manifest.enabledOption ? config.options()[a.manifest.enabledOption] !== false : addonsCfg(a.id).enabled !== false);
+  const enabledOf = a =>
+    a.manifest.enabledOption ? config.options()[a.manifest.enabledOption] !== false : addonsCfg(a.id).enabled !== false;
   const find = id => list.filter(x => x.id === id)[0];
   const paused = () => fs.existsSync(path.join(path.dirname(P.ADDONS), 'DISABLE-ADDONS')) || fs.existsSync(path.join(P.ADDONS, 'DISABLE'));
 
@@ -234,7 +242,12 @@ function create(ctx) {
 
   function load() {
     list.length = 0;
-    for (const [root, bundled] of [[P.ADDONS_BUNDLED, true], [P.ADDONS, false]]) {
+    for (const where of [
+      { root: P.ADDONS_BUNDLED, bundled: true },
+      { root: P.ADDONS, bundled: false },
+    ]) {
+      const root = where.root,
+        bundled = where.bundled;
       let names = [];
       try {
         names = fs.readdirSync(root).sort();
@@ -358,7 +371,8 @@ function create(ctx) {
       const r = check(readJson(path.join(stage, 'addon.json')), ctx.version);
       if (r.error) throw new Error(r.error);
       if (r.manifest.id !== id || r.manifest.version !== e.version) throw new Error('addon.json does not match the catalog entry');
-      if (r.manifest.kind === 'service' && !fs.existsSync(path.join(stage, r.manifest.entry.service))) throw new Error('the service file is missing');
+      if (r.manifest.kind === 'service' && !fs.existsSync(path.join(stage, r.manifest.entry.service)))
+        throw new Error('the service file is missing');
     } catch (err) {
       rmrf(stage);
       return { error: String((err && err.message) || err).slice(0, 200) };
@@ -424,7 +438,8 @@ function create(ctx) {
   // the old API paths a bundled add-on still answers (manifest "routes"); only while it runs
   const legacy = u => list.filter(a => a.bundled && a.status === 'running' && a.mod && a.manifest.routes.some(r => u.indexOf(r) === 0))[0];
   // may the page of add-on `id` call this path? Its bundled add-on's old API paths (Live TV's page calls /api/live/)
-  const pageMay = (id, u) => list.some(a => a.id === id && a.bundled && a.status === 'running' && a.manifest.routes.some(r => u.indexOf(r) === 0));
+  const pageMay = (id, u) =>
+    list.some(a => a.id === id && a.bundled && a.status === 'running' && a.manifest.routes.some(r => u.indexOf(r) === 0));
   const match = u => u.indexOf('/api/addons') === 0 || u.indexOf('/addon/') === 0 || !!legacy(u);
 
   async function viaAddon(a, req, res, sub, body) {

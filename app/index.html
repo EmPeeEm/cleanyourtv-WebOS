@@ -5692,7 +5692,13 @@ var PAGER = {
   },
   /* the page URL: the launcher's language and clock format go with it */
   url: function (p, extra) {
-    var q = '?lang=' + encodeURIComponent(cfg.lang || '') + '&clock=' + encodeURIComponent(cfg.clock || '') + '&loc=' + encodeURIComponent(LOC || '');
+    var q =
+      '?lang=' +
+      encodeURIComponent(cfg.lang || '') +
+      '&clock=' +
+      encodeURIComponent(cfg.clock || '') +
+      '&loc=' +
+      encodeURIComponent(LOC || '');
     for (var k in extra || {}) q += '&' + k + '=' + encodeURIComponent(extra[k]);
     return API + p.page + q;
   },
@@ -5769,7 +5775,24 @@ var PAGER = {
   vars: function () {
     var cs = getComputedStyle(document.documentElement),
       out = {};
-    ['ink', 'ink2', 'night', 'night-rgb', 'panel', 'panel2', 'acc', 'acc-ink', 'focus', 'font', 'fs', 'spd', 'pill-bg', 'pill-ring', 'row-r', 'menu-bg'].forEach(function (n) {
+    [
+      'ink',
+      'ink2',
+      'night',
+      'night-rgb',
+      'panel',
+      'panel2',
+      'acc',
+      'acc-ink',
+      'focus',
+      'font',
+      'fs',
+      'spd',
+      'pill-bg',
+      'pill-ring',
+      'row-r',
+      'menu-bg',
+    ].forEach(function (n) {
       out[n] = cs.getPropertyValue('--' + n).trim();
     });
     return out;

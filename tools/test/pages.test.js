@@ -5,7 +5,9 @@ const fs = require('fs'),
 const { root, ok, run } = require('./lib');
 
 run(async () => {
-  const pages = ['app', 'manager/app', 'picker/app', 'notify/app', 'helper/addons-bundled/iptv/page'].map(d => path.join(root, d, 'index.html'));
+  const pages = ['app', 'manager/app', 'picker/app', 'notify/app', 'helper/addons-bundled/iptv/page'].map(d =>
+    path.join(root, d, 'index.html')
+  );
   const rules = [
     [/\?\?|\?\.[A-Za-z_\[(]/, 'optional chaining or ??'],
     [/\|\|=|&&=/, 'logical assignment'],

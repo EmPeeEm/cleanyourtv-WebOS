@@ -13,12 +13,14 @@ run(async () => {
     .concat(path.join(root, 'scripts', 'jtool.js'))
     // add-ons run in the service too: the bundled ones and the catalog's service files must run on Node 8 as well
     .concat(
-      ['helper/addons-bundled/iptv/service.js'].concat(
-        fs
-          .readdirSync(path.join(root, 'addons', 'catalog'))
-          .filter(d => fs.existsSync(path.join(root, 'addons', 'catalog', d, 'service.js')))
-          .map(d => 'addons/catalog/' + d + '/service.js')
-      ).map(f => path.join(root, f))
+      ['helper/addons-bundled/iptv/service.js']
+        .concat(
+          fs
+            .readdirSync(path.join(root, 'addons', 'catalog'))
+            .filter(d => fs.existsSync(path.join(root, 'addons', 'catalog', d, 'service.js')))
+            .map(d => 'addons/catalog/' + d + '/service.js')
+        )
+        .map(f => path.join(root, f))
     );
   for (const f of files) {
     const r = cp.spawnSync(process.execPath, ['--check', f], { encoding: 'utf8' });

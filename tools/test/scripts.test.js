@@ -354,7 +354,12 @@ run(async () => {
     g('commit', '-q', '-am', 'a change in the package');
     fs.writeFileSync(path.join(rd, 'RELEASE-HOLD'), 'trying something\n');
     const outFile = path.join(rd, 'out.txt');
-    const run1 = () => cp.spawnSync('sh', ['tools/release.sh'], { cwd: rd, encoding: 'utf8', env: Object.assign({}, process.env, { GITHUB_OUTPUT: outFile, CYTV_DRY: '1' }) });
+    const run1 = () =>
+      cp.spawnSync('sh', ['tools/release.sh'], {
+        cwd: rd,
+        encoding: 'utf8',
+        env: Object.assign({}, process.env, { GITHUB_OUTPUT: outFile, CYTV_DRY: '1' }),
+      });
     let r1 = run1();
     ok(
       r1.status === 0 && /RELEASE-HOLD is present/.test(r1.stderr) && /^tag=$/m.test(fs.readFileSync(outFile, 'utf8')),
@@ -363,6 +368,9 @@ run(async () => {
     fs.unlinkSync(path.join(rd, 'RELEASE-HOLD'));
     fs.writeFileSync(outFile, '');
     r1 = run1();
-    ok(r1.status === 0 && /^tag=v1\.0\.1$/m.test(fs.readFileSync(outFile, 'utf8')), 'release.sh: without it the same change is released (dry run: v1.0.1)');
+    ok(
+      r1.status === 0 && /^tag=v1\.0\.1$/m.test(fs.readFileSync(outFile, 'utf8')),
+      'release.sh: without it the same change is released (dry run: v1.0.1)'
+    );
   }
 });

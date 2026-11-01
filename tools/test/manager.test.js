@@ -166,7 +166,9 @@ run(async () => {
   });
   const res = await pre.apply();
   ok(
-    res.closed.join() === 'netflix' && calls.indexOf('closeByAppId:netflix') >= 0 && calls.every(c => !/youtube|browser/.test(c) || !/^close/.test(c)),
+    res.closed.join() === 'netflix' &&
+      calls.indexOf('closeByAppId:netflix') >= 0 &&
+      calls.every(c => !/youtube|browser/.test(c) || !/^close/.test(c)),
     'only a listed app that runs in the background is closed: ' + calls.join(' ')
   );
 });

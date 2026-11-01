@@ -934,7 +934,12 @@ function build() {
   }
   if (view === 'addons') {
     if (ad.paused)
-      rows.push({ label: 'Add-ons are paused', sub: 'the file DISABLE-ADDONS is present; remove it and restart', dim: true, fn: function () {} });
+      rows.push({
+        label: 'Add-ons are paused',
+        sub: 'the file DISABLE-ADDONS is present; remove it and restart',
+        dim: true,
+        fn: function () {},
+      });
     ad.installed.forEach(function (a) {
       rows.push({
         label: a.name,
@@ -983,9 +988,11 @@ function build() {
       var bp = bookPages().filter(function (p) {
           return p.inBook;
         }),
-        bi = bp.map(function (p) {
-          return p.id;
-        }).indexOf(a1.id);
+        bi = bp
+          .map(function (p) {
+            return p.id;
+          })
+          .indexOf(a1.id);
       rows.push({
         label: 'Page of the book',
         sub: onoff(a1.inBook) + (a1.inBook && bi >= 0 ? ' \u00B7 page ' + (bi + 2) : '') + ' \u00B7 Home is page 1',
